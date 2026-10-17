@@ -41,7 +41,8 @@ def denylist_path() -> Path:
 
 def load_words(path: Path) -> list[str]:
     words = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    # utf-8-sig: Windows PowerShell 5.1 and some editors write a BOM
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
         line = line.split("#", 1)[0].strip()
         if line:
             words.append(normalize(line))

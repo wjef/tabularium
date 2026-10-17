@@ -49,6 +49,15 @@ def test_commit_message_is_checked_without_git_comments(denylist, tmp_path: Path
     assert check_denylist.main(["--commit-msg", str(msg)]) == 1
 
 
+def test_denylist_with_utf8_bom_still_matches_first_word(tmp_path: Path, monkeypatch):
+    path = tmp_path / "denylist.txt"
+    path.write_text("Kowalski\n", encoding="utf-8-sig")
+    monkeypatch.setenv("TABULARIUM_DENYLIST", str(path))
+    bad = tmp_path / "x.txt"
+    bad.write_text("kowalski", encoding="utf-8")
+    assert check_denylist.main([str(bad)]) == 1
+
+
 def test_missing_denylist_blocks(tmp_path: Path, monkeypatch, capsys):
     monkeypatch.setenv("TABULARIUM_DENYLIST", str(tmp_path / "missing.txt"))
     any_file = tmp_path / "x.txt"
