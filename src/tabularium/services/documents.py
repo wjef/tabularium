@@ -129,3 +129,8 @@ def untagged_documents() -> Select[tuple[Document]]:
     """The "To be tagged" view: documents without any tag, oldest import first."""
     has_tag = exists().where(DocumentTag.document_id == Document.id)
     return select(Document).where(~has_tag).order_by(Document.ingested_at, Document.id)
+
+
+def bulk_add_tag(session: Session, documents: list[Document], tag: Tag) -> int:
+    """Assign ``tag`` to every document; returns how many did not have it yet."""
+    return sum(add_tag(session, document, tag) for document in documents)

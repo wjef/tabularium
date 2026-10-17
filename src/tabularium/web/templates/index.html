@@ -7,7 +7,7 @@
   <button hx-post="/ingest/scan" hx-target="#ingest-result" hx-swap="innerHTML"
           hx-disabled-elt="this">{{ _("Scan ingest folder") }}</button>
   <div id="ingest-result">
-    <p>{{ _("To be tagged:") }} <strong id="untagged-count">{{ untagged }}</strong></p>
+    <p><a href="/inbox">{{ _("To be tagged:") }}</a> <strong id="untagged-count">{{ untagged }}</strong></p>
   </div>
 </section>
 

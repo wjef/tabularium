@@ -22,3 +22,16 @@ form.stacked label { display: block; margin: .4em 0; }
 form.stacked input, form.stacked textarea, form.stacked select { display: block; width: 100%; max-width: 40em; }
 table.history code { font-size: .8em; word-break: break-all; }
 h3 { margin: 1em 0 .3em; }
+.docpanel { display: flex; gap: 1em; flex-wrap: wrap; align-items: flex-start; }
+.docpanel .preview { flex: 3 1 380px; min-width: 0; }
+.docpanel .meta { flex: 2 1 300px; min-width: 0; }
+.preview iframe { width: 100%; height: 75vh; border: 1px solid #000; }
+.preview img { max-width: 100%; border: 1px solid #000; }
+form.inline { display: inline; }
+form.inline button { padding: 0 .4em; }
+label.check input { display: inline; width: auto; }
+.doclist td { border: none; border-bottom: 1px solid #ddd; }
+.split > .left.narrow { flex: 0 1 280px; }
+.meta table { table-layout: fixed; width: 100%; }
+.meta td, .meta th { overflow-wrap: anywhere; }
+.meta code { word-break: break-all; }

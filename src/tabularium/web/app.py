@@ -18,7 +18,7 @@ from tabularium.config import Config
 from tabularium.ingest import IngestBusyError, Ingestor
 from tabularium.services.documents import untagged_documents
 from tabularium.storage import LocalStorage
-from tabularium.web import routes_entities, routes_history, routes_tags
+from tabularium.web import routes_documents, routes_entities, routes_history, routes_tags
 from tabularium.web.deps import make_templates, render
 from tabularium.web.security import LocalOnlyMiddleware, new_csrf_token
 
@@ -38,7 +38,8 @@ def create_app(
     if session_factory is None:
         engine = db.make_engine(db.sqlite_url(config.database_path))
         session_factory = db.make_session_factory(engine)
-    ingestor = Ingestor(config, session_factory, LocalStorage(config.paths.archive))
+    storage = LocalStorage(config.paths.archive)
+    ingestor = Ingestor(config, session_factory, storage)
     if scan_on_startup is None:
         scan_on_startup = config.ingest.scan_on_startup
 
@@ -55,9 +56,11 @@ def create_app(
     app.state.csrf_token = csrf_token
     app.state.session_factory = session_factory
     app.state.ingestor = ingestor
+    app.state.storage = storage
     app.state.templates = make_templates(config, csrf_token)
     app.add_middleware(LocalOnlyMiddleware, csrf_token=csrf_token)
     app.mount("/static", StaticFiles(directory=str(_WEB / "static")), name="static")
+    app.include_router(routes_documents.router)
     app.include_router(routes_tags.router)
     app.include_router(routes_entities.router)
     app.include_router(routes_history.router)

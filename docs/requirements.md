@@ -148,7 +148,13 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 - Server-rendered HTML + htmx, served on `127.0.0.1` only, opened in the default browser.
 - **To be tagged** view: all active documents with zero tags.
 - **Archive** view: tag-tree filter → document list (left) → preview (right).
-- Preview inline for PDF, images, text. Other types: "Open in default app", "Show in Explorer".
+- Preview inline for PDF, PNG/JPEG/GIF/WebP/BMP images and plain text. Every other type
+  (including HTML, SVG, Office files) is only offered as a download, never rendered in the
+  app's origin. Later: "Open in default app", "Show in Explorer" (M5).
+- Tags are added by typing a full path (`sender / Jan Kowalski`, case/diacritic-insensitive)
+  from a suggestion list, by picking *under which tag + which entity* (the entity tag is
+  reused or created), or by creating a new tag on the spot.
+- Document details: title, note, document date, *keep until* (automatic or manual).
 - Tagging: add/remove tags, create tags inline, pick entities, **bulk tagging** of a selection.
 - English UI; all strings translatable (gettext); language selectable in config/UI later.
   Known gap: error messages raised by domain services are English-only for now.

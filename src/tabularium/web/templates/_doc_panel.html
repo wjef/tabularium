@@ -1,0 +1,17 @@
+{# expects: doc, preview, view + meta context #}
+<div class="docpanel">
+  <div class="preview">
+    {% set file_url = "/documents/" ~ doc.id ~ "/file" %}
+    {% if preview == "pdf" or preview == "text" %}
+      <iframe src="{{ file_url }}" title="{{ _('Preview') }}"></iframe>
+    {% elif preview == "image" %}
+      <img src="{{ file_url }}" alt="{{ doc.original_filename }}">
+    {% else %}
+      <p class="muted">{{ _("No preview for this file type.") }}</p>
+    {% endif %}
+    <p><a href="{{ file_url }}?download=1">{{ _("Download original") }}</a></p>
+  </div>
+  <div class="meta">
+    {% include "_doc_meta.html" %}
+  </div>
+</div>

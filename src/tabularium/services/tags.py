@@ -1,5 +1,6 @@
 """Tag tree operations (see docs/adr/0004)."""
 
+import re
 import uuid
 from collections.abc import Iterable
 
@@ -222,3 +223,51 @@ def merge_tag(session: Session, source: Tag, target: Tag) -> int:
     session.delete(source)
     session.flush()
     return len(links)
+
+
+def tag_paths(session: Session) -> dict[uuid.UUID, str]:
+    """Full display path (``sender / Jan Kowalski``) of every tag, from one query."""
+    tags = {t.id: t for t in session.scalars(select(Tag))}
+    paths: dict[uuid.UUID, str] = {}
+
+    def path_of(tag: Tag) -> str:
+        if tag.id not in paths:
+            parent = tags.get(tag.parent_id) if tag.parent_id else None
+            paths[tag.id] = f"{path_of(parent)} / {tag.name}" if parent else tag.name
+        return paths[tag.id]
+
+    for tag in tags.values():
+        path_of(tag)
+    return paths
+
+
+def _path_key(path: str) -> str:
+    # Spacing around "/" is irrelevant; names may themselves contain "/".
+    return re.sub(r"\s*/\s*", "/", normalize(path))
+
+
+def find_by_path(session: Session, path: str) -> Tag | None:
+    """Tag for a display path like ``sender / Jan Kowalski`` (case/diacritic-insensitive).
+
+    The exact display path wins (tag names may contain "/"). Otherwise spacing around "/" is
+    ignored; if that matches more than one tag the path is ambiguous and refused.
+    """
+    exact, loose = normalize(path), _path_key(path)
+    if not loose:
+        return None
+    paths = tag_paths(session)
+    for tag_id, display in paths.items():
+        if normalize(display) == exact:
+            return session.get(Tag, tag_id)
+    matches = [tag_id for tag_id, display in paths.items() if _path_key(display) == loose]
+    if len(matches) > 1:
+        raise DomainError(f"The path '{path.strip()}' is ambiguous; pick it from the list.")
+    return session.get(Tag, matches[0]) if matches else None
+
+
+def get_or_create_entity_tag(session: Session, parent: Tag, entity: Entity) -> Tag:
+    """The tag for ``entity`` under ``parent``, created if it does not exist yet."""
+    existing = session.scalar(
+        select(Tag).where(Tag.parent_id == parent.id, Tag.entity_id == entity.id)
+    )
+    return existing or create_tag(session, parent=parent, entity=entity)
