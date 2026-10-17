@@ -8,8 +8,10 @@ TOKEN = "test-token"
 
 
 @pytest.fixture
-def client(config):
-    app = create_app(config, csrf_token=TOKEN)
+def client(config, session_factory):
+    app = create_app(
+        config, csrf_token=TOKEN, session_factory=session_factory, scan_on_startup=False
+    )
 
     @app.post("/_test/mutate")
     def mutate() -> dict[str, bool]:
@@ -24,6 +26,22 @@ def test_index_renders_with_csrf_header_for_htmx(client):
     assert "Tabularium" in response.text
     assert CSRF_HEADER in response.text and TOKEN in response.text
     assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert "/static/htmx-2.0.11.min.js" in response.text
+    assert client.get("/static/htmx-2.0.11.min.js").status_code == 200
+
+
+def test_scan_button_imports_files(client, folders, config):
+    config.ingest.stable_seconds = 0
+    (folders["ingest"] / "letter.pdf").write_bytes(b"%PDF-1.4 letter")
+    response = client.post("/ingest/scan", headers={CSRF_HEADER: TOKEN})
+    assert response.status_code == 200
+    assert "Imported" in response.text
+    assert '<strong id="untagged-count">1</strong>' in response.text
+    assert (folders["ingest"] / "_processed" / "letter.pdf").exists()
+
+
+def test_scan_requires_csrf_token(client):
+    assert client.post("/ingest/scan").status_code == 403
 
 
 def test_health(client):

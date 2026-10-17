@@ -1,7 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>{{ _("Archive") }}</h1>
-<p>{{ _("Nothing here yet. Ingest and tagging arrive in the next milestones.") }}</p>
+
+<section id="ingest">
+  <h2>{{ _("Ingest") }}</h2>
+  <button hx-post="/ingest/scan" hx-target="#ingest-result" hx-swap="innerHTML"
+          hx-disabled-elt="this">{{ _("Scan ingest folder") }}</button>
+  <div id="ingest-result">
+    <p>{{ _("To be tagged:") }} <strong id="untagged-count">{{ untagged }}</strong></p>
+  </div>
+</section>
+
+<h2>{{ _("Folders") }}</h2>
 <table>
   <tr><th>{{ _("Ingest folder") }}</th><td>{{ config.paths.ingest }}</td></tr>
   <tr><th>{{ _("Archive folder") }}</th><td>{{ config.paths.archive }}</td></tr>

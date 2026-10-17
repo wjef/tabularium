@@ -4,7 +4,7 @@ A local document archive: drop files into an ingest folder, Tabularium stores th
 (named by SHA-256 hash), and you tag them with nested tags and reusable entities (people,
 companies, institutions). Search by tags, preview in the app.
 
-> Status: **M1 — domain model** (no ingest or UI yet). See [requirements](docs/requirements.md) and the
+> Status: **M2 — ingest pipeline** (tagging UI not yet). See [requirements](docs/requirements.md) and the
 > [architecture decisions](docs/adr/README.md).
 
 ## Requirements

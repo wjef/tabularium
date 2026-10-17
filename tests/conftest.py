@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from tabularium import db
 from tabularium.config import Config, load_config
@@ -52,8 +52,13 @@ def db_url(tmp_path: Path) -> str:
 
 
 @pytest.fixture
-def session(db_url: str) -> Iterator[Session]:
+def session_factory(db_url: str) -> Iterator[sessionmaker[Session]]:
     engine = db.make_engine(db_url)
-    with db.make_session_factory(engine)() as s:
-        yield s
+    yield db.make_session_factory(engine)
     engine.dispose()
+
+
+@pytest.fixture
+def session(session_factory: sessionmaker[Session]) -> Iterator[Session]:
+    with session_factory() as s:
+        yield s

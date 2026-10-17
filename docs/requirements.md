@@ -43,18 +43,29 @@ Status: agreed specification, v1 scope. Decisions and their reasoning are in [`d
 - Live folder watching: later.
 
 ### 3.2 Pipeline (per file)
-1. **Skip** files matching `ignore` patterns, OneDrive placeholders/temporary files, and files
-   that are not *stable* (size changed within `stable_seconds`, or file is locked).
-2. **Copy + hash** in one pass to `<archive>\.tmp\`, computing SHA-256.
-3. **Duplicate?** If the hash already exists (active or outdated): discard the temp copy,
+1. **Ignore** (silently): names matching built-in or `ignore` patterns (`~$*`, `*.tmp`,
+   `*.crdownload`, …), dot-files, hidden/system files, and the `_processed`, `_duplicates`,
+   `_failed` folders.
+2. **Skip** (logged as `SKIPPED`): OneDrive cloud-only placeholders — set the ingest folder to
+   "Always keep on this device".
+3. **Wait** (not logged, retried next scan): files created or modified less than
+   `stable_seconds` ago (future timestamps are ignored), files open in another program, and
+   files whose size or modification time changed while being copied.
+4. **Copy + hash** in one pass to `<archive>\.tmp\`, computing SHA-256.
+5. **Duplicate?** If the hash already exists (active; outdated too from M7): discard the copy,
    move the original to `<ingest>\_duplicates\`, log it.
-4. **Finalize:** atomic rename to the final archive name, re-verify the hash, preserve timestamps.
-5. **Record** the document in the database (it now appears in the *To be tagged* view).
-6. **Original:** moved to `<ingest>\_processed\` (configurable later to `delete`).
-7. **Any error:** original moved to `<ingest>\_failed\`, reason logged. Nothing is lost silently.
+6. **Finalize:** atomic rename to the final archive name and re-verify the hash. An identical
+   file already there (left by an interrupted run) is reused. The original modification time is
+   kept in the database (`original_mtime`), not on the archive copy.
+7. **Record** the document in the database (it now appears in the *To be tagged* view).
+8. **Original:** moved to `<ingest>\_processed\` (same subfolder structure; name collisions get
+   ` (1)`, ` (2)`… suffixes). If it cannot be moved, it stays and becomes a duplicate next scan.
+9. **Any error in 4–7:** the archive copy is removed again, the original moved to
+   `<ingest>\_failed\`, reason logged (`FAILED`). Nothing is lost silently.
 
 The order (copy → verify → record → move original) guarantees a crash at any step loses nothing.
-Subfolders of the ingest folder are scanned (`include_subfolders`), but carry no meaning.
+Subfolders of the ingest folder are scanned (`include_subfolders`); the subfolder path is stored
+as `original_relpath` but has no other meaning. Only one scan runs at a time.
 
 ### 3.3 Archive naming
 - `<archive>\<first 2 hex chars>\<full sha256>.<original extension, lowercase>`

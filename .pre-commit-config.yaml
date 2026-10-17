@@ -11,7 +11,9 @@ repos:
       - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
+        exclude: ^src/tabularium/web/static/htmx-.*\.min\.js$
       - id: trailing-whitespace
+        exclude: ^src/tabularium/web/static/htmx-.*\.min\.js$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.17.1

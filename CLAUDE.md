@@ -8,8 +8,8 @@ Local single-user document archive. Spec: `docs/requirements.md`. Decisions: `do
   Example Sp. z o.o.) and generated test files only. The denylist hook enforces part of this.
 - **Originals are never modified** — only copied, hashed, renamed by hash.
 - **Documents are never deleted** — only outdated (ADR 0005).
-- All schema changes go through Alembic migrations; all file access through the storage
-  interface (ADR 0009) once it exists.
+- All schema changes go through Alembic migrations; all archive file access through the storage
+  interface `tabularium.storage` (ADR 0009); Windows path quirks via `tabularium.fsutil.lp`.
 - All UI strings wrapped for gettext (ADR 0008).
 - Timestamps in UTC; `document_date` / `retain_until` are plain dates.
 - Domain changes go through `tabularium.services.*`: they enforce invariants and write the

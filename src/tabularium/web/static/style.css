@@ -5,3 +5,5 @@ main { padding: 1em; }
 footer { padding: .5em 1em; color: #666; border-top: 1px solid #ccc; }
 table { border-collapse: collapse; }
 th, td { border: 1px solid #999; padding: .25em .5em; text-align: left; }
+.warn { color: #a00; }
+button.htmx-request, button[disabled] { opacity: .5; }

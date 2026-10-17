@@ -1,0 +1,17 @@
+{% if report is none %}
+<p class="warn">{{ _("A scan is already running. Try again in a moment.") }}</p>
+{% else %}
+<table class="report">
+  <tr><th>{{ _("Imported") }}</th><td>{{ report.imported|length }}</td></tr>
+  <tr><th>{{ _("Duplicates") }}</th><td>{{ report.duplicates|length }}</td></tr>
+  <tr><th>{{ _("Failed") }}</th><td>{{ report.failed|length }}</td></tr>
+  <tr><th>{{ _("Skipped (cloud-only)") }}</th><td>{{ report.skipped|length }}</td></tr>
+  <tr><th>{{ _("Waiting (still being written)") }}</th><td>{{ report.waiting|length }}</td></tr>
+</table>
+{% for title, items in [(_("Failed"), report.failed), (_("Duplicates"), report.duplicates), (_("Skipped (cloud-only)"), report.skipped), (_("Waiting (still being written)"), report.waiting)] %}
+  {% if items %}
+  <details><summary>{{ title }}</summary><ul>{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul></details>
+  {% endif %}
+{% endfor %}
+{% endif %}
+<p>{{ _("To be tagged:") }} <strong id="untagged-count">{{ untagged }}</strong></p>
