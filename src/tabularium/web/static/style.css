@@ -1,0 +1,7 @@
+/* Deliberately brutal. Real design comes later. */
+body { font: 14px/1.4 system-ui, sans-serif; margin: 0; }
+header { display: flex; gap: 1em; padding: .5em 1em; border-bottom: 1px solid #000; }
+main { padding: 1em; }
+footer { padding: .5em 1em; color: #666; border-top: 1px solid #ccc; }
+table { border-collapse: collapse; }
+th, td { border: 1px solid #999; padding: .25em .5em; text-align: left; }

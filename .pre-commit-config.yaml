@@ -1,0 +1,45 @@
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  # Personal words, list kept outside the repo (docs/adr/0006)
+  - repo: local
+    hooks:
+      - id: denylist
+        name: personal denylist (files)
+        entry: python scripts/check_denylist.py
+        language: python
+        types: [text]
+      - id: denylist-names
+        name: personal denylist (file names, incl. binary files)
+        entry: python scripts/check_denylist.py
+        language: python
+        exclude_types: [text]
+      - id: denylist-commit-msg
+        name: personal denylist (commit message)
+        entry: python scripts/check_denylist.py --commit-msg
+        language: python
+        stages: [commit-msg]

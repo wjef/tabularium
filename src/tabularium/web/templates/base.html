@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="{{ language }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Tabularium{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body hx-headers='{"{{ csrf_header }}": "{{ csrf_token }}"}'>
+  <header>
+    <strong>Tabularium</strong>
+    <nav>
+      <a href="/">{{ _("Home") }}</a>
+    </nav>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>v{{ version }}</footer>
+</body>
+</html>

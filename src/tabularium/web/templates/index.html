@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ _("Archive") }}</h1>
+<p>{{ _("Nothing here yet. Ingest and tagging arrive in the next milestones.") }}</p>
+<table>
+  <tr><th>{{ _("Ingest folder") }}</th><td>{{ config.paths.ingest }}</td></tr>
+  <tr><th>{{ _("Archive folder") }}</th><td>{{ config.paths.archive }}</td></tr>
+  <tr><th>{{ _("Outdated folder") }}</th><td>{{ config.paths.outdated }}</td></tr>
+</table>
+{% endblock %}

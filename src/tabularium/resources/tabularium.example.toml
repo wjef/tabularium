@@ -1,0 +1,27 @@
+# Tabularium configuration.
+# This file lives in your app home (%LOCALAPPDATA%\Tabularium\tabularium.toml), NOT in the repo.
+# Use forward slashes in paths. The folders must exist.
+
+[paths]
+ingest = "D:/Example/Tabularium/Ingest"      # drop new files here
+archive = "D:/Example/Tabularium/Archive"    # hash-named, never modified
+outdated = "D:/Example/Tabularium/Outdated"  # outdated documents (never deleted)
+# database = ""  # optional; default: <app home>/data/tabularium.db — keep it OUT of OneDrive
+
+[server]
+host = "127.0.0.1"  # loopback only
+port = 8765
+open_browser = true
+
+[ingest]
+scan_on_startup = true
+include_subfolders = true
+after_import = "move_to_processed"  # originals go to <ingest>/_processed
+stable_seconds = 5                  # file size must be unchanged this long
+ignore = ["*.tmp", "~$*", "desktop.ini", "Thumbs.db", "*.partial", "*.crdownload", ".~*"]
+
+[retention]
+years = 5
+
+[ui]
+language = "en"

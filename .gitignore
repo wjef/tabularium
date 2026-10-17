@@ -1,0 +1,53 @@
+# --- Personal / local data: must never be committed (see docs/adr/0006) ---
+tabularium.toml
+!src/tabularium/resources/tabularium.example.toml
+denylist.txt
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.log
+logs/
+backups/
+.env
+.env.*
+*.pem
+*.key
+
+# Documents: real files never belong in the repo; tests generate their own
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.eml
+*.msg
+*.jpg
+*.jpeg
+*.png
+*.tif
+*.tiff
+*.heic
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.mo
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+desktop.ini
+Thumbs.db
+.DS_Store

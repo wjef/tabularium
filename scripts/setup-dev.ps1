@@ -1,0 +1,48 @@
+# Creates the development environment outside OneDrive (see docs/adr/0002).
+#   - virtual environment in %LOCALAPPDATA%\Tabularium\venv
+#   - project installed in editable mode with dev dependencies
+#   - git hooks (pre-commit + commit-msg)
+#
+# Run it from a normal PowerShell window. (Inside sandboxed/packaged apps, %LOCALAPPDATA% may be
+# redirected to a private location that the rest of Windows cannot see.)
+$ErrorActionPreference = "Stop"
+
+function Invoke-Native {
+    param([string]$Exe, [string[]]$Arguments)
+    # Windows PowerShell 5.1 turns native stderr into errors; judge by exit code instead.
+    $ErrorActionPreference = "Continue"
+    & $Exe @Arguments 2>&1 | ForEach-Object { "$_" }
+    if ($LASTEXITCODE -ne 0) { throw "$Exe $Arguments failed with exit code $LASTEXITCODE" }
+}
+
+$repo = Split-Path -Parent $PSScriptRoot
+$homeDir = Join-Path $env:LOCALAPPDATA "Tabularium"
+$venv = Join-Path $homeDir "venv"
+$py = Join-Path $venv "Scripts\python.exe"
+
+New-Item -ItemType Directory -Force $homeDir | Out-Null
+
+if (-not (Test-Path $py)) {
+    Write-Host "Creating virtual environment in $venv"
+    Invoke-Native "python" @("-m", "venv", $venv)
+}
+
+Invoke-Native $py @("-m", "pip", "install", "--upgrade", "pip")
+Invoke-Native $py @("-m", "pip", "install", "-e", "$repo[dev]")
+
+Push-Location $repo
+try {
+    Invoke-Native $py @("-m", "pre_commit", "install", "--install-hooks")
+} finally {
+    Pop-Location
+}
+
+$denylist = Join-Path $homeDir "denylist.txt"
+if (-not (Test-Path $denylist)) {
+    Write-Host ""
+    Write-Host "TIP: create $denylist with one personal word per line" -ForegroundColor Yellow
+    Write-Host "     (name, family names, e-mail...). Commits containing them will be blocked."
+}
+
+Write-Host ""
+Write-Host "Done. Python: $py"
