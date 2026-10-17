@@ -40,8 +40,9 @@ try {
 $denylist = Join-Path $homeDir "denylist.txt"
 if (-not (Test-Path $denylist)) {
     Write-Host ""
-    Write-Host "TIP: create $denylist with one personal word per line" -ForegroundColor Yellow
-    Write-Host "     (name, family names, e-mail...). Commits containing them will be blocked."
+    Write-Host "REQUIRED before committing: create $denylist" -ForegroundColor Yellow
+    Write-Host "     with one personal word per line (name, family names, e-mail...)."
+    Write-Host "     Commits containing them are blocked; without the file all commits are blocked."
 }
 
 Write-Host ""

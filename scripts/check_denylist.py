@@ -4,6 +4,9 @@ The word list lives OUTSIDE the repo: ``%LOCALAPPDATA%\\Tabularium\\denylist.txt
 (or ``$TABULARIUM_DENYLIST``). One word per line, ``#`` starts a comment. Matching is
 case- and diacritic-insensitive substring matching.
 
+Fails closed: a missing list blocks the commit, so the check can never be skipped silently.
+``TABULARIUM_DENYLIST=none`` is the explicit opt-out.
+
 Usage (wired up by pre-commit):
     check_denylist.py FILE...                 check names and contents of staged files
     check_denylist.py --commit-msg MSGFILE    check the commit message
@@ -74,10 +77,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("files", nargs="*")
     args = parser.parse_args(argv)
 
+    if os.environ.get("TABULARIUM_DENYLIST", "").lower() == "none":
+        print("WARNING: TABULARIUM_DENYLIST=none - personal-word check disabled.")
+        return 0
     path = denylist_path()
     if not path.is_file():
-        print(f"WARNING: denylist not found at {path} - personal-word check skipped.")
-        return 0
+        print(f"Commit blocked - denylist not found at {path}")
+        print("Create it (one personal word per line) or set TABULARIUM_DENYLIST=none to opt out.")
+        return 1
     words = load_words(path)
     if not words:
         return 0

@@ -27,11 +27,14 @@ Then:
 2. Edit that file: set your `ingest`, `archive` and `outdated` folders (they must exist).
 3. Run `Tabularium.bat` again — the app opens in your browser.
 
-## Personal denylist (recommended)
+## Personal denylist (required for committing)
 
 Create `%LOCALAPPDATA%\Tabularium\denylist.txt` with one word per line (your name, family
 names, e-mail, user-profile folder name…). Commits containing any of them — in file contents,
 file names or the commit message — are blocked. The list never leaves your machine.
+
+Without the list, commits are blocked too. Contributors who don't need it can opt out with
+`$env:TABULARIUM_DENYLIST = "none"`.
 
 ## Development
 

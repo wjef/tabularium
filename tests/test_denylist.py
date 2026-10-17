@@ -49,8 +49,16 @@ def test_commit_message_is_checked_without_git_comments(denylist, tmp_path: Path
     assert check_denylist.main(["--commit-msg", str(msg)]) == 1
 
 
-def test_missing_denylist_only_warns(tmp_path: Path, monkeypatch, capsys):
+def test_missing_denylist_blocks(tmp_path: Path, monkeypatch, capsys):
     monkeypatch.setenv("TABULARIUM_DENYLIST", str(tmp_path / "missing.txt"))
+    any_file = tmp_path / "x.txt"
+    any_file.write_text("hello", encoding="utf-8")
+    assert check_denylist.main([str(any_file)]) == 1
+    assert "denylist not found" in capsys.readouterr().out
+
+
+def test_explicit_opt_out_passes_with_warning(tmp_path: Path, monkeypatch, capsys):
+    monkeypatch.setenv("TABULARIUM_DENYLIST", "none")
     any_file = tmp_path / "x.txt"
     any_file.write_text("Kowalski", encoding="utf-8")
     assert check_denylist.main([str(any_file)]) == 0
