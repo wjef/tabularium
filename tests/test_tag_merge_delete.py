@@ -1,9 +1,10 @@
 import hashlib
 
 import pytest
+from conftest import etype
 from sqlalchemy import select
 
-from tabularium.models import AuditLog, DocumentTag, EntityType, Tag
+from tabularium.models import AuditLog, DocumentTag, Tag
 from tabularium.services import DomainError
 from tabularium.services.documents import add_tag, create_document
 from tabularium.services.entities import create_entity, delete_entity
@@ -115,7 +116,7 @@ def test_delete_unused_leaf_is_audited(session, setup):
 
 
 def test_entity_delete_guard(session):
-    person = create_entity(session, EntityType.PERSON, "Anna Nowak")
+    person = create_entity(session, etype(session, "Person"), "Anna Nowak")
     sender = create_tag(session, "sender")
     tag = create_tag(session, parent=sender, entity=person)
     session.commit()

@@ -12,6 +12,12 @@ from tabularium.i18n import N_
 from tabularium.models import AuditLog, Entity, EntityType, Tag
 from tabularium.services import DomainError
 from tabularium.services.entities import create_entity, delete_entity, update_entity
+from tabularium.services.entity_types import (
+    create_type,
+    delete_type,
+    list_types,
+    rename_type,
+)
 from tabularium.services.tags import create_tag
 from tabularium.web.deps import get_session, parse_uuid, render
 from tabularium.web.routes_tags import build_tree
@@ -66,7 +72,7 @@ def workspace_context(
     return {
         "entities": entities,
         "selected": selected,
-        "entity_types": list(EntityType),
+        "entity_types": list_types(session),
         "tag_nodes": tag_nodes,
         "parents": sorted(index.values(), key=lambda n: n.path.casefold()),
         "history": history,
@@ -90,6 +96,13 @@ def _get_entity(session: Session, entity_id: uuid.UUID) -> Entity:
     return entity
 
 
+def _get_type(session: Session, type_id: str) -> EntityType:
+    entity_type = session.get(EntityType, parse_uuid(type_id)) if parse_uuid(type_id) else None
+    if entity_type is None:
+        raise DomainError("Choose an entity type.")
+    return entity_type
+
+
 def _apply(request, session, selected_id, action, message, form=None):
     try:
         result_id = action()
@@ -110,13 +123,13 @@ def entities_create(
     request: Request,
     session: SessionDep,
     name: Annotated[str, Form()],
-    type: Annotated[EntityType, Form()],
+    type_id: Annotated[str, Form()] = "",
 ):
     return _apply(
         request,
         session,
         None,
-        lambda: create_entity(session, type, name).id,
+        lambda: create_entity(session, _get_type(session, type_id), name).id,
         N_("Entity created."),
     )
 
@@ -127,7 +140,7 @@ def entities_update(
     session: SessionDep,
     entity_id: uuid.UUID,
     name: Annotated[str, Form()],
-    type: Annotated[EntityType, Form()],
+    type_id: Annotated[str, Form()] = "",
     aliases: Annotated[str, Form()] = "",
     attributes: Annotated[str, Form()] = "",
 ):
@@ -137,7 +150,7 @@ def entities_update(
             session,
             entity,
             name=name,
-            type_=type,
+            type_=_get_type(session, type_id),
             aliases=parse_lines(aliases),
             attributes=parse_attributes(attributes),
         )
@@ -168,3 +181,65 @@ def entities_delete(request: Request, session: SessionDep, entity_id: uuid.UUID)
         return None
 
     return _apply(request, session, entity_id, action, N_("Entity deleted."))
+
+
+# --- entity types ----------------------------------------------------------------------
+
+
+def _type_action(request, session, selected_id: str, change, message: str):
+    """Change a type, then show the entities page with the same entity still selected."""
+
+    def action():
+        change()
+        return parse_uuid(selected_id)
+
+    return _apply(request, session, parse_uuid(selected_id), action, message)
+
+
+@router.post("/entities/types/create", response_class=HTMLResponse)
+def entity_type_create(
+    request: Request,
+    session: SessionDep,
+    name: Annotated[str, Form()],
+    selected_id: Annotated[str, Form()] = "",
+):
+    return _type_action(
+        request,
+        session,
+        selected_id,
+        lambda: create_type(session, name),
+        N_("Entity type created."),
+    )
+
+
+@router.post("/entities/types/{type_id}/rename", response_class=HTMLResponse)
+def entity_type_rename(
+    request: Request,
+    session: SessionDep,
+    type_id: uuid.UUID,
+    name: Annotated[str, Form()],
+    selected_id: Annotated[str, Form()] = "",
+):
+    return _type_action(
+        request,
+        session,
+        selected_id,
+        lambda: rename_type(session, _get_type(session, str(type_id)), name),
+        N_("Entity type renamed."),
+    )
+
+
+@router.post("/entities/types/{type_id}/delete", response_class=HTMLResponse)
+def entity_type_delete(
+    request: Request,
+    session: SessionDep,
+    type_id: uuid.UUID,
+    selected_id: Annotated[str, Form()] = "",
+):
+    return _type_action(
+        request,
+        session,
+        selected_id,
+        lambda: delete_type(session, _get_type(session, str(type_id))),
+        N_("Entity type deleted."),
+    )

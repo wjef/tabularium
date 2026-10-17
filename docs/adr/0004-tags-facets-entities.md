@@ -15,6 +15,8 @@ time, and able to refer to a person or organization whose details are stored onc
 - Assignments reference tag IDs, so rename/move/merge never break them.
 - Search: a selected tag includes descendants; OR within a facet, AND across facets.
 - `normalized_name` (casefold, no diacritics, `ł → l`) for uniqueness and search.
+- Entity types are rows in `entity_type`, managed by the user (2026-10-17; replaced the
+  initial fixed list). Migration 0003 turned the four fixed values into editable rows.
 
 ## Consequences
 - Both "sent by X" and "anything involving X" are answerable.

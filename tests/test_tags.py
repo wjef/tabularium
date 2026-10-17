@@ -1,7 +1,8 @@
 import pytest
+from conftest import etype
 from sqlalchemy import select
 
-from tabularium.models import AuditLog, EntityType, Tag
+from tabularium.models import AuditLog, Tag
 from tabularium.services import DomainError
 from tabularium.services.entities import create_entity, update_entity
 from tabularium.services.tags import (
@@ -18,8 +19,8 @@ from tabularium.services.tags import (
 @pytest.fixture
 def tree(session):
     """sender → (Jan Kowalski entity, Urząd Skarbowy entity); category → taxes → PIT."""
-    jan = create_entity(session, EntityType.PERSON, "Jan Kowalski")
-    office = create_entity(session, EntityType.INSTITUTION, "Urząd Skarbowy")
+    jan = create_entity(session, etype(session, "Person"), "Jan Kowalski")
+    office = create_entity(session, etype(session, "Institution"), "Urząd Skarbowy")
     sender = create_tag(session, "sender")
     category = create_tag(session, "category")
     taxes = create_tag(session, "taxes", parent=category)

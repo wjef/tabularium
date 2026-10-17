@@ -1,6 +1,7 @@
 import re
 
 import pytest
+from conftest import etype
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
@@ -22,6 +23,11 @@ def client(config, session_factory):
 def tag_id(session_factory, name: str) -> str:
     with session_factory() as s:
         return str(s.scalars(select(Tag.id).where(Tag.name == name)).one())
+
+
+def type_id(session_factory, name: str) -> str:
+    with session_factory() as s:
+        return str(etype(s, name).id)
 
 
 def entity_id(session_factory, name: str) -> str:
@@ -82,7 +88,10 @@ def test_rename_move_merge_delete(client, session_factory):
 
 
 def test_entity_lifecycle(client, session_factory):
-    r = client.post("/entities/create", data={"name": "Urząd Skarbowy", "type": "INSTITUTION"})
+    r = client.post(
+        "/entities/create",
+        data={"name": "Urząd Skarbowy", "type_id": type_id(session_factory, "Institution")},
+    )
     assert "Entity created." in r.text
     office = entity_id(session_factory, "Urząd Skarbowy")
 
@@ -90,7 +99,7 @@ def test_entity_lifecycle(client, session_factory):
         f"/entities/{office}/update",
         data={
             "name": "Urząd Skarbowy Example",
-            "type": "INSTITUTION",
+            "type_id": type_id(session_factory, "Institution"),
             "aliases": "US\n\nTax office\n",
             "attributes": "tax id: 000-000-00-00\naddress: ul. Przykładowa 1",
         },
@@ -111,13 +120,20 @@ def test_entity_lifecycle(client, session_factory):
 
 
 def test_saving_details_does_not_touch_tag_history(client, session_factory):
-    client.post("/entities/create", data={"name": "Anna Nowak", "type": "PERSON"})
+    client.post(
+        "/entities/create",
+        data={"name": "Anna Nowak", "type_id": type_id(session_factory, "Person")},
+    )
     anna = entity_id(session_factory, "Anna Nowak")
     client.post("/tags/create", data={"name": "sender"})
     client.post(f"/entities/{anna}/add-tag", data={"parent_id": tag_id(session_factory, "sender")})
     client.post(
         f"/entities/{anna}/update",
-        data={"name": "Anna Nowak", "type": "PERSON", "attributes": "e-mail: anna@example.com"},
+        data={
+            "name": "Anna Nowak",
+            "type_id": type_id(session_factory, "Person"),
+            "attributes": "e-mail: anna@example.com",
+        },
     )
     with session_factory() as s:
         tag_updates = s.scalars(
@@ -127,11 +143,18 @@ def test_saving_details_does_not_touch_tag_history(client, session_factory):
 
 
 def test_bad_attribute_line_keeps_user_input(client, session_factory):
-    client.post("/entities/create", data={"name": "Jan Kowalski", "type": "PERSON"})
+    client.post(
+        "/entities/create",
+        data={"name": "Jan Kowalski", "type_id": type_id(session_factory, "Person")},
+    )
     jan = entity_id(session_factory, "Jan Kowalski")
     r = client.post(
         f"/entities/{jan}/update",
-        data={"name": "Jan Kowalski", "type": "PERSON", "attributes": "no colon here"},
+        data={
+            "name": "Jan Kowalski",
+            "type_id": type_id(session_factory, "Person"),
+            "attributes": "no colon here",
+        },
     )
     assert "key: value" in r.text
     assert "no colon here</textarea>" in r.text
@@ -162,4 +185,9 @@ def test_mutations_require_csrf(config, session_factory, url):
         config, csrf_token=TOKEN, session_factory=session_factory, scan_on_startup=False
     )
     plain = TestClient(app, base_url="http://127.0.0.1:8765")
-    assert plain.post(url, data={"name": "x", "type": "PERSON"}).status_code == 403
+    assert (
+        plain.post(
+            url, data={"name": "x", "type_id": type_id(session_factory, "Person")}
+        ).status_code
+        == 403
+    )

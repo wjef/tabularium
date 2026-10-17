@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from tabularium import db
 from tabularium.config import Config, load_config
+from tabularium.models import EntityType
 
 
 @pytest.fixture(autouse=True)
@@ -62,3 +63,10 @@ def session_factory(db_url: str) -> Iterator[sessionmaker[Session]]:
 def session(session_factory: sessionmaker[Session]) -> Iterator[Session]:
     with session_factory() as s:
         yield s
+
+
+def etype(session: Session, name: str) -> EntityType:
+    """One of the editable starting types created by migration 0003 (Person, Organization…)."""
+    from sqlalchemy import select
+
+    return session.scalars(select(EntityType).where(EntityType.name == name)).one()

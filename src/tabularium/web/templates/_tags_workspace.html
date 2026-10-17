@@ -39,7 +39,7 @@
       {{ _("or entity") }}
       <select name="entity_id">
         <option value="">—</option>
-        {% for e in entities %}<option value="{{ e.id }}">{{ e.name }} ({{ e.type.value }})</option>{% endfor %}
+        {% for e in entities %}<option value="{{ e.id }}">{{ e.name }} ({{ e.type.name }})</option>{% endfor %}
       </select>
       <button>{{ _("Add") }}</button>
     </form>

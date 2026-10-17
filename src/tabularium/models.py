@@ -39,13 +39,6 @@ def _str_enum(enum_cls: type[StrEnum], name: str) -> Enum:
     )
 
 
-class EntityType(StrEnum):
-    PERSON = "PERSON"
-    ORGANIZATION = "ORGANIZATION"
-    INSTITUTION = "INSTITUTION"
-    OTHER = "OTHER"
-
-
 class RelationType(StrEnum):
     RELATED = "RELATED"
     PAYMENT_FOR = "PAYMENT_FOR"
@@ -61,13 +54,29 @@ class IngestResult(StrEnum):
     SKIPPED = "SKIPPED"
 
 
+class EntityType(Base):
+    """User-defined kind of entity (Person, Company, Bank, School…)."""
+
+    __tablename__ = "entity_type"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(100))
+    normalized_name: Mapped[str] = mapped_column(String(100), unique=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+    entities: Mapped[list["Entity"]] = relationship(back_populates="type")
+
+
 class Entity(Base):
     """A person or organization, defined once and referenced by tags."""
 
     __tablename__ = "entity"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    type: Mapped[EntityType] = mapped_column(_str_enum(EntityType, "entity_type"))
+    type_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("entity_type.id", ondelete="RESTRICT"), index=True
+    )
     name: Mapped[str] = mapped_column(String(300))
     normalized_name: Mapped[str] = mapped_column(String(300), index=True)
     aliases: Mapped[list[str]] = mapped_column(JSON, default=list)
@@ -75,6 +84,7 @@ class Entity(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
 
+    type: Mapped[EntityType] = relationship(back_populates="entities")
     tags: Mapped[list["Tag"]] = relationship(back_populates="entity")
 
 

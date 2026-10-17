@@ -6,7 +6,7 @@
       {% for e in entities %}
       <tr{% if selected and selected.id == e.id %} class="selected"{% endif %}>
         <td><a href="/entities?id={{ e.id }}">{{ e.name }}</a></td>
-        <td>{{ e.type.value }}</td>
+        <td>{{ e.type.name }}</td>
         <td>{{ e.tags | length }}</td>
       </tr>
       {% else %}
@@ -17,10 +17,38 @@
     <h3>{{ _("New entity") }}</h3>
     <form hx-post="/entities/create" hx-target="#workspace" hx-swap="outerHTML">
       <input name="name" required placeholder="{{ _('e.g. Jan Kowalski') }}">
-      <select name="type">
-        {% for t in entity_types %}<option value="{{ t.value }}">{{ t.value }}</option>{% endfor %}
+      <select name="type_id" required>
+        {% for t in entity_types %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
       </select>
       <button>{{ _("Create") }}</button>
+    </form>
+
+    <h3>{{ _("Entity types") }}</h3>
+    <table>
+      {% for t in entity_types %}
+      <tr>
+        <td>
+          <form class="inline" hx-post="/entities/types/{{ t.id }}/rename" hx-target="#workspace" hx-swap="outerHTML">
+            <input type="hidden" name="selected_id" value="{{ selected.id if selected else '' }}">
+            <input name="name" value="{{ t.name }}" required aria-label="{{ _('Type name') }}">
+            <button>{{ _("Rename") }}</button>
+          </form>
+        </td>
+        <td class="muted">{{ _("%(n)s entities", n=t.entities|length) }}</td>
+        <td>
+          <form class="inline" hx-post="/entities/types/{{ t.id }}/delete" hx-target="#workspace" hx-swap="outerHTML"
+                hx-confirm="{{ _('Delete this entity type?') }}">
+            <input type="hidden" name="selected_id" value="{{ selected.id if selected else '' }}">
+            <button>{{ _("Delete") }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    <form hx-post="/entities/types/create" hx-target="#workspace" hx-swap="outerHTML">
+      <input type="hidden" name="selected_id" value="{{ selected.id if selected else '' }}">
+      <input name="name" required placeholder="{{ _('new type, e.g. Bank') }}">
+      <button>{{ _("Add type") }}</button>
     </form>
   </section>
 
@@ -32,8 +60,8 @@
     <form hx-post="/entities/{{ e.id }}/update" hx-target="#workspace" hx-swap="outerHTML" class="stacked">
       <label>{{ _("Name") }} <input name="name" value="{{ form.name if form.name is defined else e.name }}" required></label>
       <label>{{ _("Type") }}
-        <select name="type">
-          {% for t in entity_types %}<option value="{{ t.value }}"{% if t == e.type %} selected{% endif %}>{{ t.value }}</option>{% endfor %}
+        <select name="type_id" required>
+          {% for t in entity_types %}<option value="{{ t.id }}"{% if t.id == e.type_id %} selected{% endif %}>{{ t.name }}</option>{% endfor %}
         </select>
       </label>
       <label>{{ _("Aliases (one per line)") }}

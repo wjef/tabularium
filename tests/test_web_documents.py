@@ -4,10 +4,11 @@ import uuid
 from datetime import date
 
 import pytest
+from conftest import etype
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from tabularium.models import Document, DocumentTag, EntityType, Tag
+from tabularium.models import Document, DocumentTag, Tag
 from tabularium.services.documents import create_document
 from tabularium.services.entities import create_entity
 from tabularium.services.tags import create_tag, find_by_path, get_or_create_entity_tag
@@ -57,7 +58,7 @@ def tags(session_factory):
         category = create_tag(s, "category")
         taxes = create_tag(s, "taxes", parent=category)
         create_tag(s, "PIT/2024", parent=taxes)  # a name containing the separator
-        anna = create_entity(s, EntityType.PERSON, "Anna Nowak")
+        anna = create_entity(s, etype(s, "Person"), "Anna Nowak")
         return {"sender": str(sender.id), "taxes": str(taxes.id), "anna": str(anna.id)}
 
 

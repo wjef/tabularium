@@ -15,7 +15,7 @@ from tabularium.text import clean_name, normalize
 
 def _snapshot(entity: Entity) -> dict:
     return {
-        "type": entity.type.value,
+        "type": entity.type.name,
         "name": entity.name,
         "aliases": list(entity.aliases),
         "attributes": dict(entity.attributes),
@@ -33,7 +33,8 @@ def create_entity(
     name = clean_name(name)
     entity = Entity(
         id=uuid.uuid4(),
-        type=EntityType(type_),
+        type=type_,
+        type_id=type_.id,
         name=name,
         normalized_name=normalize(name),
         aliases=[clean_name(a) for a in aliases or []],
@@ -74,7 +75,7 @@ def update_entity(
             tag.name, tag.normalized_name = name, entity.normalized_name
             record(session, Action.UPDATE, tag, old=tag_old, new={"name": name})
     if type_ is not None:
-        entity.type = EntityType(type_)
+        entity.type, entity.type_id = type_, type_.id
     if aliases is not None:
         entity.aliases = [clean_name(a) for a in aliases]
     if attributes is not None:

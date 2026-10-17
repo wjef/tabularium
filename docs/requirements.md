@@ -75,7 +75,8 @@ as `original_relpath` but has no other meaning. Only one scan runs at a time.
 ## 4. Object model
 
 ```
-Entity      id, type (PERSON | ORGANIZATION | INSTITUTION | …), name, normalized_name,
+EntityType  id, name, normalized_name (unique), sort_order — user-defined
+Entity      id, type_id → EntityType, name, normalized_name,
             aliases[], attributes{} (tax id, address, e-mail, …)
 
 Tag         id, parent_id (null = root), name, normalized_name, entity_id (nullable),
@@ -111,6 +112,9 @@ IngestLog   id, run_id, source_path, sha256, result (IMPORTED | DUPLICATE | FAIL
 - A tag may point to an entity; its display name then comes from the entity.
 - The same entity can appear under several facets (`sender / Jan Kowalski` and
   `recipient / Jan Kowalski` are two tags pointing to one entity).
+- Entity types are user-defined (Person, Organization, Institution and Other exist at
+  start and can be renamed or deleted; add e.g. Bank, School). A type can only be deleted
+  when no entity uses it.
 - An entity can only be deleted when no tag points to it. Details are free-form
   `key: value` pairs (tax id, address, e-mail…); aliases are a list.
 

@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from tabularium.models import AuditLog, Document, Entity
+from tabularium.models import AuditLog, Document, Entity, EntityType
 from tabularium.web.deps import get_session, render
 from tabularium.web.routes_tags import build_tree
 
@@ -33,6 +33,9 @@ def _labels(session: Session, entries: list[AuditLog]) -> dict[tuple[str, str], 
     if ids := wanted.get("entity"):
         for entity in session.scalars(select(Entity).where(Entity.id.in_(ids))):
             labels[("entity", str(entity.id))] = (entity.name, f"/entities?id={entity.id}")
+    if ids := wanted.get("entity_type"):
+        for entity_type in session.scalars(select(EntityType).where(EntityType.id.in_(ids))):
+            labels[("entity_type", str(entity_type.id))] = (entity_type.name, "/entities")
     if ids := wanted.get("document"):
         for doc in session.scalars(select(Document).where(Document.id.in_(ids))):
             label = doc.title or doc.original_filename
