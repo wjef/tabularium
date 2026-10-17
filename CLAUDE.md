@@ -23,6 +23,8 @@ Local single-user document archive. Spec: `docs/requirements.md`. Decisions: `do
 - **Never run the app against the real app home / real config.** It would move the user's real
   OneDrive files while writing DB changes into the private copy. Always set `TABULARIUM_HOME` to a
   scratch folder with scratch ingest/archive/outdated folders.
+- `pip install` through `%LOCALAPPDATA%\...\venv` fails there ("Resource name escapes package");
+  call the venv via its real path `%LOCALAPPDATA%\Packages\Claude_*\LocalCache\Local\Tabularium\venv`.
 - Never write to `%LOCALAPPDATA%\Tabularium` except Claude's own venv. In particular never create
   `denylist.txt` there; for commits set `TABULARIUM_DENYLIST` only if the user's list is not readable.
 

@@ -7,3 +7,18 @@ table { border-collapse: collapse; }
 th, td { border: 1px solid #999; padding: .25em .5em; text-align: left; }
 .warn { color: #a00; }
 button.htmx-request, button[disabled] { opacity: .5; }
+nav a { margin-right: .75em; }
+.split { display: flex; gap: 2em; align-items: flex-start; flex-wrap: wrap; }
+.split > .left { flex: 1 1 320px; min-width: 0; }
+.split > .right { flex: 2 1 420px; min-width: 0; border-left: 1px solid #000; padding-left: 1em; }
+.split ul { padding-left: 1.2em; margin: .2em 0; }
+a.selected, tr.selected td { font-weight: bold; background: #ff0; }
+.badge { border: 1px solid #000; font-size: .75em; padding: 0 .25em; }
+.count, .muted, small { color: #666; }
+.flash { padding: .3em .5em; border: 1px solid; }
+.flash.error { color: #a00; }
+.flash.ok { color: #060; }
+form.stacked label { display: block; margin: .4em 0; }
+form.stacked input, form.stacked textarea, form.stacked select { display: block; width: 100%; max-width: 40em; }
+table.history code { font-size: .8em; word-break: break-all; }
+h3 { margin: 1em 0 .3em; }

@@ -1,0 +1,15 @@
+{# expects: history (list of AuditLog) #}
+<table class="history">
+  <tr><th>{{ _("When (UTC)") }}</th><th>{{ _("Who") }}</th><th>{{ _("Action") }}</th><th>{{ _("Before") }}</th><th>{{ _("After") }}</th></tr>
+  {% for entry in history %}
+  <tr>
+    <td>{{ entry.at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+    <td>{{ entry.actor }}</td>
+    <td>{{ entry.action }}</td>
+    <td><code>{{ entry.old_value | readable_json if entry.old_value is not none else "" }}</code></td>
+    <td><code>{{ entry.new_value | readable_json if entry.new_value is not none else "" }}</code></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5">{{ _("No changes recorded.") }}</td></tr>
+  {% endfor %}
+</table>

@@ -19,6 +19,8 @@ class Action(StrEnum):
     CREATE = "CREATE"
     UPDATE = "UPDATE"
     MOVE = "MOVE"
+    MERGE = "MERGE"
+    DELETE = "DELETE"
     TAG_ADD = "TAG_ADD"
     TAG_REMOVE = "TAG_REMOVE"
     OUTDATE = "OUTDATE"

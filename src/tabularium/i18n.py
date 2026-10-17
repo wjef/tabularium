@@ -24,3 +24,8 @@ def available_languages() -> list[str]:
         if entry.is_dir() and (entry / "LC_MESSAGES" / f"{DOMAIN}.mo").is_file()
     }
     return sorted(found | {DEFAULT_LANGUAGE})
+
+
+def N_(message: str) -> str:  # noqa: N802 — gettext convention
+    """Mark a message for extraction; it is translated where it is displayed."""
+    return message

@@ -10,18 +10,17 @@ from fastapi import FastAPI, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from tabularium import __version__, db
 from tabularium.config import Config
-from tabularium.i18n import get_translations
 from tabularium.ingest import IngestBusyError, Ingestor
 from tabularium.services.documents import untagged_documents
 from tabularium.storage import LocalStorage
-from tabularium.web.security import CSRF_HEADER, LocalOnlyMiddleware, new_csrf_token
+from tabularium.web import routes_entities, routes_history, routes_tags
+from tabularium.web.deps import make_templates, render
+from tabularium.web.security import LocalOnlyMiddleware, new_csrf_token
 
 log = logging.getLogger(__name__)
 _WEB = resources.files("tabularium") / "web"
@@ -56,22 +55,12 @@ def create_app(
     app.state.csrf_token = csrf_token
     app.state.session_factory = session_factory
     app.state.ingestor = ingestor
+    app.state.templates = make_templates(config, csrf_token)
     app.add_middleware(LocalOnlyMiddleware, csrf_token=csrf_token)
     app.mount("/static", StaticFiles(directory=str(_WEB / "static")), name="static")
-
-    env = Environment(
-        loader=FileSystemLoader(str(_WEB / "templates")),
-        autoescape=select_autoescape(),
-        extensions=["jinja2.ext.i18n"],
-    )
-    templates = Jinja2Templates(env=env)
-    templates.env.install_gettext_translations(get_translations(config.ui.language), newstyle=True)
-    templates.env.globals.update(
-        csrf_header=CSRF_HEADER,
-        csrf_token=csrf_token,
-        version=__version__,
-        language=config.ui.language,
-    )
+    app.include_router(routes_tags.router)
+    app.include_router(routes_entities.router)
+    app.include_router(routes_history.router)
 
     def untagged_count() -> int:
         with session_factory() as session:
@@ -80,9 +69,7 @@ def create_app(
 
     @app.get("/", response_class=HTMLResponse)
     def index(request: Request):
-        return templates.TemplateResponse(
-            request, "index.html", {"config": config, "untagged": untagged_count()}
-        )
+        return render(request, "index.html", {"config": config, "untagged": untagged_count()})
 
     @app.post("/ingest/scan", response_class=HTMLResponse)
     async def ingest_scan(request: Request):
@@ -90,10 +77,8 @@ def create_app(
             report = await run_in_threadpool(ingestor.scan)
         except IngestBusyError:
             report = None
-        return templates.TemplateResponse(
-            request,
-            "_ingest_report.html",
-            {"report": report, "untagged": untagged_count()},
+        return render(
+            request, "_ingest_report.html", {"report": report, "untagged": untagged_count()}
         )
 
     @app.get("/health")

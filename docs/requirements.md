@@ -101,13 +101,18 @@ IngestLog   id, run_id, source_path, sha256, result (IMPORTED | DUPLICATE | FAIL
 - **All facets are multi-value** (a document may have two senders).
 - **No tag is required.**
 - Tags are referenced by ID: renaming, moving, merging never breaks assignments.
-- A tag in use cannot be deleted silently: user must merge it or reassign its documents.
+- **Delete** is only possible for a tag without documents and without sub-tags.
+- **Merge** A into B: documents tagged A get B (no duplicate links), sub-tags of A move under B,
+  A is removed. Refused when B is A or below A, or when B already has a sub-tag with the same
+  name as one of A's (nothing changes then). Every document re-tag is recorded in its history.
 
 ### 4.2 Entities
 - A person/organization is defined once, with its details.
 - A tag may point to an entity; its display name then comes from the entity.
 - The same entity can appear under several facets (`sender / Jan Kowalski` and
   `recipient / Jan Kowalski` are two tags pointing to one entity).
+- An entity can only be deleted when no tag points to it. Details are free-form
+  `key: value` pairs (tax id, address, e-mail…); aliases are a list.
 
 ### 4.3 Text normalization
 - `normalized_name` = case-folded, diacritics removed, `ł → l`. Used for uniqueness and search,
@@ -146,6 +151,7 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 - Preview inline for PDF, images, text. Other types: "Open in default app", "Show in Explorer".
 - Tagging: add/remove tags, create tags inline, pick entities, **bulk tagging** of a selection.
 - English UI; all strings translatable (gettext); language selectable in config/UI later.
+  Known gap: error messages raised by domain services are English-only for now.
 
 ### 8.1 Search semantics
 - Selecting a tag includes all its descendants.

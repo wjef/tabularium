@@ -3,7 +3,7 @@
 import uuid
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from tabularium.audit import Action, record
@@ -56,8 +56,9 @@ def update_entity(
 ) -> Entity:
     """Update details. A new name is propagated to every tag pointing to this entity."""
     old = _snapshot(entity)
-    if name is not None:
-        name = clean_name(name)
+    name = clean_name(name) if name is not None else None
+    # Any visible change counts as a rename (also case or diacritics, e.g. "Lodz" → "Łódź").
+    if name is not None and name != entity.name:
         # Query instead of entity.tags: a collection loaded earlier may miss newer tags.
         tags = session.scalars(select(Tag).where(Tag.entity_id == entity.id)).all()
         for tag in tags:
@@ -83,3 +84,15 @@ def update_entity(
         record(session, Action.UPDATE, entity, old=old, new=new)
     session.flush()
     return entity
+
+
+def delete_entity(session: Session, entity: Entity) -> None:
+    """Delete an entity that no tag points to."""
+    used = session.scalar(select(func.count()).select_from(Tag).where(Tag.entity_id == entity.id))
+    if used:
+        raise DomainError(
+            f"This entity is used by {used} tag(s); delete or merge those tags first."
+        )
+    record(session, Action.DELETE, entity, old=_snapshot(entity))
+    session.delete(entity)
+    session.flush()
