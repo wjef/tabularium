@@ -1,7 +1,10 @@
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from sqlalchemy.orm import Session
 
+from tabularium import db
 from tabularium.config import Config, load_config
 
 
@@ -38,3 +41,19 @@ def write_config(path: Path, folders: dict[str, Path], extra: str = "") -> Path:
 @pytest.fixture
 def config(app_home: Path, folders: dict[str, Path]) -> Config:
     return load_config(write_config(app_home / "tabularium.toml", folders))
+
+
+@pytest.fixture
+def db_url(tmp_path: Path) -> str:
+    """A fresh database built through the real migrations."""
+    url = db.sqlite_url(tmp_path / "test.db")
+    db.upgrade(url)
+    return url
+
+
+@pytest.fixture
+def session(db_url: str) -> Iterator[Session]:
+    engine = db.make_engine(db_url)
+    with db.make_session_factory(engine)() as s:
+        yield s
+    engine.dispose()

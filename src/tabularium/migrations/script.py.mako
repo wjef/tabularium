@@ -9,6 +9,8 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+
+import tabularium.db  # noqa: F401 — custom column types (UTCDateTime)
 ${imports if imports else ""}
 
 revision: str = ${repr(up_revision)}

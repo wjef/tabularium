@@ -1,6 +1,7 @@
 from alembic import context
 from sqlalchemy import pool
 
+import tabularium.models  # noqa: F401 — registers the tables on Base.metadata
 from tabularium.db import Base, make_engine
 
 config = context.config

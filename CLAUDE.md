@@ -12,6 +12,10 @@ Local single-user document archive. Spec: `docs/requirements.md`. Decisions: `do
   interface (ADR 0009) once it exists.
 - All UI strings wrapped for gettext (ADR 0008).
 - Timestamps in UTC; `document_date` / `retain_until` are plain dates.
+- Domain changes go through `tabularium.services.*`: they enforce invariants and write the
+  audit entry in the caller's transaction (caller commits). Don't mutate models directly elsewhere.
+- After changing `models.py`, add a migration; `tests/test_db.py::test_models_match_migrations`
+  fails otherwise.
 
 ## AppData redirection (Claude desktop app) — see ADR 0002
 - Inside the Claude desktop app, writes to `%LOCALAPPDATA%` go to a private copy; reads fall
