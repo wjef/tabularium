@@ -4,7 +4,7 @@ A local document archive: drop files into an ingest folder, Tabularium stores th
 (named by SHA-256 hash), and you tag them with nested tags and reusable entities (people,
 companies, institutions). Search by tags, preview in the app.
 
-> Status: **M6 — integrity, backups, restore** (outdating not yet). See [requirements](docs/requirements.md) and the
+> Status: **M7 — outdating**: all planned v1 milestones done. See [requirements](docs/requirements.md) and the
 > [architecture decisions](docs/adr/README.md).
 
 ## Requirements
@@ -38,7 +38,8 @@ Without the list, commits are blocked too. Contributors who don't need it can op
 
 ## Moving to a new PC
 
-Copy (or sync) the **Archive** folder — it contains every file plus `metadata.json`.
+Copy (or sync) the **Archive** and **Outdated** folders — each contains its files plus a
+`metadata.json`.
 On the new PC: set up Tabularium, point `archive` in the config at that folder, start it,
 open **Maintenance** and click **Restore from metadata.json** (offered while the database
 is empty). Until then Tabularium does not ingest anything and does not touch

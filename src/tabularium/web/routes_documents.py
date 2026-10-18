@@ -19,6 +19,7 @@ from tabularium.desktop import DesktopError
 from tabularium.export import make_open_copy, write_zip
 from tabularium.i18n import N_
 from tabularium.models import AuditLog, Document, DocumentTag, Entity, Tag
+from tabularium.retention import can_outdate
 from tabularium.services import DomainError
 from tabularium.services.documents import (
     add_tag,
@@ -112,6 +113,7 @@ def meta_context(
         "inbox": inbox,
         "next_doc": next_doc,
         "retention_years": request.app.state.config.retention.years,
+        "can_outdate": can_outdate(document.retain_until, date.today()),
         "message": message,
         "error": error,
     }

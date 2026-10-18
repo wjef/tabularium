@@ -87,6 +87,7 @@ def maintenance_restore(request: Request, session: SessionDep):
         data = read(config.paths.archive / FILENAME)
         restore(session, data, revision_of(session))
         session.commit()
+        request.app.state.outdated_store.restore_metadata()  # Outdated folder, if any
     except (DomainError, OSError, ValueError, KeyError) as exc:
         session.rollback()
         return render(request, "maintenance.html", _context(request, session, error=str(exc)))

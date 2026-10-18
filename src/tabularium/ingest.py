@@ -79,11 +79,13 @@ class Ingestor:
         storage: Storage,
         *,
         clock: Callable[[], float] = time.time,
+        is_outdated: Callable[[str], bool] | None = None,
     ) -> None:
         self.config = config
         self.session_factory = session_factory
         self.storage = storage
         self.clock = clock
+        self.is_outdated = is_outdated  # hash known in the outdated store?
         self._lock = threading.Lock()
 
     @property
@@ -179,6 +181,8 @@ class Ingestor:
 
             with self.session_factory() as session:
                 exists = session.scalar(select(Document.id).where(Document.sha256 == staged.sha256))
+            if exists is None and self.is_outdated is not None:
+                exists = self.is_outdated(staged.sha256) or None
             if exists is not None:
                 self.storage.discard(staged)
                 self._move_original(c, DUPLICATES)

@@ -143,14 +143,25 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 `AuditLog` in the same transaction as the change itself.
 
 ## 7. Outdating (never delete)
-- Manual action "Outdate", blocked while `retain_until` is in the future.
-- Steps (crash-safe order): copy record + tag/entity **snapshot** + history to `outdated.db`
-  → move file to the Outdated folder (same hash name) and verify → remove from active database
-  → audit entry in both databases.
-- `outdated.db` is **self-contained**: it stores tag paths and entity details as they were, so
-  later renames in the active archive do not affect it.
-- Access: the same application started in **read-only "Outdated" mode** (separate shortcut):
-  search, preview, export, **restore to active**. No editing.
+- Manual action "Outdate" on the document page (optional reason), offered only after
+  `retain_until` has passed.
+- Crash-safe order: copy the file to the Outdated folder (same hash name) and verify →
+  write `outdated.db` → remove the document from the active database (tag links and
+  relations go with it; its audit history stays) → remove the archive file. A retry after a
+  crash continues where it stopped.
+- `outdated.db` is **self-contained**: each document keeps a snapshot of its tags (paths),
+  the entities behind them (type, details, groups), its relations and its history. Later
+  renames or deletions in the active archive do not affect it.
+- The Outdated folder has its own `metadata.json`; the Maintenance restore rebuilds
+  `outdated.db` from it too.
+- **Outdated** section of the app (decided during M7 instead of a separate read-only
+  instance — same result, one app): list and text search, preview, download, snapshot,
+  history, **Restore to the archive** — no tagging or editing.
+- Restore re-links the original tags where they still exist and recreates missing tags and
+  entities from the snapshot; relations are restored when the other document is active.
+- Ingesting a file whose hash is outdated counts as a duplicate.
+- Not yet: integrity check of the Outdated folder; backups of `outdated.db` (its
+  `metadata.json` is the safety net).
 
 ## 8. User interface (v1: simple and brutal)
 - Server-rendered HTML + htmx, served on `127.0.0.1` only, opened in the default browser.

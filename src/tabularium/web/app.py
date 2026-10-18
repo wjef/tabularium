@@ -17,6 +17,7 @@ from tabularium import __version__, db
 from tabularium.config import Config
 from tabularium.ingest import IngestBusyError, Ingestor
 from tabularium.metadata import MetadataExporter, restore_pending
+from tabularium.outdated import OutdatedStore
 from tabularium.services.documents import untagged_documents
 from tabularium.storage import LocalStorage
 from tabularium.web import (
@@ -24,6 +25,7 @@ from tabularium.web import (
     routes_entities,
     routes_history,
     routes_maintenance,
+    routes_outdated,
     routes_search,
     routes_tags,
 )
@@ -40,6 +42,7 @@ def create_app(
     csrf_token: str | None = None,
     session_factory: sessionmaker[Session] | None = None,
     scan_on_startup: bool | None = None,
+    outdated_store: OutdatedStore | None = None,
 ) -> FastAPI:
     """Build the app. The database must already be migrated (see ``__main__``)."""
     csrf_token = csrf_token or new_csrf_token()
@@ -47,7 +50,9 @@ def create_app(
         engine = db.make_engine(db.sqlite_url(config.database_path))
         session_factory = db.make_session_factory(engine)
     storage = LocalStorage(config.paths.archive)
-    ingestor = Ingestor(config, session_factory, storage)
+    if outdated_store is None:
+        outdated_store = OutdatedStore(config.outdated_database_path, config.paths.outdated)
+    ingestor = Ingestor(config, session_factory, storage, is_outdated=outdated_store.has_hash)
     exporter = MetadataExporter(
         session_factory,
         config.paths.archive,
@@ -74,10 +79,12 @@ def create_app(
     app.state.ingestor = ingestor
     app.state.storage = storage
     app.state.metadata_exporter = exporter
+    app.state.outdated_store = outdated_store
     app.state.templates = make_templates(config, csrf_token)
     app.add_middleware(LocalOnlyMiddleware, csrf_token=csrf_token)
     app.mount("/static", StaticFiles(directory=str(_WEB / "static")), name="static")
     app.include_router(routes_documents.router)
+    app.include_router(routes_outdated.router)
     app.include_router(routes_search.router)
     app.include_router(routes_tags.router)
     app.include_router(routes_entities.router)

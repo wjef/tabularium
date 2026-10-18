@@ -75,6 +75,17 @@
     <tr><th>SHA-256</th><td><code>{{ doc.sha256 }}</code></td></tr>
   </table>
 
+  <h3>{{ _("Outdate") }}</h3>
+  {% if can_outdate %}
+  <form hx-post="/documents/{{ doc.id }}/outdate" {{ target|safe }} class="stacked"
+        hx-confirm="{{ _('Move this document to the Outdated folder? It leaves the archive and search, but is never deleted and can be restored.') }}">
+    <label>{{ _("Reason (optional)") }} <input name="reason" placeholder="{{ _('e.g. retention period over') }}"></label>
+    <button>{{ _("Outdate this document") }}</button>
+  </form>
+  {% else %}
+  <p class="muted">{{ _("Must be kept until %(d)s; it can be outdated from the day after.", d=doc.retain_until.isoformat()) }}</p>
+  {% endif %}
+
   <h3>{{ _("History") }}</h3>
   {% include "_history.html" %}
 </div>

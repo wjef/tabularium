@@ -11,8 +11,10 @@ metadata stored separately. Retention (default 5 years) must prevent premature o
 - File moves to the Outdated folder (same hash name); metadata moves to `outdated.db`.
 - `outdated.db` stores a **snapshot** of the document's tag paths and entity details plus its
   history, so later changes in the active archive cannot break it.
-- Outdated documents are accessed by the same application in **read-only Outdated mode**
-  (separate shortcut): search, preview, export, restore.
+- Outdated documents are accessed in a read-only **Outdated section of the same app**
+  (2026-10-18; replaces the planned separate shortcut — one running app is simpler and
+  gives the same guarantees): search, preview, download, restore.
+- `outdated.db` schema v1 is created with `create_all`; later changes need migrations.
 - Restore re-links to existing tags/entities where possible, recreates missing ones.
 
 ## Consequences
