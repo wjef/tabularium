@@ -6,6 +6,7 @@ Schema changes go through Alembic migrations only.
 import uuid
 from datetime import date, datetime
 from enum import StrEnum
+from pathlib import PurePosixPath
 from typing import Any
 
 from sqlalchemy import (
@@ -150,6 +151,20 @@ class Document(Base):
     tag_links: Mapped[list["DocumentTag"]] = relationship(
         back_populates="document", cascade="all, delete-orphan", passive_deletes=True
     )
+
+    @property
+    def stored_name(self) -> str:
+        """File name in the archive: ``<sha256>.<ext>``."""
+        return PurePosixPath(self.stored_path).name
+
+    @property
+    def display_name(self) -> str:
+        """How the app names the document: its title, otherwise its archive file name.
+
+        Original file names are often random (scanner/phone names), so they are only shown as
+        reference information, never as the document's name.
+        """
+        return self.title or self.stored_name
 
 
 class DocumentTag(Base):

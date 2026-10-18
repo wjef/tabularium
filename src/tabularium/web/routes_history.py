@@ -38,7 +38,7 @@ def _labels(session: Session, entries: list[AuditLog]) -> dict[tuple[str, str], 
             labels[("entity_type", str(entity_type.id))] = (entity_type.name, "/entities")
     if ids := wanted.get("document"):
         for doc in session.scalars(select(Document).where(Document.id.in_(ids))):
-            label = doc.title or doc.original_filename
+            label = doc.display_name
             labels[("document", str(doc.id))] = (label, f"/documents/{doc.id}")
     return labels
 

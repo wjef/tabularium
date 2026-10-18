@@ -84,17 +84,26 @@ def result_names(html: str) -> list[str]:
 # --- search page -----------------------------------------------------------------------
 
 
+BILL = hashlib.sha256(b"%PDF bill").hexdigest() + ".pdf"
+OTHER = hashlib.sha256(b"%PDF other").hexdigest() + ".pdf"
+
+
 def test_search_page_filters_by_tags_entities_text_dates(client, world):
-    assert result_names(client.get("/search").text) == ["Zeznanie PIT", "bill.pdf", "other.pdf"]
+    # documents without a title are listed by their archive (hash) name
+    assert result_names(client.get("/search").text) == ["Zeznanie PIT", BILL, OTHER]
     r = client.get("/search", params={"tag": world["taxes"]})
     assert result_names(r.text) == ["Zeznanie PIT"]
     r = client.get("/search", params={"tag": world["sender"]})
-    assert result_names(r.text) == ["Zeznanie PIT", "bill.pdf"]
+    assert result_names(r.text) == ["Zeznanie PIT", BILL]
     r = client.get("/search", params={"entity": world["anna"], "from": "2025-01-01"})
     assert result_names(r.text) == ["Zeznanie PIT"]
     r = client.get("/search", params={"q": "zeznanie"})
     assert result_names(r.text) == ["Zeznanie PIT"]
     assert "1 document(s) found." in r.text
+    r = client.get("/search", params={"q": BILL[:10]})  # by hash prefix
+    assert result_names(r.text) == [BILL]
+    r = client.get("/search", params={"q": "bill.pdf"})  # original name still searchable
+    assert result_names(r.text) == [BILL]
 
 
 def test_selected_result_keeps_filters_and_shows_preview(client, world):

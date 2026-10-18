@@ -99,7 +99,10 @@ def test_inbox_lists_untagged_and_tagging_removes_from_it(client, archive, tags,
     second = archive("scan.jpg", b"jpeg", "image/jpeg")
 
     r = client.get("/inbox")
-    assert "invoice.pdf" in r.text and "scan.jpg" in r.text
+    # listed by archive name (hash), not by the original file name
+    sha_one, sha_two = (hashlib.sha256(d).hexdigest() for d in (b"%PDF-1.4 one", b"jpeg"))
+    assert f"{sha_one}.pdf</a>" in r.text and f"{sha_two}.jpg</a>" in r.text
+    assert "scan.jpg" not in r.text  # original name only in the selected document's info
     assert "2 document(s) without tags." in r.text
 
     r = client.post(
@@ -269,4 +272,5 @@ def test_exact_path_wins_and_ambiguous_paths_are_refused(session_factory, tags):
 def test_history_links_to_documents(client, archive):
     doc = archive("a.pdf", b"a", "application/pdf")
     r = client.get("/history")
-    assert f'<a href="/documents/{doc}">a.pdf</a>' in r.text
+    sha = hashlib.sha256(b"a").hexdigest()
+    assert f'<a href="/documents/{doc}">{sha}.pdf</a>' in r.text

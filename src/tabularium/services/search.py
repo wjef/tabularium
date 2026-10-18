@@ -4,7 +4,8 @@
 - Selected tags are grouped by facet (root tag): OR within a facet, AND across facets.
 - Selected entities form one more group: documents with any tag pointing to one of them
   ("anything involving X or Y").
-- Text matches title, original file name and note, ignoring case and diacritics.
+- Text matches title, original file name, note and the hash (archive file name),
+  ignoring case and diacritics.
 - The date range applies to the document date; documents without one are then excluded.
 """
 
@@ -65,6 +66,7 @@ def build_query(session: Session, query: SearchQuery) -> Select[tuple[Document]]
     for word in normalize(query.text).split():
         stmt = stmt.where(
             or_(
+                Document.sha256.contains(word, autoescape=True),
                 func.tnorm(Document.title, type_=String).contains(word, autoescape=True),
                 func.tnorm(Document.original_filename, type_=String).contains(
                     word, autoescape=True

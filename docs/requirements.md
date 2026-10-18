@@ -165,6 +165,9 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   from a suggestion list, by picking *under which tag + which entity* (the entity tag is
   reused or created), or by creating a new tag on the spot.
 - Document details: title, note, document date, *keep until* (automatic or manual).
+- **Document name in the app** = its title, otherwise its archive file name
+  (`<sha256>.<ext>`). Original file names are often random (scanner/phone names), so
+  they are shown only as reference in the document's *File* section (still searchable).
 - Tagging: add/remove tags, create tags inline, pick entities, **bulk tagging** of a selection.
 - English UI; all strings translatable (gettext); language selectable in config/UI later.
   Known gap: error messages raised by domain services are English-only for now.

@@ -11,7 +11,7 @@
       {% for d in inbox %}
       <tr{% if selected_id and d.id == selected_id %} class="selected"{% endif %}>
         <td><input type="checkbox" name="doc_ids" value="{{ d.id }}" aria-label="{{ _('select') }}"></td>
-        <td><a href="/inbox?id={{ d.id }}">{{ d.title or d.original_filename }}</a></td>
+        <td><a href="/inbox?id={{ d.id }}">{{ d.display_name }}</a></td>
         <td class="muted">{{ d.ingested_at.astimezone().strftime("%Y-%m-%d") }}</td>
       </tr>
       {% endfor %}

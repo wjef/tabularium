@@ -2,7 +2,7 @@
    retention_years, message, error; optional oob (refresh the inbox list too) #}
 {% set target = 'hx-target="#doc-meta" hx-swap="outerHTML"' %}
 <div id="doc-meta">
-  <h2>{{ doc.title or doc.original_filename }}</h2>
+  <h2>{{ doc.display_name }}</h2>
   {% include "_flash.html" %}
   {% if view == "inbox" and next_doc %}
     <p><a href="/inbox?id={{ next_doc.id }}">{{ _("Next document to tag →") }}</a></p>
@@ -55,7 +55,7 @@
   <h3>{{ _("Details") }}</h3>
   <form hx-post="/documents/{{ doc.id }}/details" {{ target|safe }} class="stacked">
     <input type="hidden" name="view" value="{{ view }}">
-    <label>{{ _("Title") }} <input name="title" value="{{ doc.title or '' }}" placeholder="{{ doc.original_filename }}"></label>
+    <label>{{ _("Title") }} <input name="title" value="{{ doc.title or '' }}" placeholder="{{ _('e.g. Invoice FK/038/S1/26') }}"></label>
     <label>{{ _("Document date") }} <input type="date" name="document_date" value="{{ doc.document_date.isoformat() if doc.document_date else '' }}"></label>
     <label>{{ _("Keep until") }} <input type="date" name="retain_until" value="{{ doc.retain_until.isoformat() }}"></label>
     <label class="check"><input type="checkbox" name="retain_auto" value="1"{% if not doc.retain_until_manual %} checked{% endif %}>
@@ -66,6 +66,7 @@
 
   <h3>{{ _("File") }}</h3>
   <table>
+    <tr><th>{{ _("Archive file") }}</th><td><code>{{ doc.stored_path }}</code></td></tr>
     <tr><th>{{ _("Original name") }}</th><td>{{ doc.original_filename }}</td></tr>
     {% if doc.original_relpath %}<tr><th>{{ _("Ingest subfolder") }}</th><td>{{ doc.original_relpath }}</td></tr>{% endif %}
     <tr><th>{{ _("Imported") }}</th><td>{{ doc.ingested_at.astimezone().strftime("%Y-%m-%d %H:%M") }}</td></tr>

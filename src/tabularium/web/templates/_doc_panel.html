@@ -5,7 +5,7 @@
     {% if preview == "pdf" or preview == "text" %}
       <iframe src="{{ file_url }}" title="{{ _('Preview') }}"></iframe>
     {% elif preview == "image" %}
-      <img src="{{ file_url }}" alt="{{ doc.original_filename }}">
+      <img src="{{ file_url }}" alt="{{ doc.display_name }}">
     {% else %}
       <p class="muted">{{ _("No preview for this file type.") }}</p>
     {% endif %}
