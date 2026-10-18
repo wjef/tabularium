@@ -15,6 +15,16 @@
 </section>
 {% endif %}
 
+{% if outdated_restore_pending %}
+<section class="restore">
+  <h2>{{ _("Restore the outdated store") }}</h2>
+  <p>{{ _("The outdated store is empty, but the Outdated folder's metadata.json lists outdated documents. Outdating and restoring are paused until it is restored.") }}</p>
+  <form hx-post="/maintenance/restore-outdated" hx-target="main" hx-select="main" hx-swap="outerHTML">
+    <button>{{ _("Restore the outdated store") }}</button>
+  </form>
+</section>
+{% endif %}
+
 <h2>{{ _("Integrity check") }}</h2>
 <p>{{ _("Compares the documents with the files in the archive folder. Nothing is changed.") }}</p>
 <p>

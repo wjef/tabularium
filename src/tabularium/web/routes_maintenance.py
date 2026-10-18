@@ -32,6 +32,7 @@ def _context(request: Request, session: Session, **extra) -> dict:
         "metadata_exists": metadata_file.exists(),
         "exporter": exporter,
         "can_restore": is_empty(session) and metadata_file.exists(),
+        "outdated_restore_pending": request.app.state.outdated_store.restore_pending(),
         "report": None,
         "message": None,
         "error": None,
@@ -102,3 +103,13 @@ def maintenance_restore(request: Request, session: SessionDep):
             report=report,
         ),
     )
+
+
+@router.post("/maintenance/restore-outdated", response_class=HTMLResponse)
+def maintenance_restore_outdated(request: Request, session: SessionDep):
+    try:
+        count = request.app.state.outdated_store.restore_metadata()
+    except (OSError, ValueError, KeyError) as exc:
+        return render(request, "maintenance.html", _context(request, session, error=str(exc)))
+    message = N_("Outdated store restored.") if count else None
+    return render(request, "maintenance.html", _context(request, session, message=message))

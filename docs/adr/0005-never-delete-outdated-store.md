@@ -20,4 +20,5 @@ metadata stored separately. Retention (default 5 years) must prevent premature o
 ## Consequences
 - One codebase for both modes; mistakes are reversible.
 - Two databases must be kept consistent; operations follow a crash-safe order
-  (copy → move file → verify → remove from active).
+  (copy file + verify → write outdated.db → remove from active DB → remove archive file;
+  restore mirrors it).

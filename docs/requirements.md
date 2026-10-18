@@ -160,8 +160,16 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 - Restore re-links the original tags where they still exist and recreates missing tags and
   entities from the snapshot; relations are restored when the other document is active.
 - Ingesting a file whose hash is outdated counts as a duplicate.
-- Not yet: integrity check of the Outdated folder; backups of `outdated.db` (its
-  `metadata.json` is the safety net).
+- If `outdated.db` is empty while the Outdated folder's `metadata.json` lists documents
+  (lost database, new PC), outdating and restoring are paused and the Maintenance page
+  offers **Restore the outdated store**; that `metadata.json` is never overwritten by an
+  empty store.
+- History links outdated documents to the Outdated section.
+- Known limitations: no integrity check of the Outdated folder yet; no backups of
+  `outdated.db` (its `metadata.json` is the safety net); a crash after the database
+  steps but before the archive file is removed leaves that file behind (the integrity
+  check reports it as an orphan); when both documents of a relation are outdated one
+  after the other, the second snapshot no longer contains the link.
 
 ## 8. User interface (v1: simple and brutal)
 - Server-rendered HTML + htmx, served on `127.0.0.1` only, opened in the default browser.

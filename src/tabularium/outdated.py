@@ -19,6 +19,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from tabularium import db, metadata
 from tabularium.db import UTCDateTime, utcnow
+from tabularium.metadata import RestorePendingError
 from tabularium.storage import LocalStorage
 
 SCHEMA_VERSION = 1
@@ -130,7 +131,36 @@ class OutdatedStore:
             "tables": tables,
         }
 
-    def write_metadata(self) -> Path:
+    def metadata_lists_documents(self) -> bool:
+        path = self.folder / metadata.FILENAME
+        if not path.exists():
+            return False
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return bool(data.get("counts", {}).get("outdated_document"))
+        except (OSError, ValueError):
+            return True  # unreadable: protect it rather than overwrite it
+
+    def restore_pending(self) -> bool:
+        """outdated.db is empty but the folder's metadata.json is not (lost / new PC)."""
+        return self.count() == 0 and self.metadata_lists_documents()
+
+    def ensure_usable(self) -> None:
+        if self.restore_pending():
+            raise RestorePendingError(
+                "The outdated store is empty but its metadata.json lists documents. "
+                "Restore the outdated store first (Maintenance page)."
+            )
+
+    def write_metadata(self, *, after_change: bool = False) -> Path:
+        """Mirror outdated.db into the folder's metadata.json.
+
+        ``after_change``: called by an outdate/restore that checked ``ensure_usable`` before
+        starting, so an empty store here is a real state (e.g. the last document restored).
+        Otherwise an empty store never replaces a metadata.json that lists documents.
+        """
+        if not after_change:
+            self.ensure_usable()
         return metadata.write(self.folder, self.dump())
 
     def restore_metadata(self) -> int:

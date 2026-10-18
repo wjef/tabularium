@@ -293,3 +293,61 @@ def test_outdate_too_early_shows_error(client, world):
 
 def test_unknown_outdated_document(client):
     assert client.get(f"/outdated/{uuid.uuid4()}/file").status_code == 404
+
+
+def test_empty_outdated_store_never_overwrites_its_metadata(
+    session, archive, store, world, tmp_path, config
+):
+    """outdated.db lost or not restored yet: its metadata.json is the only copy."""
+    outdate(session, archive, store, world["old"], today=TODAY)
+    meta = config.paths.outdated / "metadata.json"
+    before = meta.read_bytes()
+
+    lost = OutdatedStore(tmp_path / "lost-outdated.db", config.paths.outdated)
+    try:
+        assert lost.restore_pending()
+        payment = world["payment"]
+        set_retain_until(session, payment, date(2020, 1, 1), retention_years=5)
+        session.commit()
+        with pytest.raises(DomainError, match="Restore the outdated store"):
+            outdate(session, archive, lost, payment, today=TODAY)
+        with pytest.raises(DomainError, match="Restore the outdated store"):
+            lost.write_metadata()
+        assert meta.read_bytes() == before
+        assert session.get(Document, payment.id) is not None  # nothing moved
+
+        assert lost.restore_metadata() == 1
+        assert not lost.restore_pending()
+        outdate(session, archive, lost, session.get(Document, payment.id), today=TODAY)
+        with lost.session_factory() as s:
+            assert len(s.scalars(select(OutdatedDocument)).all()) == 2
+    finally:
+        lost.dispose()
+
+
+def test_history_links_outdated_documents(client, world, session, archive, store):
+    outdate(session, archive, store, world["old"], today=TODAY)
+    page = client.get("/history").text
+    assert f'<a href="/outdated?id={world["old"].id}">Rachunek 2024 (outdated)</a>' in page
+
+
+def test_maintenance_offers_outdated_store_restore(
+    config, session_factory, session, archive, world, tmp_path
+):
+    first = OutdatedStore(tmp_path / "first.db", config.paths.outdated)
+    outdate(session, archive, first, world["old"], today=TODAY)
+    first.dispose()
+    lost = OutdatedStore(tmp_path / "lost.db", config.paths.outdated)
+    app = create_app(
+        config,
+        csrf_token=TOKEN,
+        session_factory=session_factory,
+        scan_on_startup=False,
+        outdated_store=lost,
+    )
+    c = TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN})
+    assert "Restore the outdated store" in c.get("/maintenance").text
+    r = c.post("/maintenance/restore-outdated")
+    assert "Outdated store restored." in r.text
+    assert "Restore the outdated store" not in c.get("/maintenance").text
+    lost.dispose()

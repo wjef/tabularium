@@ -5,7 +5,8 @@ Crash-safe order for both directions — a crash at any step loses nothing:
   2. write the target database (commit)
   3. remove the document from the source database (commit)
   4. remove the source file
-A retry after a crash between steps finds the copy / row already there and continues.
+A retry after a crash between steps 1-3 finds the copy / row already there and continues.
+A crash between 3 and 4 leaves the source file behind; the integrity check reports it.
 """
 
 import uuid
@@ -142,6 +143,7 @@ def outdate(
     reason: str | None = None,
 ) -> None:
     """Move a document out of the active archive. Blocked while ``retain_until`` has not passed."""
+    store.ensure_usable()
     if not can_outdate(document.retain_until, today):
         raise DomainError(
             f"This document must be kept until {document.retain_until.isoformat()}; "
@@ -185,7 +187,7 @@ def outdate(
     session.commit()
 
     archive.remove_moved(document.stored_path)  # 4
-    store.write_metadata()
+    store.write_metadata(after_change=True)
 
 
 # --- restore --------------------------------------------------------------------------
@@ -250,6 +252,7 @@ def restore_to_active(
     session: Session, archive: Storage, store: OutdatedStore, document_id: uuid.UUID
 ) -> Document:
     """Bring an outdated document back into the active archive with its tags."""
+    store.ensure_usable()
     with store.session_factory() as outdated:
         row = outdated.get(OutdatedDocument, document_id)
         if row is None:
@@ -301,5 +304,5 @@ def restore_to_active(
         )
 
     store.storage.remove_moved(fields["stored_path"])  # 4
-    store.write_metadata()
+    store.write_metadata(after_change=True)
     return document
