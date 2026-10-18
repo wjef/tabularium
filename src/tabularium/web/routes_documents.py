@@ -18,7 +18,7 @@ from tabularium import desktop, paths
 from tabularium.desktop import DesktopError
 from tabularium.export import make_open_copy, write_zip
 from tabularium.i18n import N_
-from tabularium.models import AuditLog, Document, DocumentTag, Entity, Tag
+from tabularium.models import AuditLog, Document, DocumentTag, DocumentText, Entity, Tag
 from tabularium.retention import can_outdate
 from tabularium.services import DomainError
 from tabularium.services.documents import (
@@ -36,6 +36,7 @@ from tabularium.services.tags import (
     get_or_create_entity_tag,
     tag_paths,
 )
+from tabularium.textindex import request_extraction
 from tabularium.web.deps import get_session, parse_uuid, render
 from tabularium.web.files import file_response, preview_kind
 
@@ -114,6 +115,7 @@ def meta_context(
         "next_doc": next_doc,
         "retention_years": request.app.state.config.retention.years,
         "can_outdate": can_outdate(document.retain_until, date.today()),
+        "text": session.get(DocumentText, document.id),
         "message": message,
         "error": error,
     }
@@ -399,3 +401,15 @@ def reveal_document(request: Request, session: SessionDep, document_id: uuid.UUI
         return N_("Shown in Explorer (archived files have hash names).")
 
     return _desktop_action(request, session, document_id, action)
+
+
+@router.post("/documents/{document_id}/text/extract", response_class=HTMLResponse)
+def extract_again(
+    request: Request, session: SessionDep, document_id: uuid.UUID, view: ViewField = DOCUMENT
+):
+    def action(document):
+        request_extraction(session, document.id)
+
+    response = _meta(request, session, document_id, view, action, N_("Text extraction queued."))
+    request.app.state.text_indexer.wake()
+    return response

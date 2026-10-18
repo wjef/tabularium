@@ -16,7 +16,7 @@
 <div class="search-layout">
   <form class="filters" method="get" action="/search">
     <p>
-      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('title, file name, note') }}">
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('words in the document, title, file name, note') }}">
       <button>{{ _("Search") }}</button>
       <a href="/search">{{ _("Clear") }}</a>
     </p>
@@ -64,6 +64,7 @@
           <td>
             <a href="/search?{{ base_query }}{{ '&' if base_query else '' }}id={{ d.id }}">{{ d.display_name }}</a><br>
             <small class="muted">{{ result_tags[d.id] | join(" · ") }}</small>
+            {% if snippets[d.id] %}<br><small class="snippet">{{ snippets[d.id] }}</small>{% endif %}
           </td>
           <td class="muted">{{ d.document_date.isoformat() if d.document_date else "" }}</td>
         </tr>

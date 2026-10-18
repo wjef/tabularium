@@ -48,6 +48,14 @@ class RelationType(StrEnum):
     REPLACES = "REPLACES"
 
 
+class TextStatus(StrEnum):
+    PENDING = "PENDING"  # waiting for the background indexer
+    DONE = "DONE"
+    EMPTY = "EMPTY"  # no text found / file type without text
+    NEEDS_OCR = "NEEDS_OCR"  # scanned pages, but OCR is not available yet
+    FAILED = "FAILED"
+
+
 class IngestResult(StrEnum):
     IMPORTED = "IMPORTED"
     DUPLICATE = "DUPLICATE"
@@ -196,6 +204,28 @@ class DocumentTag(Base):
 
     document: Mapped[Document] = relationship(back_populates="tag_links")
     tag: Mapped[Tag] = relationship()
+
+
+class DocumentText(Base):
+    """Text extracted from a document (text layer and/or OCR). Regenerable, so not exported.
+
+    The searchable copy lives in the FTS5 table ``document_fts`` (normalized text), kept in
+    sync by ``tabularium.textindex``.
+    """
+
+    __tablename__ = "document_text"
+
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("document.id", ondelete="CASCADE"), primary_key=True
+    )
+    status: Mapped[TextStatus] = mapped_column(_str_enum(TextStatus, "text_status"), index=True)
+    method: Mapped[str | None] = mapped_column(String(20))  # text | ocr | mixed
+    pages: Mapped[int | None] = mapped_column(Integer)
+    ocr_pages: Mapped[int | None] = mapped_column(Integer)
+    chars: Mapped[int | None] = mapped_column(Integer)
+    content: Mapped[str | None] = mapped_column(Text)
+    error: Mapped[str | None] = mapped_column(Text)
+    extracted_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
 
 class DocumentRelation(Base):

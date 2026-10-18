@@ -12,9 +12,11 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from tabularium.models import Document, Entity
+from tabularium.models import Document, DocumentText, Entity
 from tabularium.services.entity_types import list_types
 from tabularium.services.search import SearchQuery, search
+from tabularium.text import normalize
+from tabularium.textindex import snippet
 from tabularium.web.deps import get_session, parse_uuid, render
 from tabularium.web.routes_documents import DOCUMENT, document_tag_paths, page_context
 from tabularium.web.routes_tags import build_tree
@@ -29,6 +31,25 @@ def _date(value: str) -> date | None:
         return date.fromisoformat(value) if value else None
     except ValueError:
         return None
+
+
+def _snippets(session: Session, documents: list[Document], q: str) -> dict:
+    """Where the search words were found in each document's text (original spelling)."""
+    words = normalize(q).split()
+    if not words or not documents:
+        return {}
+    rows = session.execute(
+        select(DocumentText.document_id, DocumentText.content).where(
+            DocumentText.document_id.in_([d.id for d in documents]),
+            DocumentText.content.is_not(None),
+        )
+    )
+    result = {}
+    for doc_id, content in rows:
+        piece = snippet(content, words)
+        if piece:
+            result[doc_id] = piece
+    return result
 
 
 @router.get("/search", response_class=HTMLResponse)
@@ -86,6 +107,7 @@ def search_page(
             "total": total,
             "limit": RESULT_LIMIT,
             "result_tags": document_tag_paths(session, [d.id for d in documents]),
+            "snippets": _snippets(session, documents, q),
             "base_query": base,
         }
     )

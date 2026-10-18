@@ -19,6 +19,9 @@ dependencies = [
     "babel>=2.15",
     "pydantic>=2.7",
     "python-multipart>=0.0.20",
+    "pypdfium2>=4.30",
+    "pytesseract>=0.3.10",
+    "pillow>=10.4",
 ]
 
 [project.optional-dependencies]

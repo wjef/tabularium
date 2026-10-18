@@ -2,7 +2,7 @@ from alembic import context
 from sqlalchemy import event, pool
 
 import tabularium.models  # noqa: F401 — registers the tables on Base.metadata
-from tabularium.db import Base, make_engine
+from tabularium.db import Base, include_object, make_engine
 
 config = context.config
 target_metadata = Base.metadata
@@ -58,6 +58,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             render_as_batch=True,  # SQLite needs batch mode for ALTER TABLE
+            include_object=include_object,
             transactional_ddl=True,
             transaction_per_migration=True,
             on_version_apply=(

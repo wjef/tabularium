@@ -75,6 +75,27 @@
     <tr><th>SHA-256</th><td><code>{{ doc.sha256 }}</code></td></tr>
   </table>
 
+  <h3>{{ _("Text") }}</h3>
+  {% if not text or text.status.value == "PENDING" %}
+    <p class="muted">{{ _("Waiting for text extraction (runs in the background).") }}</p>
+  {% else %}
+    <p>
+      {% if text.status.value == "DONE" %}{{ _("%(n)s characters", n=text.chars) }} ·
+        {% if text.method == "ocr" %}{{ _("read by OCR") }}{% elif text.method == "mixed" %}{{ _("text layer + OCR") }}{% else %}{{ _("text layer") }}{% endif %}
+        {% if text.pages %} · {{ _("%(n)s page(s)", n=text.pages) }}{% endif %}
+      {% elif text.status.value == "NEEDS_OCR" %}<span class="warn">{{ _("Scanned pages: needs OCR (install Tesseract, see Maintenance).") }}</span>
+      {% elif text.status.value == "EMPTY" %}{{ _("No text found.") }}
+      {% else %}<span class="warn">{{ _("Extraction failed:") }} {{ text.error }}</span>{% endif %}
+    </p>
+    {% if text.content %}
+    <details><summary>{{ _("Show extracted text") }}</summary><pre class="extracted">{{ text.content }}</pre></details>
+    {% endif %}
+  {% endif %}
+  <form hx-post="/documents/{{ doc.id }}/text/extract" {{ target|safe }}>
+    <input type="hidden" name="view" value="{{ view }}">
+    <button>{{ _("Extract again") }}</button>
+  </form>
+
   <h3>{{ _("Outdate") }}</h3>
   {% if can_outdate %}
   <form hx-post="/documents/{{ doc.id }}/outdate" {{ target|safe }} class="stacked"

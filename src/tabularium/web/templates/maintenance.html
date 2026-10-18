@@ -33,6 +33,28 @@
 </p>
 <div id="integrity-result">{% if report %}{% include "_integrity_report.html" %}{% endif %}</div>
 
+<h2>{{ _("Full-text search") }}</h2>
+<table>
+  <tr><th>{{ _("Indexed") }}</th><td>{{ text_counts.DONE }}</td></tr>
+  <tr><th>{{ _("Waiting") }}</th><td>{{ text_counts.PENDING }}</td></tr>
+  <tr><th>{{ _("Need OCR") }}</th><td>{{ text_counts.NEEDS_OCR }}</td></tr>
+  <tr><th>{{ _("No text") }}</th><td>{{ text_counts.EMPTY }}</td></tr>
+  <tr><th>{{ _("Failed") }}</th><td>{{ text_counts.FAILED }}</td></tr>
+  <tr><th>{{ _("OCR (Tesseract)") }}</th><td>
+    {% if not text_config.ocr %}{{ _("switched off in the configuration") }}
+    {% elif ocr.available %}{{ _("available") }} · {{ text_config.languages }} · <code>{{ ocr.command }}</code>
+    {% else %}<span class="warn">{{ ocr.message }}</span>{% endif %}
+  </td></tr>
+</table>
+{% if text_config.ocr and not ocr.available %}
+<p>{{ _("To read scans and photos, install Tesseract with the Polish language pack, then click the button below (no restart needed). In PowerShell:") }}</p>
+<pre>winget install --id UB-Mannheim.TesseractOCR</pre>
+<p class="muted"><small>{{ _("The installer offers “Additional language data”: tick Polish. Or download pol.traineddata from github.com/tesseract-ocr/tessdata_fast into the tessdata folder.") }}</small></p>
+{% endif %}
+<form hx-post="/maintenance/ocr-check" hx-target="main" hx-select="main" hx-swap="outerHTML">
+  <button>{{ _("Check OCR again") }}</button>
+</form>
+
 <h2>{{ _("metadata.json") }}</h2>
 <p>{{ _("A complete, readable copy of the database, kept next to the files in the archive folder and refreshed shortly after every change. With it, the database can be rebuilt anywhere.") }}</p>
 <table>

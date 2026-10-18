@@ -27,6 +27,19 @@ Then:
 2. Edit that file: set your `ingest`, `archive` and `outdated` folders (they must exist).
 3. Run `Tabularium.bat` again — the app opens in your browser.
 
+## OCR for scans and photos (optional)
+
+Text PDFs are searchable right away. To also search scans and photos, install Tesseract
+with the Polish language pack:
+
+```powershell
+winget install --id UB-Mannheim.TesseractOCR
+```
+
+If Polish is missing afterwards, put `pol.traineddata` (from
+github.com/tesseract-ocr/tessdata_fast) into `C:\Program Files\Tesseract-OCR\tessdata`.
+Then click **Maintenance → Check OCR again**; waiting documents are read automatically.
+
 ## Personal denylist (required for committing)
 
 Create `%LOCALAPPDATA%\Tabularium\denylist.txt` with one word per line (your name, family

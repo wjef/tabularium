@@ -87,6 +87,14 @@ def alembic_config(url: str) -> AlembicConfig:
     return cfg
 
 
+FTS_TABLE = "document_fts"
+
+
+def include_object(obj, name, type_, reflected, compare_to) -> bool:
+    """Hide the FTS5 virtual table (and its shadow tables) from Alembic autogenerate."""
+    return not (type_ == "table" and name and name.startswith(FTS_TABLE))
+
+
 def upgrade(url: str) -> None:
     """Bring the database schema to the latest migration."""
     command.upgrade(alembic_config(url), "head")

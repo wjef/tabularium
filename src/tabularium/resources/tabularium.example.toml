@@ -27,5 +27,13 @@ years = 5
 keep = 10                       # database backups kept in <app home>/backups
 metadata_interval_seconds = 30  # how often metadata.json in the archive is refreshed
 
+[text]
+enabled = true          # full-text search inside documents
+ocr = true              # read scans/photos with Tesseract (install it separately)
+tesseract_cmd = ""      # empty = find it automatically
+languages = "pol+eng"   # Tesseract language packs to use
+ocr_dpi = 300
+max_pages = 300         # per document
+
 [ui]
 language = "en"

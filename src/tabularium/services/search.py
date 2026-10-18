@@ -5,8 +5,8 @@
 - Selected entities form one more group: documents with any tag pointing to one of them
   ("anything involving X or Y"). With ``include_related`` the chosen entities are widened
   to every group they belong to and every member they have (all levels).
-- Text matches title, original file name, note and the hash (archive file name),
-  ignoring case and diacritics.
+- Text matches title, original file name, note, the hash (archive file name) and the
+  document's extracted text (full-text index), ignoring case and diacritics.
 - The date range applies to the document date; documents without one are then excluded.
 """
 
@@ -22,6 +22,7 @@ from tabularium.models import Document, DocumentTag, Tag
 from tabularium.services.entities import related_entities
 from tabularium.services.tags import ancestors, descendant_ids, facet_of
 from tabularium.text import normalize
+from tabularium.textindex import matching_ids
 
 
 @dataclass
@@ -72,6 +73,7 @@ def build_query(session: Session, query: SearchQuery) -> Select[tuple[Document]]
     for word in normalize(query.text).split():
         stmt = stmt.where(
             or_(
+                Document.id.in_(matching_ids(word)),
                 Document.sha256.contains(word, autoescape=True),
                 func.tnorm(Document.title, type_=String).contains(word, autoescape=True),
                 func.tnorm(Document.original_filename, type_=String).contains(

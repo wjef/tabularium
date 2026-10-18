@@ -37,7 +37,10 @@ def test_models_match_migrations(db_url):
     """Fails when a model changed without a migration."""
     engine = db.make_engine(db_url)
     with engine.connect() as conn:
-        diff = compare_metadata(MigrationContext.configure(conn), db.Base.metadata)
+        diff = compare_metadata(
+            MigrationContext.configure(conn, opts={"include_object": db.include_object}),
+            db.Base.metadata,
+        )
     engine.dispose()
     assert diff == []
 

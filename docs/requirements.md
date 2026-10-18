@@ -212,6 +212,23 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 - "Open copy" refuses programs and scripts (`.exe`, `.bat`, `.ps1`, `.js`, `.lnk`, …):
   copies lose the internet-origin marker that normally makes Windows warn.
 
+### 8.2 Full-text search and OCR
+- Every document's text is extracted in the background (one at a time) and indexed in an
+  SQLite FTS5 table as normalized text, so searches ignore case and Polish diacritics.
+- PDFs: the text layer is read page by page; pages with (almost) no text are treated as
+  scans and read by OCR. Images (PNG, JPEG, GIF, BMP, WebP, TIFF incl. multi-page) go to OCR.
+  Text files: UTF-8, falling back to Windows-1250. Other types (e.g. Office) are not read yet.
+- OCR = Tesseract (`[text] languages = "pol+eng"`), installed separately and detected
+  automatically. Without it, scanned documents wait as "needs OCR" and are read as soon as
+  it is installed (Maintenance → Check OCR again). Cloud-only files are not downloaded.
+- The search box matches every word in title, original name, note, hash **or** document
+  text (word prefixes); results show a snippet in the original spelling.
+- Document page: extraction status, the extracted text, "Extract again".
+- Extracted text is not part of `metadata.json` (it is regenerated after a restore) and is
+  removed from the index when a document is outdated (re-extracted after restoring).
+- Known gaps: FTS is SQLite-only (PostgreSQL would need its own index); OCR runs in one
+  background thread, so a large first import takes a while.
+
 ## 9. Security and privacy
 - Server binds to loopback only. Host header allow-list (DNS-rebinding protection),
   Origin check and CSRF token on every state-changing request.

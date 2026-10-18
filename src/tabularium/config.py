@@ -62,6 +62,15 @@ class BackupConfig(_Section):
     metadata_interval_seconds: int = Field(default=30, ge=5)  # metadata.json refresh
 
 
+class TextConfig(_Section):
+    enabled: bool = True  # extract text for full-text search
+    ocr: bool = True  # read scans and photos with Tesseract when it is installed
+    tesseract_cmd: str = ""  # empty: find tesseract.exe automatically
+    languages: str = "pol+eng"
+    ocr_dpi: int = Field(default=300, ge=72, le=600)
+    max_pages: int = Field(default=300, ge=1)
+
+
 class UiConfig(_Section):
     language: str = "en"
 
@@ -72,6 +81,7 @@ class Config(_Section):
     ingest: IngestConfig = Field(default_factory=IngestConfig)
     retention: RetentionConfig = Field(default_factory=RetentionConfig)
     backup: BackupConfig = Field(default_factory=BackupConfig)
+    text: TextConfig = Field(default_factory=TextConfig)
     ui: UiConfig = Field(default_factory=UiConfig)
 
     @property

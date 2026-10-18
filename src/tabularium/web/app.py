@@ -20,6 +20,8 @@ from tabularium.metadata import MetadataExporter, restore_pending
 from tabularium.outdated import OutdatedStore
 from tabularium.services.documents import untagged_documents
 from tabularium.storage import LocalStorage
+from tabularium.textextract import TesseractOcr, tesseract_status
+from tabularium.textindex import TextIndexer
 from tabularium.web import (
     routes_documents,
     routes_entities,
@@ -53,6 +55,13 @@ def create_app(
     if outdated_store is None:
         outdated_store = OutdatedStore(config.outdated_database_path, config.paths.outdated)
     ingestor = Ingestor(config, session_factory, storage, is_outdated=outdated_store.has_hash)
+    text_indexer = TextIndexer(
+        session_factory,
+        storage,
+        ocr_factory=lambda: _ocr_engine(config),
+        dpi=config.text.ocr_dpi,
+        max_pages=config.text.max_pages,
+    )
     exporter = MetadataExporter(
         session_factory,
         config.paths.archive,
@@ -65,9 +74,12 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         exporter.start()
+        if config.text.enabled:
+            text_indexer.start()
         if scan_on_startup and not is_restore_pending():
             threading.Thread(target=_startup_scan, args=(ingestor,), daemon=True).start()
         yield
+        text_indexer.stop()
         exporter.stop()
 
     app = FastAPI(
@@ -80,6 +92,7 @@ def create_app(
     app.state.storage = storage
     app.state.metadata_exporter = exporter
     app.state.outdated_store = outdated_store
+    app.state.text_indexer = text_indexer
     app.state.templates = make_templates(config, csrf_token)
     app.add_middleware(LocalOnlyMiddleware, csrf_token=csrf_token)
     app.mount("/static", StaticFiles(directory=str(_WEB / "static")), name="static")
@@ -124,6 +137,7 @@ def create_app(
             )
         try:
             report = await run_in_threadpool(ingestor.scan)
+            text_indexer.wake()
         except IngestBusyError:
             report = None
         return render(
@@ -149,3 +163,14 @@ def _startup_scan(ingestor: Ingestor) -> None:
 def _revision(session_factory: sessionmaker[Session]) -> str | None:
     with session_factory() as session:
         return db.revision_of(session)
+
+
+def _ocr_engine(config: Config):
+    """Tesseract if OCR is enabled and installed with the configured languages."""
+    if not (config.text.enabled and config.text.ocr):
+        return None
+    status = tesseract_status(config.text.tesseract_cmd, config.text.languages)
+    if not status.available:
+        log.info("OCR not available: %s", status.message)
+        return None
+    return TesseractOcr(status.command, config.text.languages)

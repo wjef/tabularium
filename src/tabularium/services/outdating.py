@@ -34,6 +34,7 @@ from tabularium.services.entities import create_entity, groups_of
 from tabularium.services.tags import create_tag, find_by_path, tag_paths
 from tabularium.storage import Storage
 from tabularium.text import normalize
+from tabularium.textindex import remove_from_index
 
 # columns shared by models.Document and outdated.OutdatedDocument
 _DOCUMENT_FIELDS = [
@@ -183,6 +184,7 @@ def outdate(
         old={"tags": [t["path"] for t in snapshot["tags"]], "relations": snapshot["relations"]},
         new={"reason": reason},
     )
+    remove_from_index(session, document.id)
     session.delete(document)
     session.commit()
 

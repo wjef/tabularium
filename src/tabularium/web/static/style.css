@@ -41,3 +41,5 @@ label.check input { display: inline; width: auto; }
 .search-layout .selected-doc { flex: 3 1 560px; min-width: 0; }
 ul.checktree { list-style: none; padding-left: 1em; margin: .1em 0; }
 ul.checktree label { cursor: pointer; }
+.snippet { color: #333; background: #ffd; }
+pre.extracted { white-space: pre-wrap; max-height: 24em; overflow: auto; border: 1px solid #ccc; padding: .5em; }
