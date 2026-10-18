@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from tabularium import __version__, db
 from tabularium.config import Config
 from tabularium.ingest import IngestBusyError, Ingestor
-from tabularium.metadata import MetadataExporter
+from tabularium.metadata import MetadataExporter, restore_pending
 from tabularium.services.documents import untagged_documents
 from tabularium.storage import LocalStorage
 from tabularium.web import (
@@ -60,7 +60,7 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         exporter.start()
-        if scan_on_startup:
+        if scan_on_startup and not is_restore_pending():
             threading.Thread(target=_startup_scan, args=(ingestor,), daemon=True).start()
         yield
         exporter.stop()
@@ -84,6 +84,12 @@ def create_app(
     app.include_router(routes_history.router)
     app.include_router(routes_maintenance.router)
 
+    def is_restore_pending() -> bool:
+        with session_factory() as session:
+            return restore_pending(session, config.paths.archive)
+
+    app.state.restore_pending = is_restore_pending
+
     def untagged_count() -> int:
         with session_factory() as session:
             query = select(func.count()).select_from(untagged_documents().subquery())
@@ -91,10 +97,24 @@ def create_app(
 
     @app.get("/", response_class=HTMLResponse)
     def index(request: Request):
-        return render(request, "index.html", {"config": config, "untagged": untagged_count()})
+        return render(
+            request,
+            "index.html",
+            {
+                "config": config,
+                "untagged": untagged_count(),
+                "restore_pending": is_restore_pending(),
+            },
+        )
 
     @app.post("/ingest/scan", response_class=HTMLResponse)
     async def ingest_scan(request: Request):
+        if is_restore_pending():
+            return render(
+                request,
+                "_ingest_report.html",
+                {"report": None, "blocked": True, "untagged": untagged_count()},
+            )
         try:
             report = await run_in_threadpool(ingestor.scan)
         except IngestBusyError:

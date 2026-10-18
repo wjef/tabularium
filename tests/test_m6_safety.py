@@ -3,6 +3,7 @@
 import io
 import json
 import os
+import time
 from datetime import date
 
 import pytest
@@ -85,15 +86,27 @@ def rich(session, config):
 # --- backups ----------------------------------------------------------------------------
 
 
-def test_backups_are_made_and_pruned(tmp_path, db_url):
+def test_startup_backups_are_pruned_but_upgrade_and_manual_backups_kept(
+    tmp_path, db_url, session, rich
+):
     database = tmp_path / "test.db"
     backups = tmp_path / "backups"
-    made = [backup_now(database, backups, keep=3, label=f"n{i}") for i in range(5)]
-    assert all(made)
-    names = [p.name for p in list_backups(backups)]
-    assert len(names) == 3
-    assert names == sorted(names, reverse=True)
+    db.backup_sqlite(database, backups, "before-upgrade-from-0003")
+    assert backup_now(database, backups, keep=3, label="manual")
+    for _ in range(5):
+        assert backup_now(database, backups, keep=3)
+        time.sleep(1.05)  # names carry a timestamp with seconds
+    assert len(list_backups(backups, "startup")) == 3
+    assert len(list_backups(backups, "manual")) == 1
+    assert len(list_backups(backups, "before-upgrade-from-0003")) == 1
     assert backup_now(tmp_path / "missing.db", backups, keep=3) is None
+
+
+def test_empty_database_is_not_backed_up_at_startup(tmp_path):
+    database = tmp_path / "empty.db"
+    db.upgrade(db.sqlite_url(database))  # seeded entity types only: no user data
+    assert backup_now(database, tmp_path / "b", keep=3) is None
+    assert backup_now(database, tmp_path / "b", keep=3, label="manual") is not None
 
 
 # --- metadata.json ------------------------------------------------------------------------
@@ -259,4 +272,50 @@ def test_moving_to_a_new_pc(session, rich, config, tmp_path, monkeypatch):
     assert "1 document(s) found." in r.text
     with factory() as s:
         assert s.scalars(select(AuditLog.action).order_by(AuditLog.id.desc())).first() == "RESTORE"
+    engine.dispose()
+
+
+def _new_pc_app(config, tmp_path, *, scan_on_startup=True):
+    url = db.sqlite_url(tmp_path / "new-pc.db")
+    db.upgrade(url)
+    engine = db.make_engine(url)
+    factory = db.make_session_factory(engine)
+    app = create_app(
+        config, csrf_token=TOKEN, session_factory=factory, scan_on_startup=scan_on_startup
+    )
+    return app, factory, engine
+
+
+def test_empty_database_never_overwrites_the_archive_metadata(session, rich, config, tmp_path):
+    """New PC / lost database: the archive's metadata.json is the only restore source."""
+    original = metadata.write(config.paths.archive, metadata.dump(session, db.revision_of(session)))
+    before = original.read_bytes()
+    (config.paths.ingest / "waiting.pdf").write_bytes(b"%PDF new")  # must not be ingested yet
+    config.backup.metadata_interval_seconds = 5
+
+    app, factory, engine = _new_pc_app(config, tmp_path)
+    with TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN}) as c:
+        app.state.metadata_exporter.interval = 0.05  # let the background loop run
+        import time
+
+        time.sleep(0.5)
+        home = c.get("/").text
+        assert "Restore" in home and "/maintenance" in home  # banner
+        r = c.post("/ingest/scan")
+        assert "restore" in r.text.lower()
+        r = c.post("/maintenance/metadata")
+        assert "not overwriting" in r.text.lower()
+    assert original.read_bytes() == before  # untouched, also by the shutdown write
+    assert (config.paths.ingest / "waiting.pdf").exists()
+    engine.dispose()
+
+
+def test_after_restore_metadata_is_written_again(session, rich, config, tmp_path):
+    metadata.write(config.paths.archive, metadata.dump(session, db.revision_of(session)))
+    app, factory, engine = _new_pc_app(config, tmp_path, scan_on_startup=False)
+    with TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN}) as c:
+        assert "Database restored" in c.post("/maintenance/restore").text
+    data = metadata.read(config.paths.archive / "metadata.json")
+    assert data["counts"]["document"] == 2
+    assert data["tables"]["audit_log"][-1]["action"] == "RESTORE"
     engine.dispose()

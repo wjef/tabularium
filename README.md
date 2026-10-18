@@ -41,7 +41,8 @@ Without the list, commits are blocked too. Contributors who don't need it can op
 Copy (or sync) the **Archive** folder — it contains every file plus `metadata.json`.
 On the new PC: set up Tabularium, point `archive` in the config at that folder, start it,
 open **Maintenance** and click **Restore from metadata.json** (offered while the database
-is empty).
+is empty). Until then Tabularium does not ingest anything and does not touch
+`metadata.json`, so nothing can block or overwrite the restore.
 
 ## Development
 

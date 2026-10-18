@@ -152,6 +152,31 @@ def is_empty(session: Session) -> bool:
     return True
 
 
+class RestorePendingError(DomainError):
+    """The database is empty but the archive's metadata.json is not: restore first."""
+
+
+def archive_has_data(archive_root: Path) -> bool:
+    """Does the archive's metadata.json describe any documents, tags or entities?"""
+    path = archive_root / FILENAME
+    if not path.exists():
+        return False
+    try:
+        counts = read(path).get("counts", {})
+    except (OSError, ValueError, DomainError):
+        return True  # unreadable: protect it rather than overwrite it
+    return any(counts.get(name) for name in ("document", "tag", "entity"))
+
+
+def restore_pending(session: Session, archive_root: Path) -> bool:
+    """An empty database next to an archive with metadata: a new PC or a lost database.
+
+    In this state nothing may write metadata.json (it is the only restore source) and nothing
+    may be ingested (that would make the database non-empty and block the restore).
+    """
+    return is_empty(session) and archive_has_data(archive_root)
+
+
 def _tags_parents_first(rows: list[dict]) -> list[dict]:
     by_id = {r["id"]: r for r in rows}
 
@@ -249,8 +274,17 @@ class MetadataExporter:
             self.dirty.clear()
             try:
                 with self.session_factory() as session:
+                    if restore_pending(session, self.archive_root):
+                        # stays clean: the restore commit will mark it dirty again
+                        self.last_error = (
+                            "Not overwriting metadata.json with an empty database; "
+                            "restore it first (Maintenance page)."
+                        )
+                        raise RestorePendingError(self.last_error)
                     data = dump(session, self.schema_revision())
                 path = write(self.archive_root, data)
+            except RestorePendingError:
+                raise
             except Exception as exc:
                 self.dirty.set()  # try again later (e.g. file briefly locked by OneDrive)
                 self.last_error = f"{type(exc).__name__}: {exc}"
@@ -263,6 +297,8 @@ class MetadataExporter:
             if self.dirty.is_set():
                 try:
                     self.write_now()
+                except RestorePendingError:
+                    log.warning("metadata.json not written: restore pending")
                 except Exception:  # noqa: BLE001 — retried next interval
                     log.exception("Could not write %s", FILENAME)
 
@@ -279,5 +315,7 @@ class MetadataExporter:
         if self.dirty.is_set():
             try:
                 self.write_now()
+            except RestorePendingError:
+                log.warning("metadata.json not written on shutdown: restore pending")
             except Exception:  # noqa: BLE001
                 log.exception("Could not write %s on shutdown", FILENAME)

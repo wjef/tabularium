@@ -1,4 +1,6 @@
-{% if report is none %}
+{% if blocked is defined and blocked %}
+<p class="flash error">{{ _("Restore the database first (Maintenance page). Ingesting now would block the restore.") }}</p>
+{% elif report is none %}
 <p class="warn">{{ _("A scan is already running. Try again in a moment.") }}</p>
 {% else %}
 <table class="report">

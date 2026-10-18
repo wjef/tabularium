@@ -12,7 +12,7 @@ from tabularium.backup import backup_now, list_backups
 from tabularium.db import revision_of
 from tabularium.i18n import N_
 from tabularium.integrity import check
-from tabularium.metadata import FILENAME, is_empty, read, restore
+from tabularium.metadata import FILENAME, RestorePendingError, is_empty, read, restore
 from tabularium.services import DomainError
 from tabularium.web.deps import get_session, render
 
@@ -76,7 +76,7 @@ def maintenance_metadata(request: Request, session: SessionDep):
             "maintenance.html",
             _context(request, session, message=N_("metadata.json written.")),
         )
-    except OSError as exc:
+    except (OSError, RestorePendingError) as exc:
         return render(request, "maintenance.html", _context(request, session, error=str(exc)))
 
 

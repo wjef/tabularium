@@ -206,8 +206,10 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 
 ## 10. Reliability, portability, future cloud
 - Single running instance enforced by a lock file in app home.
-- Database backup (SQLite backup API) on every start and before every migration, newest
-  `[backup] keep` (10) kept in `<app home>/backups`; manual backup on the Maintenance page.
+- Database backup (SQLite backup API) on every start and before every migration; manual
+  backup on the Maintenance page. Only startup backups are pruned (newest `[backup] keep`,
+  10); an empty database is not backed up at startup, so a lost database cannot push the
+  last good backups out. Upgrade and manual backups are kept.
 - `metadata.json` in the archive root: every table as readable JSON (plus tag paths and
   display names), rewritten atomically within `metadata_interval_seconds` (30) after any
   committed change, at start and on shutdown. Not included: the ingest log.
@@ -219,6 +221,9 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   `metadata.json` (Maintenance page); followed by an integrity check. Tested as a round
   trip (export → rebuild → identical tables).
 - **Moving PCs** = copy the archive folder, point the new installation at it, restore.
+- **Restore pending** (empty database, archive `metadata.json` with data — a new PC or a lost
+  database): `metadata.json` is never written and nothing is ingested until the restore is
+  done; the home page points to it.
 - Cloud readiness: SQLAlchemy 2 + Alembic (portable to PostgreSQL), file access through a
   storage interface (local now, blob storage later), UUIDs and relative paths only.
 

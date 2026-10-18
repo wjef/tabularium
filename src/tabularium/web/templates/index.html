@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>{{ _("Archive") }}</h1>
+{% if restore_pending %}
+<p class="flash error">{{ _("The database is empty, but the archive folder contains a metadata.json with your archive. Restore it first:") }}
+  <a href="/maintenance">{{ _("Maintenance → Restore") }}</a></p>
+{% endif %}
 
 <section id="ingest">
   <h2>{{ _("Ingest") }}</h2>
