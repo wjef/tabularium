@@ -158,8 +158,8 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 - **Open copy in default app**: a read-only copy with a readable name is made in
   `<app home>\tmp\open` (cleaned after a day) and handed to Windows, so an editor can never
   change the archived file. **Show in Explorer** selects the archived (hash-named) file.
-- **Export**: selected documents as a zip of copies named `YYYY-MM-DD <title or original
-  name>.<ext>` (Windows-safe, de-duplicated) plus `index.csv` (name, original name, date,
+- **Export**: selected documents as a zip of copies named `YYYY-MM-DD <title or sha256>.<ext>`
+  (date only if set; never the original name) (Windows-safe, de-duplicated) plus `index.csv` (name, original name, date,
   title, tags, SHA-256; UTF-8 with BOM for Excel).
 - Tags are added by typing a full path (`sender / Jan Kowalski`, case/diacritic-insensitive)
   from a suggestion list, by picking *under which tag + which entity* (the entity tag is

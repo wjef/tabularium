@@ -122,19 +122,22 @@ def test_bad_filter_values_are_ignored(client, world):
 # --- export ----------------------------------------------------------------------------
 
 
-def test_readable_names_are_safe_and_unique():
-    def doc(title, name, when=None):
-        return Document(title=title, original_filename=name, document_date=when)
+def test_readable_names_use_title_else_hash_and_are_safe():
+    sha = "ab" * 32
 
-    assert readable_name(doc("Faktura 03/2025: prąd?", "x.PDF", date(2025, 3, 1))) == (
+    def doc(title, name="scan_0001.PDF", when=None):
+        return Document(title=title, original_filename=name, sha256=sha, document_date=when)
+
+    assert readable_name(doc("Faktura 03/2025: prąd?", when=date(2025, 3, 1))) == (
         "2025-03-01 Faktura 03_2025_ prąd_.pdf"
     )
-    assert readable_name(doc(None, "CON.txt")) == "_CON.txt"
+    # no title: the hash, never the (random) original name
+    assert readable_name(doc(None)) == f"{sha}.pdf"
+    assert readable_name(doc(None, when=date(2024, 1, 15))) == f"2024-01-15 {sha}.pdf"
+    assert readable_name(doc("CON", "x.txt")) == "_CON.txt"
     assert readable_name(doc("...", "a.pdf")) == "document.pdf"
-    names = [
-        n for _, n in unique_names([doc(None, "a.pdf"), doc(None, "A.pdf"), doc(None, "a.pdf")])
-    ]
-    assert names == ["a.pdf", "A (2).pdf", "a (3).pdf"]
+    names = [n for _, n in unique_names([doc("Umowa"), doc("umowa"), doc("Umowa")])]
+    assert names == ["Umowa.pdf", "umowa (2).pdf", "Umowa (3).pdf"]
 
 
 def test_export_zip_has_readable_copies_and_index(client, world):
@@ -144,7 +147,7 @@ def test_export_zip_has_readable_copies_and_index(client, world):
     assert r.headers["content-disposition"].startswith('attachment; filename="Tabularium export')
     with zipfile.ZipFile(io.BytesIO(r.content)) as z:
         assert sorted(z.namelist()) == [
-            "2024-01-15 bill.pdf",
+            f"2024-01-15 {BILL}",
             "2025-04-01 Zeznanie PIT.pdf",
             "index.csv",
         ]

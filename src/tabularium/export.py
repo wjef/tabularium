@@ -1,7 +1,8 @@
 """Readable copies of archived documents: zip export and "open a copy" (docs/requirements.md §8).
 
 Archived files keep their hash names; anything handed to the user gets a readable name such as
-``2025-04-01 Zeznanie PIT 2024.pdf``. The archive itself is never touched.
+``2025-04-01 Zeznanie PIT 2024.pdf`` (title), or the hash when there is no title. The archive
+itself is never touched.
 """
 
 import csv
@@ -27,9 +28,13 @@ MAX_STEM = 120
 
 
 def readable_name(document: Document) -> str:
-    """``[YYYY-MM-DD ]<title or original name>.<ext>``, safe as a Windows file name."""
+    """``[YYYY-MM-DD ]<title or sha256>.<ext>``, safe as a Windows file name.
+
+    Like in the app, the original file name is never used as the name (it is often random);
+    it is listed in ``index.csv`` instead.
+    """
     original = PurePath(document.original_filename)
-    stem = document.title or original.stem
+    stem = document.title or document.sha256
     if document.document_date:
         stem = f"{document.document_date.isoformat()} {stem}"
     stem = _INVALID.sub("_", stem).strip().rstrip(".") or "document"
