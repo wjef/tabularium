@@ -40,6 +40,7 @@ def search_page(
     q: str = "",
     date_from: Annotated[str, Query(alias="from")] = "",
     date_to: Annotated[str, Query(alias="to")] = "",
+    related: str = "",
     id: str = "",
 ):
     query = SearchQuery(
@@ -48,13 +49,18 @@ def search_page(
         text=q,
         date_from=_date(date_from),
         date_to=_date(date_to),
+        include_related=bool(related),
     )
     documents, total = search(session, query, limit=RESULT_LIMIT)
 
     params = [("tag", str(t)) for t in query.tag_ids] + [
         ("entity", str(e)) for e in query.entity_ids
     ]
-    params += [(k, v) for k, v in (("q", q), ("from", date_from), ("to", date_to)) if v]
+    params += [
+        (k, v)
+        for k, v in (("q", q), ("from", date_from), ("to", date_to), ("related", related))
+        if v
+    ]
     base = urlencode(params)
 
     selected = session.get(Document, parse_uuid(id)) if parse_uuid(id) else None
@@ -73,6 +79,7 @@ def search_page(
             "q": q,
             "date_from": date_from,
             "date_to": date_to,
+            "include_related": bool(related),
             "selected_tags": set(query.tag_ids),
             "selected_entities": set(query.entity_ids),
             "results": documents,

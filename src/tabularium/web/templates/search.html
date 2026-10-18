@@ -30,6 +30,8 @@
     {% if roots %}{{ tag_tree(roots) }}{% else %}<p class="muted">{{ _("No tags yet.") }}</p>{% endif %}
     <h3>{{ _("Involving") }}</h3>
     <p class="muted"><small>{{ _("Documents with any tag pointing to one of the chosen entities.") }}</small></p>
+    <p><label><input type="checkbox" name="related" value="1"{% if include_related %} checked{% endif %}>
+      {{ _("Include related entities: the groups they belong to and their members") }}</label></p>
     {% for entity_type, members in entity_groups %}
       <strong>{{ entity_type.name }}</strong>
       <ul class="checktree">

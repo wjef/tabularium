@@ -73,6 +73,46 @@
       <button>{{ _("Save") }}</button>
     </form>
 
+    <h3>{{ _("Member of") }}</h3>
+    <ul>
+      {% for g in membership.groups %}
+      <li><a href="/entities?id={{ g.id }}">{{ g.name }}</a>
+        <form class="inline" hx-post="/entities/{{ e.id }}/groups/{{ g.id }}/remove" hx-target="#workspace" hx-swap="outerHTML">
+          <button title="{{ _('Remove from this group') }}">×</button>
+        </form></li>
+      {% else %}<li class="muted">{{ _("Not a member of any group.") }}</li>{% endfor %}
+      {% for g in membership.indirect_groups %}<li class="muted">{{ _("via another group:") }} <a href="/entities?id={{ g.id }}">{{ g.name }}</a></li>{% endfor %}
+    </ul>
+    {% if membership.group_options %}
+    <form hx-post="/entities/{{ e.id }}/groups/add" hx-target="#workspace" hx-swap="outerHTML">
+      <select name="other_id" required>
+        <option value="">{{ _("group…") }}</option>
+        {% for o in membership.group_options %}<option value="{{ o.id }}">{{ o.name }} ({{ o.type.name }})</option>{% endfor %}
+      </select>
+      <button>{{ _("Add to group") }}</button>
+    </form>
+    {% endif %}
+
+    <h3>{{ _("Members") }}</h3>
+    <ul>
+      {% for m in membership.members %}
+      <li><a href="/entities?id={{ m.id }}">{{ m.name }}</a>
+        <form class="inline" hx-post="/entities/{{ e.id }}/members/{{ m.id }}/remove" hx-target="#workspace" hx-swap="outerHTML">
+          <button title="{{ _('Remove member') }}">×</button>
+        </form></li>
+      {% else %}<li class="muted">{{ _("No members.") }}</li>{% endfor %}
+      {% for m in membership.indirect_members %}<li class="muted">{{ _("via a member group:") }} <a href="/entities?id={{ m.id }}">{{ m.name }}</a></li>{% endfor %}
+    </ul>
+    {% if membership.member_options %}
+    <form hx-post="/entities/{{ e.id }}/members/add" hx-target="#workspace" hx-swap="outerHTML">
+      <select name="other_id" required>
+        <option value="">{{ _("member…") }}</option>
+        {% for o in membership.member_options %}<option value="{{ o.id }}">{{ o.name }} ({{ o.type.name }})</option>{% endfor %}
+      </select>
+      <button>{{ _("Add member") }}</button>
+    </form>
+    {% endif %}
+
     <h3>{{ _("Used as tag") }}</h3>
     <ul>
       {% for n in tag_nodes %}<li><a href="/tags?id={{ n.tag.id }}">{{ n.path }}</a> ({{ n.count }})</li>

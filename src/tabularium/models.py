@@ -89,6 +89,21 @@ class Entity(Base):
     tags: Mapped[list["Tag"]] = relationship(back_populates="entity")
 
 
+class EntityMembership(Base):
+    """``member`` belongs to ``group`` (Jan Kowalski → Kowalski Family). Many-to-many, nestable."""
+
+    __tablename__ = "entity_membership"
+    __table_args__ = (CheckConstraint("member_id <> group_id", name="not_self"),)
+
+    member_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("entity.id", ondelete="CASCADE"), primary_key=True
+    )
+    group_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("entity.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 class Tag(Base):
     """Node of the tag tree. Root tags act as facets. May point to an entity."""
 

@@ -76,6 +76,7 @@ as `original_relpath` but has no other meaning. Only one scan runs at a time.
 
 ```
 EntityType  id, name, normalized_name (unique), sort_order — user-defined
+EntityMembership  member_id → Entity, group_id → Entity (many-to-many, nestable, no loops)
 Entity      id, type_id → EntityType, name, normalized_name,
             aliases[], attributes{} (tax id, address, e-mail, …)
 
@@ -115,6 +116,9 @@ IngestLog   id, run_id, source_path, sha256, result (IMPORTED | DUPLICATE | FAIL
 - Entity types are user-defined (Person, Organization, Institution and Other exist at
   start and can be renamed or deleted; add e.g. Bank, School). A type can only be deleted
   when no entity uses it.
+- Entities can belong to other entities (person → family → extended family; a person can
+  be in several groups). Loops are refused. Managed on the entity page (Member of /
+  Members); deleting an entity removes its memberships.
 - An entity can only be deleted when no tag points to it. Details are free-form
   `key: value` pairs (tax id, address, e-mail…); aliases are a list.
 
@@ -177,7 +181,9 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   the lower one (`sender` + `sender / Jan Kowalski` = sent by Jan).
 - **OR within a facet, AND across facets.**
 - "Anything involving entity X" = documents with any tag pointing to X; several chosen
-  entities form one more group (any of them).
+  entities form one more group (any of them). Optional per search: **include related
+  entities** — also every group the chosen entities belong to and every member they have
+  (all levels; siblings are not included). The tag tree filter is always exact.
 - Additional filters: text in title, original file name and note (every word must match,
   case/diacritic-insensitive), document date range (documents without a date are then
   excluded). Results: newest document date first, undated last; first 500 shown.

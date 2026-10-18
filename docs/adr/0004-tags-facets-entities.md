@@ -17,6 +17,9 @@ time, and able to refer to a person or organization whose details are stored onc
 - `normalized_name` (casefold, no diacritics, `ł → l`) for uniqueness and search.
 - Entity types are rows in `entity_type`, managed by the user (2026-10-17; replaced the
   initial fixed list). Migration 0003 turned the four fixed values into editable rows.
+- Entities can be members of other entities (`entity_membership`, migration 0004). Search
+  can optionally widen an entity filter to its groups and members; tag filters never do,
+  so each filter keeps one simple rule.
 
 ## Consequences
 - Both "sent by X" and "anything involving X" are answerable.

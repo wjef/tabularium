@@ -9,9 +9,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from tabularium.i18n import N_
-from tabularium.models import AuditLog, Entity, EntityType, Tag
+from tabularium.models import AuditLog, Entity, EntityMembership, EntityType, Tag
 from tabularium.services import DomainError
-from tabularium.services.entities import create_entity, delete_entity, update_entity
+from tabularium.services.entities import (
+    add_membership,
+    create_entity,
+    delete_entity,
+    groups_of,
+    members_of,
+    remove_membership,
+    update_entity,
+)
 from tabularium.services.entity_types import (
     create_type,
     delete_type,
@@ -59,8 +67,10 @@ def workspace_context(
     entities = session.scalars(select(Entity).order_by(Entity.normalized_name)).all()
     selected = session.get(Entity, selected_id) if selected_id else None
     tag_nodes, history = [], []
+    membership: dict = {}
     _, index = build_tree(session)
     if selected is not None:
+        membership = membership_context(session, selected, entities)
         tag_ids = session.scalars(select(Tag.id).where(Tag.entity_id == selected.id)).all()
         tag_nodes = sorted((index[t] for t in tag_ids), key=lambda n: n.path.casefold())
         history = session.scalars(
@@ -74,6 +84,7 @@ def workspace_context(
         "selected": selected,
         "entity_types": list_types(session),
         "tag_nodes": tag_nodes,
+        "membership": membership,
         "parents": sorted(index.values(), key=lambda n: n.path.casefold()),
         "history": history,
         "format_attributes": format_attributes,
@@ -242,4 +253,102 @@ def entity_type_delete(
         selected_id,
         lambda: delete_type(session, _get_type(session, str(type_id))),
         N_("Entity type deleted."),
+    )
+
+
+# --- membership ------------------------------------------------------------------------
+
+
+def membership_context(session: Session, entity: Entity, entities) -> dict:
+    """Direct groups/members, indirect ones, and which entities can be added without a loop."""
+    by_id = {e.id: e for e in entities}
+    direct_groups = set(
+        session.scalars(
+            select(EntityMembership.group_id).where(EntityMembership.member_id == entity.id)
+        )
+    )
+    direct_members = set(
+        session.scalars(
+            select(EntityMembership.member_id).where(EntityMembership.group_id == entity.id)
+        )
+    )
+    all_groups, all_members = groups_of(session, {entity.id}), members_of(session, {entity.id})
+
+    def named(ids):
+        return sorted((by_id[i] for i in ids), key=lambda e: e.normalized_name)
+
+    return {
+        "groups": named(direct_groups),
+        "indirect_groups": named(all_groups - direct_groups),
+        "members": named(direct_members),
+        "indirect_members": named(all_members - direct_members),
+        # a group that is already below this entity would create a loop, and vice versa
+        "group_options": named(set(by_id) - {entity.id} - all_members - direct_groups),
+        "member_options": named(set(by_id) - {entity.id} - all_groups - direct_members),
+    }
+
+
+def _membership_action(request, session, entity_id, other_id: str, change, message):
+    def action():
+        entity = _get_entity(session, entity_id)
+        other = session.get(Entity, parse_uuid(other_id)) if parse_uuid(other_id) else None
+        if other is None:
+            raise DomainError("Choose an entity.")
+        change(entity, other)
+        return entity_id
+
+    return _apply(request, session, entity_id, action, message)
+
+
+@router.post("/entities/{entity_id}/groups/add", response_class=HTMLResponse)
+def entity_join_group(
+    request: Request, session: SessionDep, entity_id: uuid.UUID, other_id: Annotated[str, Form()]
+):
+    return _membership_action(
+        request,
+        session,
+        entity_id,
+        other_id,
+        lambda entity, group: add_membership(session, entity, group),
+        N_("Added to the group."),
+    )
+
+
+@router.post("/entities/{entity_id}/groups/{other_id}/remove", response_class=HTMLResponse)
+def entity_leave_group(request: Request, session: SessionDep, entity_id: uuid.UUID, other_id: str):
+    return _membership_action(
+        request,
+        session,
+        entity_id,
+        other_id,
+        lambda entity, group: remove_membership(session, entity, group),
+        N_("Removed from the group."),
+    )
+
+
+@router.post("/entities/{entity_id}/members/add", response_class=HTMLResponse)
+def entity_add_member(
+    request: Request, session: SessionDep, entity_id: uuid.UUID, other_id: Annotated[str, Form()]
+):
+    return _membership_action(
+        request,
+        session,
+        entity_id,
+        other_id,
+        lambda entity, member: add_membership(session, member, entity),
+        N_("Member added."),
+    )
+
+
+@router.post("/entities/{entity_id}/members/{other_id}/remove", response_class=HTMLResponse)
+def entity_remove_member(
+    request: Request, session: SessionDep, entity_id: uuid.UUID, other_id: str
+):
+    return _membership_action(
+        request,
+        session,
+        entity_id,
+        other_id,
+        lambda entity, member: remove_membership(session, member, entity),
+        N_("Member removed."),
     )
