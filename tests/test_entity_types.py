@@ -124,3 +124,80 @@ def test_types_are_managed_from_the_entities_page(client, session_factory):
 def test_creating_entity_without_type_shows_error(client):
     r = client.post("/entities/create", data={"name": "Nobody"})
     assert "Choose an entity type." in r.text
+
+
+def _db_at_0002_with_tagged_entity(tmp_path):
+    """A 0002 database where a tag points to an entity (the real-life case)."""
+    url = db.sqlite_url(tmp_path / "real.db")
+    cfg = db.alembic_config(url)
+    command.upgrade(cfg, "0002")
+    engine = db.make_engine(url)
+    entity_id, tag_id = uuid.uuid4(), uuid.uuid4()
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO entity (id, type, name, normalized_name, aliases, attributes,"
+                " created_at, updated_at) VALUES (:id, 'PERSON', 'Anna Nowak', 'anna nowak',"
+                " '[]', '{}', '2026-01-01 00:00:00', '2026-01-01 00:00:00')"
+            ),
+            {"id": entity_id.hex},
+        )
+        conn.execute(
+            text(
+                "INSERT INTO tag (id, parent_id, name, normalized_name, entity_id, sort_order,"
+                " created_at) VALUES (:id, NULL, 'Anna Nowak', 'anna nowak', :e, 0,"
+                " '2026-01-01 00:00:00')"
+            ),
+            {"id": tag_id.hex, "e": entity_id.hex},
+        )
+    engine.dispose()
+    return url, cfg, entity_id, tag_id
+
+
+def _check_upgraded(url, entity_id, tag_id):
+    engine = db.make_engine(url)
+    with db.make_session_factory(engine)() as s:
+        entity = s.get(Entity, entity_id)
+        assert entity.type.name == "Person"
+        assert [t.id for t in entity.tags] == [tag_id]
+        assert s.connection().exec_driver_sql("PRAGMA foreign_key_check").fetchall() == []
+    engine.dispose()
+
+
+def test_migration_works_when_tags_point_to_entities(tmp_path):
+    url, cfg, entity_id, tag_id = _db_at_0002_with_tagged_entity(tmp_path)
+    db.upgrade(url)
+    _check_upgraded(url, entity_id, tag_id)
+
+
+def test_migration_recovers_from_an_interrupted_first_attempt(tmp_path):
+    """State left by the failed run: an empty entity_type table, still at 0002."""
+    url, cfg, entity_id, tag_id = _db_at_0002_with_tagged_entity(tmp_path)
+    engine = db.make_engine(url)
+    with engine.begin() as conn:
+        conn.execute(text("CREATE TABLE entity_type (id CHAR(32) NOT NULL PRIMARY KEY)"))
+    engine.dispose()
+    db.upgrade(url)
+    _check_upgraded(url, entity_id, tag_id)
+
+
+def test_failed_migration_rolls_back_completely(tmp_path):
+    """A broken reference makes the post-migration check fail: nothing may be left behind."""
+    url, cfg, entity_id, tag_id = _db_at_0002_with_tagged_entity(tmp_path)
+    engine = db.make_engine(url)
+    with engine.connect() as conn:
+        conn.exec_driver_sql("PRAGMA foreign_keys = OFF")
+        conn.execute(text("UPDATE tag SET entity_id = :x"), {"x": uuid.uuid4().hex})
+        conn.commit()
+    engine.dispose()
+
+    with pytest.raises(Exception, match="broken references"):
+        db.upgrade(url)
+
+    engine = db.make_engine(url)
+    with engine.connect() as conn:
+        assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar() == "0002"
+        tables = {r[0] for r in conn.execute(text("SELECT name FROM sqlite_master"))}
+        assert "entity_type" not in tables
+        assert "type" in {r[1] for r in conn.execute(text("PRAGMA table_info(entity)"))}
+    engine.dispose()

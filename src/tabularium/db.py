@@ -1,13 +1,17 @@
 """Database engine, sessions and migrations (SQLAlchemy 2 + Alembic, see docs/adr/0009)."""
 
+import sqlite3
 from datetime import UTC, datetime
 from importlib import resources
 from pathlib import Path
 
 from alembic import command
 from alembic.config import Config as AlembicConfig
+from alembic.migration import MigrationContext
+from alembic.script import ScriptDirectory
 from sqlalchemy import DateTime, Engine, MetaData, TypeDecorator, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from tabularium.text import normalize
 
@@ -86,3 +90,48 @@ def alembic_config(url: str) -> AlembicConfig:
 def upgrade(url: str) -> None:
     """Bring the database schema to the latest migration."""
     command.upgrade(alembic_config(url), "head")
+
+
+def current_revision(url: str) -> str | None:
+    engine = make_engine(url, poolclass=NullPool)
+    try:
+        with engine.connect() as conn:
+            return MigrationContext.configure(conn).get_current_revision()
+    finally:
+        engine.dispose()
+
+
+def head_revision(url: str) -> str | None:
+    return ScriptDirectory.from_config(alembic_config(url)).get_current_head()
+
+
+def backup_sqlite(path: Path, backup_dir: Path, label: str) -> Path:
+    """Consistent copy of a SQLite database (online backup API, includes the WAL)."""
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    target = backup_dir / f"tabularium-{stamp}-{label}.db"
+    source = sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True)
+    try:
+        dest = sqlite3.connect(target)
+        try:
+            source.backup(dest)
+        finally:
+            dest.close()
+    finally:
+        source.close()
+    return target
+
+
+def upgrade_with_backup(path: Path, backup_dir: Path) -> Path | None:
+    """Back up an existing database before applying pending migrations, then upgrade.
+
+    Returns the backup path, or None when nothing needed migrating.
+    """
+    url = sqlite_url(path)
+    backup = None
+    if path.exists():
+        current = current_revision(url)
+        if current != head_revision(url):
+            backup = backup_sqlite(path, backup_dir, f"before-upgrade-from-{current or 'empty'}")
+    upgrade(url)
+    return backup

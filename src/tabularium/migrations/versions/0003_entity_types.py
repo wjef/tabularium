@@ -45,7 +45,25 @@ entity_table = sa.table(
 )
 
 
+def _remove_leftovers_of_failed_attempt() -> None:
+    """Before migrations ran in a transaction, a failed attempt could leave an empty
+    ``entity_type`` table (and a batch-mode temp table) behind while still at 0002."""
+    conn = op.get_bind()
+    tables = set(sa.inspect(conn).get_table_names())
+    if "_alembic_tmp_entity" in tables:
+        op.drop_table("_alembic_tmp_entity")
+    if "entity_type" in tables:
+        rows = conn.execute(sa.text("SELECT count(*) FROM entity_type")).scalar()
+        if rows:
+            raise RuntimeError(
+                "Found a non-empty entity_type table at revision 0002; not touching it. "
+                "Restore the backup from before the upgrade."
+            )
+        op.drop_table("entity_type")
+
+
 def upgrade() -> None:
+    _remove_leftovers_of_failed_attempt()
     op.create_table(
         "entity_type",
         sa.Column("id", sa.Uuid(), nullable=False),

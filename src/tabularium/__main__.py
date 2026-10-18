@@ -47,7 +47,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         with InstanceLock(paths.lock_file()):
             config.database_path.parent.mkdir(parents=True, exist_ok=True)
-            db.upgrade(db.sqlite_url(config.database_path))
+            backup = db.upgrade_with_backup(config.database_path, paths.backups_dir())
+            if backup:
+                log.info("Database upgraded; previous version saved as %s", backup)
 
             url = f"http://{config.server.host}:{config.server.port}/"
             if config.server.open_browser and not args.no_browser:

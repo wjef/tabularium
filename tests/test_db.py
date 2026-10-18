@@ -50,3 +50,22 @@ def test_downgrade_to_base_and_upgrade_again(db_url):
         assert not EXPECTED_TABLES & set(inspect(conn).get_table_names())
     engine.dispose()
     db.upgrade(db_url)
+
+
+def test_backup_is_made_only_when_migrations_are_pending(tmp_path):
+    path = tmp_path / "data" / "tabularium.db"
+    path.parent.mkdir()
+    backups = tmp_path / "backups"
+    assert db.upgrade_with_backup(path, backups) is None  # new database: nothing to back up
+
+    command.downgrade(db.alembic_config(db.sqlite_url(path)), "0002")
+    backup = db.upgrade_with_backup(path, backups)
+    assert backup is not None and backup.parent == backups
+    assert "before-upgrade-from-0002" in backup.name
+    engine = db.make_engine(db.sqlite_url(backup))
+    with engine.connect() as conn:
+        assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar() == "0002"
+    engine.dispose()
+
+    assert db.upgrade_with_backup(path, backups) is None  # up to date: no new backup
+    assert len(list(backups.iterdir())) == 1
