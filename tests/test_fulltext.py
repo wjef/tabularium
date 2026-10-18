@@ -240,6 +240,7 @@ def test_maintenance_shows_index_and_how_to_install_ocr(client, docs):
     page = client.get("/maintenance").text
     assert "Full-text search" in page and "Tesseract is not installed." in page
     assert "winget install --id UB-Mannheim.TesseractOCR" in page
+    assert "tessdata_best/main/pol.traineddata" in page
 
 
 # --- real Tesseract (only where installed with Polish) ----------------------------------

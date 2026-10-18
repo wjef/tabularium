@@ -36,8 +36,13 @@ with the Polish language pack:
 winget install --id UB-Mannheim.TesseractOCR
 ```
 
-If Polish is missing afterwards, put `pol.traineddata` (from
-github.com/tesseract-ocr/tessdata_fast) into `C:\Program Files\Tesseract-OCR\tessdata`.
+winget installs English only. Add Polish from a PowerShell started with **Run as
+administrator**:
+
+```powershell
+Invoke-WebRequest https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/main/pol.traineddata -OutFile "C:\Program Files\Tesseract-OCR\tessdata\pol.traineddata"
+```
+
 Then click **Maintenance → Check OCR again**; waiting documents are read automatically.
 
 ## Personal denylist (required for committing)
