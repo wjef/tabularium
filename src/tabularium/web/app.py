@@ -16,12 +16,14 @@ from sqlalchemy.orm import Session, sessionmaker
 from tabularium import __version__, db
 from tabularium.config import Config
 from tabularium.ingest import IngestBusyError, Ingestor
+from tabularium.metadata import MetadataExporter
 from tabularium.services.documents import untagged_documents
 from tabularium.storage import LocalStorage
 from tabularium.web import (
     routes_documents,
     routes_entities,
     routes_history,
+    routes_maintenance,
     routes_search,
     routes_tags,
 )
@@ -46,14 +48,22 @@ def create_app(
         session_factory = db.make_session_factory(engine)
     storage = LocalStorage(config.paths.archive)
     ingestor = Ingestor(config, session_factory, storage)
+    exporter = MetadataExporter(
+        session_factory,
+        config.paths.archive,
+        schema_revision=lambda: _revision(session_factory),
+        interval=config.backup.metadata_interval_seconds,
+    ).attach()
     if scan_on_startup is None:
         scan_on_startup = config.ingest.scan_on_startup
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        exporter.start()
         if scan_on_startup:
             threading.Thread(target=_startup_scan, args=(ingestor,), daemon=True).start()
         yield
+        exporter.stop()
 
     app = FastAPI(
         title="Tabularium", version=__version__, docs_url=None, redoc_url=None, lifespan=lifespan
@@ -63,6 +73,7 @@ def create_app(
     app.state.session_factory = session_factory
     app.state.ingestor = ingestor
     app.state.storage = storage
+    app.state.metadata_exporter = exporter
     app.state.templates = make_templates(config, csrf_token)
     app.add_middleware(LocalOnlyMiddleware, csrf_token=csrf_token)
     app.mount("/static", StaticFiles(directory=str(_WEB / "static")), name="static")
@@ -71,6 +82,7 @@ def create_app(
     app.include_router(routes_tags.router)
     app.include_router(routes_entities.router)
     app.include_router(routes_history.router)
+    app.include_router(routes_maintenance.router)
 
     def untagged_count() -> int:
         with session_factory() as session:
@@ -105,3 +117,8 @@ def _startup_scan(ingestor: Ingestor) -> None:
         pass
     except Exception:  # noqa: BLE001 — a failed scan must not stop the app
         log.exception("Startup ingest scan failed")
+
+
+def _revision(session_factory: sessionmaker[Session]) -> str | None:
+    with session_factory() as session:
+        return db.revision_of(session)

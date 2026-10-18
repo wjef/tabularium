@@ -57,6 +57,11 @@ class RetentionConfig(_Section):
     years: int = Field(default=5, ge=0)
 
 
+class BackupConfig(_Section):
+    keep: int = Field(default=10, ge=1)  # database backups made at startup
+    metadata_interval_seconds: int = Field(default=30, ge=5)  # metadata.json refresh
+
+
 class UiConfig(_Section):
     language: str = "en"
 
@@ -66,6 +71,7 @@ class Config(_Section):
     server: ServerConfig = Field(default_factory=ServerConfig)
     ingest: IngestConfig = Field(default_factory=IngestConfig)
     retention: RetentionConfig = Field(default_factory=RetentionConfig)
+    backup: BackupConfig = Field(default_factory=BackupConfig)
     ui: UiConfig = Field(default_factory=UiConfig)
 
     @property

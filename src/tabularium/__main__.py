@@ -10,6 +10,7 @@ from logging.handlers import RotatingFileHandler
 import uvicorn
 
 from tabularium import __version__, db, paths
+from tabularium.backup import backup_now
 from tabularium.config import ConfigError, load_config
 from tabularium.lock import AlreadyRunningError, InstanceLock
 from tabularium.web.app import create_app
@@ -50,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
             backup = db.upgrade_with_backup(config.database_path, paths.backups_dir())
             if backup:
                 log.info("Database upgraded; previous version saved as %s", backup)
+            backup_now(config.database_path, paths.backups_dir(), config.backup.keep)
 
             url = f"http://{config.server.host}:{config.server.port}/"
             if config.server.open_browser and not args.no_browser:

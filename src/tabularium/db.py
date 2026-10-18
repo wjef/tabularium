@@ -135,3 +135,8 @@ def upgrade_with_backup(path: Path, backup_dir: Path) -> Path | None:
             backup = backup_sqlite(path, backup_dir, f"before-upgrade-from-{current or 'empty'}")
     upgrade(url)
     return backup
+
+
+def revision_of(session) -> str | None:
+    """Schema revision of the database behind ``session``."""
+    return MigrationContext.configure(session.connection()).get_current_revision()

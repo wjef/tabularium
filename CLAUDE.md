@@ -13,7 +13,10 @@ Local single-user document archive. Spec: `docs/requirements.md`. Decisions: `do
 - All UI strings wrapped for gettext (ADR 0008).
 - Timestamps in UTC; `document_date` / `retain_until` are plain dates.
 - Domain changes go through `tabularium.services.*`: they enforce invariants and write the
-  audit entry in the caller's transaction (caller commits). Don't mutate models directly elsewhere.
+  audit entry in the caller's transaction (caller commits). Don't mutate models directly elsewhere
+  (sole exception: `metadata.restore`, which rebuilds an empty database row by row).
+- Migrations run with SQLite foreign keys off, one transaction each, FK check afterwards
+  (`migrations/env.py`). Test new migrations against data shaped like real use.
 - After changing `models.py`, add a migration; `tests/test_db.py::test_models_match_migrations`
   fails otherwise.
 

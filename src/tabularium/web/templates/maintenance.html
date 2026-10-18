@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Maintenance") }} – Tabularium{% endblock %}
+{% block content %}
+<h1>{{ _("Maintenance") }}</h1>
+{% include "_flash.html" %}
+
+{% if can_restore %}
+<section class="restore">
+  <h2>{{ _("Restore the database from the archive") }}</h2>
+  <p>{{ _("The database is empty, and the archive folder contains metadata.json. Restoring rebuilds tags, entities, documents and history from it — for example after moving to a new PC.") }}</p>
+  <form method="post" hx-post="/maintenance/restore" hx-target="main" hx-select="main" hx-swap="outerHTML"
+        hx-confirm="{{ _('Rebuild the database from metadata.json?') }}">
+    <button>{{ _("Restore from metadata.json") }}</button>
+  </form>
+</section>
+{% endif %}
+
+<h2>{{ _("Integrity check") }}</h2>
+<p>{{ _("Compares the documents with the files in the archive folder. Nothing is changed.") }}</p>
+<p>
+  <button hx-post="/maintenance/check" hx-target="#integrity-result" hx-disabled-elt="this">{{ _("Quick check") }}</button>
+  <button hx-post="/maintenance/check?full=true" hx-target="#integrity-result" hx-disabled-elt="this">{{ _("Full check (re-read every file)") }}</button>
+</p>
+<div id="integrity-result">{% if report %}{% include "_integrity_report.html" %}{% endif %}</div>
+
+<h2>{{ _("metadata.json") }}</h2>
+<p>{{ _("A complete, readable copy of the database, kept next to the files in the archive folder and refreshed shortly after every change. With it, the database can be rebuilt anywhere.") }}</p>
+<table>
+  <tr><th>{{ _("File") }}</th><td><code>{{ metadata_file }}</code>{% if not metadata_exists %} <span class="warn">{{ _("(not written yet)") }}</span>{% endif %}</td></tr>
+  <tr><th>{{ _("Last written") }}</th><td>{{ exporter.last_written.astimezone().strftime("%Y-%m-%d %H:%M:%S") if exporter.last_written else _("not in this session") }}</td></tr>
+  {% if exporter.last_error %}<tr><th>{{ _("Last error") }}</th><td class="warn">{{ exporter.last_error }}</td></tr>{% endif %}
+</table>
+<form hx-post="/maintenance/metadata" hx-target="main" hx-select="main" hx-swap="outerHTML">
+  <button>{{ _("Write metadata.json now") }}</button>
+</form>
+
+<h2>{{ _("Database backups") }}</h2>
+<p>{{ _("A backup is made at every start and before every database upgrade; the newest %(n)s are kept in", n=keep) }} <code>{{ backup_dir }}</code>.</p>
+<form hx-post="/maintenance/backup" hx-target="main" hx-select="main" hx-swap="outerHTML">
+  <button>{{ _("Back up now") }}</button>
+</form>
+<ul>
+  {% for b in backups %}<li><code>{{ b.name }}</code> <span class="muted">({{ (b.stat().st_size / 1024)|round(1) }} KB)</span></li>
+  {% else %}<li class="muted">{{ _("No backups yet.") }}</li>{% endfor %}
+</ul>
+{% endblock %}

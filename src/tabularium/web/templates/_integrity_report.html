@@ -1,0 +1,26 @@
+{# expects: report (IntegrityReport) #}
+{% macro problems(title, items, hint) -%}
+  {% if items %}
+  <h4>{{ title }} ({{ items|length }})</h4>
+  <p class="muted"><small>{{ hint }}</small></p>
+  <ul>
+    {% for p in items %}
+    <li><code>{{ p.path }}</code>
+      {% if p.document_id %} — <a href="/documents/{{ p.document_id }}">{{ p.name }}</a>{% endif %}
+      {% if p.detail %} <span class="muted">({{ p.detail }})</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+{%- endmacro %}
+<div id="integrity-report">
+  {% if report.healthy %}
+    <p class="flash ok">{{ _("All good: %(ok)s of %(n)s documents verified.", ok=report.ok, n=report.checked) }}
+    {% if report.full %}{{ _("(content hashes compared)") }}{% else %}{{ _("(files present, sizes match)") }}{% endif %}</p>
+  {% else %}
+    <p class="flash error">{{ _("Problems found. %(ok)s of %(n)s documents verified.", ok=report.ok, n=report.checked) }}</p>
+  {% endif %}
+  {{ problems(_("Missing files"), report.missing, _("The archive file is gone. Restore it from a backup of the archive folder (e.g. OneDrive version history).")) }}
+  {{ problems(_("Changed files"), report.changed, _("The archive file no longer matches what was imported. Restore it from a backup of the archive folder.")) }}
+  {{ problems(_("Cloud-only (not verified)"), report.cloud_only, _("OneDrive placeholders are not downloaded by the check. Set the archive folder to “Always keep on this device”.")) }}
+  {{ problems(_("Files no document refers to"), report.orphans, _("For example OneDrive conflict copies or leftovers. Nothing is deleted automatically; review them in Explorer.")) }}
+</div>

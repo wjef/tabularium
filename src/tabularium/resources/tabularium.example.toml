@@ -23,5 +23,9 @@ ignore = ["*.tmp", "~$*", "desktop.ini", "Thumbs.db", "*.partial", "*.crdownload
 [retention]
 years = 5
 
+[backup]
+keep = 10                       # database backups kept in <app home>/backups
+metadata_interval_seconds = 30  # how often metadata.json in the archive is refreshed
+
 [ui]
 language = "en"

@@ -206,11 +206,19 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 
 ## 10. Reliability, portability, future cloud
 - Single running instance enforced by a lock file in app home.
-- Database backup on each start (keep last N) + `metadata.json` export into the archive folder.
-- Integrity check: missing files, hash mismatches, orphan files in the archive (e.g. OneDrive
-  conflict copies), cloud-only placeholders (detected without downloading).
-- **Restore test:** the database can be rebuilt from `metadata.json` + archive files.
-- **Full export / import** to move the archive to another PC.
+- Database backup (SQLite backup API) on every start and before every migration, newest
+  `[backup] keep` (10) kept in `<app home>/backups`; manual backup on the Maintenance page.
+- `metadata.json` in the archive root: every table as readable JSON (plus tag paths and
+  display names), rewritten atomically within `metadata_interval_seconds` (30) after any
+  committed change, at start and on shutdown. Not included: the ingest log.
+- Integrity check (Maintenance page, quick = presence + size, full = re-hash): missing
+  files, changed files, orphan files in the archive (e.g. OneDrive conflict copies; an
+  orphan with the content of a missing document is pointed out), cloud-only placeholders
+  (reported, never downloaded). It only reports; nothing is changed or deleted.
+- **Restore:** into an empty database of the same schema version, from the archive's
+  `metadata.json` (Maintenance page); followed by an integrity check. Tested as a round
+  trip (export → rebuild → identical tables).
+- **Moving PCs** = copy the archive folder, point the new installation at it, restore.
 - Cloud readiness: SQLAlchemy 2 + Alembic (portable to PostgreSQL), file access through a
   storage interface (local now, blob storage later), UUIDs and relative paths only.
 
