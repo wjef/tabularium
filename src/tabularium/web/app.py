@@ -18,7 +18,13 @@ from tabularium.config import Config
 from tabularium.ingest import IngestBusyError, Ingestor
 from tabularium.services.documents import untagged_documents
 from tabularium.storage import LocalStorage
-from tabularium.web import routes_documents, routes_entities, routes_history, routes_tags
+from tabularium.web import (
+    routes_documents,
+    routes_entities,
+    routes_history,
+    routes_search,
+    routes_tags,
+)
 from tabularium.web.deps import make_templates, render
 from tabularium.web.security import LocalOnlyMiddleware, new_csrf_token
 
@@ -61,6 +67,7 @@ def create_app(
     app.add_middleware(LocalOnlyMiddleware, csrf_token=csrf_token)
     app.mount("/static", StaticFiles(directory=str(_WEB / "static")), name="static")
     app.include_router(routes_documents.router)
+    app.include_router(routes_search.router)
     app.include_router(routes_tags.router)
     app.include_router(routes_entities.router)
     app.include_router(routes_history.router)

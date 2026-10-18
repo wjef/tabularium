@@ -125,6 +125,10 @@ class LocalStorage:
         """Undo a ``commit`` whose database record could not be written."""
         _unlink_quietly(self._path(key))
 
+    def local_path(self, key: str) -> Path:
+        """Where the file lives on disk (local storage only; e.g. for "Show in Explorer")."""
+        return self._path(key)
+
     def exists(self, key: str) -> bool:
         return os.path.isfile(lp(self._path(key)))
 

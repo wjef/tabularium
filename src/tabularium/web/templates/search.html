@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Search") }} – Tabularium{% endblock %}
+{% macro tag_tree(nodes) -%}
+<ul class="checktree">
+  {% for node in nodes %}
+  <li>
+    <label><input type="checkbox" name="tag" value="{{ node.tag.id }}"{% if node.tag.id in selected_tags %} checked{% endif %}>
+      {{ node.tag.name }}</label>
+    {% if node.children %}{{ tag_tree(node.children) }}{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{%- endmacro %}
+{% block content %}
+<h1>{{ _("Search") }}</h1>
+<div class="search-layout">
+  <form class="filters" method="get" action="/search">
+    <p>
+      <input type="search" name="q" value="{{ q }}" placeholder="{{ _('title, file name, note') }}">
+      <button>{{ _("Search") }}</button>
+      <a href="/search">{{ _("Clear") }}</a>
+    </p>
+    <p>
+      {{ _("Document date") }}<br>
+      <input type="date" name="from" value="{{ date_from }}" aria-label="{{ _('from') }}">
+      – <input type="date" name="to" value="{{ date_to }}" aria-label="{{ _('to') }}">
+    </p>
+    <h3>{{ _("Tags") }}</h3>
+    <p class="muted"><small>{{ _("A tag includes everything below it; also ticking a tag below it narrows to that one. Several tags in one facet: any of them. Tags in different facets: all of them.") }}</small></p>
+    {% if roots %}{{ tag_tree(roots) }}{% else %}<p class="muted">{{ _("No tags yet.") }}</p>{% endif %}
+    <h3>{{ _("Involving") }}</h3>
+    <p class="muted"><small>{{ _("Documents with any tag pointing to one of the chosen entities.") }}</small></p>
+    {% for entity_type, members in entity_groups %}
+      <strong>{{ entity_type.name }}</strong>
+      <ul class="checktree">
+        {% for e in members %}
+        <li><label><input type="checkbox" name="entity" value="{{ e.id }}"{% if e.id in selected_entities %} checked{% endif %}> {{ e.name }}</label></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">{{ _("No entities yet.") }}</p>
+    {% endfor %}
+    <p><button>{{ _("Search") }}</button></p>
+  </form>
+
+  <section class="results">
+    <p>
+      {% if total > results|length %}
+        {{ _("%(n)s documents found, showing the first %(m)s.", n=total, m=results|length) }}
+      {% else %}
+        {{ _("%(n)s document(s) found.", n=total) }}
+      {% endif %}
+    </p>
+    <form id="export-form" action="/documents/export" method="post" data-export
+          data-msg-empty="{{ _('Select at least one document.') }}"
+          data-msg-busy="{{ _('Preparing the zip…') }}"
+          data-msg-failed="{{ _('Export failed:') }}">
+      <table class="doclist">
+        {% for d in results %}
+        <tr{% if doc and d.id == doc.id %} class="selected"{% endif %}>
+          <td><input type="checkbox" name="doc_ids" value="{{ d.id }}" aria-label="{{ _('select') }}"></td>
+          <td>
+            <a href="/search?{{ base_query }}{{ '&' if base_query else '' }}id={{ d.id }}">{{ d.title or d.original_filename }}</a><br>
+            <small class="muted">{{ result_tags[d.id] | join(" · ") }}</small>
+          </td>
+          <td class="muted">{{ d.document_date.isoformat() if d.document_date else "" }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% if results %}
+      <p>
+        <label><input type="checkbox" data-select-all> {{ _("select all") }}</label>
+        <button>{{ _("Export selected (zip)") }}</button>
+        <span class="export-status" role="status"></span>
+      </p>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="selected-doc">
+    {% if doc %}
+      {% include "_doc_panel.html" %}
+    {% else %}
+      <p class="muted">{{ _("Select a document to preview it.") }}</p>
+    {% endif %}
+  </section>
+</div>
+<script src="/static/export.js" defer></script>
+{% endblock %}

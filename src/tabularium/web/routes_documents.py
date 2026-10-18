@@ -4,15 +4,19 @@ Mutations on one document return its metadata block (tags, details, history) so 
 is not reloaded; in the inbox the document list is refreshed out-of-band alongside.
 """
 
+import tempfile
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from tabularium import desktop, paths
+from tabularium.desktop import DesktopError
+from tabularium.export import make_open_copy, write_zip
 from tabularium.i18n import N_
 from tabularium.models import AuditLog, Document, DocumentTag, Entity, Tag
 from tabularium.services import DomainError
@@ -291,3 +295,105 @@ def bulk_tag(
             "list_error": error,
         },
     )
+
+
+# --- export, open, show ---------------------------------------------------------------
+
+
+def document_tag_paths(
+    session: Session, document_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, list[str]]:
+    """Document id → sorted tag paths, for many documents in one query."""
+    paths = tag_paths(session)
+    result: dict[uuid.UUID, list[str]] = {i: [] for i in document_ids}
+    rows = session.execute(
+        select(DocumentTag.document_id, DocumentTag.tag_id).where(
+            DocumentTag.document_id.in_(document_ids)
+        )
+    )
+    for document_id, tag_id in rows:
+        result[document_id].append(paths[tag_id])
+    for value in result.values():
+        value.sort(key=str.casefold)
+    return result
+
+
+@router.post("/documents/export")
+def export_documents(
+    request: Request,
+    session: SessionDep,
+    doc_ids: Annotated[list[str] | None, Form()] = None,
+):
+    """Selected documents as a zip of readable copies (plus index.csv)."""
+    ids = [i for i in (parse_uuid(v) for v in doc_ids or []) if i is not None]
+    if not ids:
+        raise HTTPException(status_code=400, detail="Select at least one document.")
+    documents = list(
+        session.scalars(
+            select(Document)
+            .where(Document.id.in_(ids))
+            .order_by(Document.document_date, Document.original_filename)
+        )
+    )
+    storage = request.app.state.storage
+    missing = [d.original_filename for d in documents if not storage.exists(d.stored_path)]
+    if missing:
+        raise HTTPException(status_code=409, detail=f"Missing from the archive: {missing}")
+
+    spool = tempfile.SpooledTemporaryFile(max_size=32 * 1024 * 1024)  # noqa: SIM115
+    write_zip(storage, documents, document_tag_paths(session, ids), spool)
+    size = spool.tell()
+    spool.seek(0)
+
+    def chunks():
+        try:
+            while chunk := spool.read(1024 * 1024):
+                yield chunk
+        finally:
+            spool.close()
+
+    stamp = datetime.now().strftime("%Y-%m-%d %H%M")
+    return StreamingResponse(
+        chunks(),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="Tabularium export {stamp}.zip"',
+            "Content-Length": str(size),
+        },
+    )
+
+
+def _desktop_action(request: Request, session: Session, document_id: uuid.UUID, action):
+    document = _get_document(session, document_id)
+    try:
+        message = action(document, request.app.state.storage)
+        return render(request, "_flash.html", {"message": message, "error": None})
+    except (DesktopError, OSError) as exc:
+        return render(request, "_flash.html", {"message": None, "error": str(exc)})
+
+
+@router.post("/documents/{document_id}/open", response_class=HTMLResponse)
+def open_document(request: Request, session: SessionDep, document_id: uuid.UUID):
+    def action(document, storage):
+        if desktop.is_runnable(document.original_filename):
+            raise DesktopError(
+                "Programs and scripts are not opened from the archive. "
+                "Use Download or Show in Explorer if you really need the file."
+            )
+        copy = make_open_copy(storage, document, paths.app_home() / "tmp" / "open")
+        desktop.open_with_default_app(copy)
+        return N_("Opened a read-only copy; changes to it are not saved in the archive.")
+
+    return _desktop_action(request, session, document_id, action)
+
+
+@router.post("/documents/{document_id}/reveal", response_class=HTMLResponse)
+def reveal_document(request: Request, session: SessionDep, document_id: uuid.UUID):
+    def action(document, storage):
+        local_path = getattr(storage, "local_path", None)
+        if local_path is None:
+            raise DesktopError("This archive is not on a local disk.")
+        desktop.show_in_explorer(local_path(document.stored_path))
+        return N_("Shown in Explorer (archived files have hash names).")
+
+    return _desktop_action(request, session, document_id, action)

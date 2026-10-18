@@ -9,7 +9,12 @@
     {% else %}
       <p class="muted">{{ _("No preview for this file type.") }}</p>
     {% endif %}
-    <p><a href="{{ file_url }}?download=1">{{ _("Download original") }}</a></p>
+    <p>
+      <button hx-post="/documents/{{ doc.id }}/open" hx-target="#desktop-result">{{ _("Open copy in default app") }}</button>
+      <button hx-post="/documents/{{ doc.id }}/reveal" hx-target="#desktop-result">{{ _("Show in Explorer") }}</button>
+      <a href="{{ file_url }}?download=1">{{ _("Download original") }}</a>
+    </p>
+    <div id="desktop-result"></div>
   </div>
   <div class="meta">
     {% include "_doc_meta.html" %}

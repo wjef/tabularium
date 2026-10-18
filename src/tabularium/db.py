@@ -9,6 +9,8 @@ from alembic.config import Config as AlembicConfig
 from sqlalchemy import DateTime, Engine, MetaData, TypeDecorator, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
+from tabularium.text import normalize
+
 # Stable constraint names, so migrations work identically on SQLite and PostgreSQL.
 NAMING_CONVENTION = {
     "ix": "ix_%(column_0_label)s",
@@ -63,6 +65,11 @@ def _sqlite_pragmas(dbapi_connection, _record) -> None:
     cursor.execute("PRAGMA foreign_keys = ON")
     cursor.execute("PRAGMA journal_mode = WAL")  # safe: the database is on a local disk
     cursor.close()
+    # tnorm(x): the app's own normalization (case, diacritics, ł → l) for text search.
+    # A PostgreSQL backend would need an equivalent function (e.g. unaccent + lower).
+    dbapi_connection.create_function(
+        "tnorm", 1, lambda v: None if v is None else normalize(v), deterministic=True
+    )
 
 
 def make_session_factory(engine: Engine) -> sessionmaker:

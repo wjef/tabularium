@@ -35,3 +35,9 @@ label.check input { display: inline; width: auto; }
 .meta table { table-layout: fixed; width: 100%; }
 .meta td, .meta th { overflow-wrap: anywhere; }
 .meta code { word-break: break-all; }
+.search-layout { display: flex; gap: 1em; align-items: flex-start; flex-wrap: wrap; }
+.search-layout .filters { flex: 0 1 260px; min-width: 0; border-right: 1px solid #000; padding-right: 1em; }
+.search-layout .results { flex: 1 1 300px; min-width: 0; }
+.search-layout .selected-doc { flex: 3 1 560px; min-width: 0; }
+ul.checktree { list-style: none; padding-left: 1em; margin: .1em 0; }
+ul.checktree label { cursor: pointer; }

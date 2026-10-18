@@ -154,7 +154,13 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 - **Archive** view: tag-tree filter → document list (left) → preview (right).
 - Preview inline for PDF, PNG/JPEG/GIF/WebP/BMP images and plain text. Every other type
   (including HTML, SVG, Office files) is only offered as a download, never rendered in the
-  app's origin. Later: "Open in default app", "Show in Explorer" (M5).
+  app's origin.
+- **Open copy in default app**: a read-only copy with a readable name is made in
+  `<app home>\tmp\open` (cleaned after a day) and handed to Windows, so an editor can never
+  change the archived file. **Show in Explorer** selects the archived (hash-named) file.
+- **Export**: selected documents as a zip of copies named `YYYY-MM-DD <title or original
+  name>.<ext>` (Windows-safe, de-duplicated) plus `index.csv` (name, original name, date,
+  title, tags, SHA-256; UTF-8 with BOM for Excel).
 - Tags are added by typing a full path (`sender / Jan Kowalski`, case/diacritic-insensitive)
   from a suggestion list, by picking *under which tag + which entity* (the entity tag is
   reused or created), or by creating a new tag on the spot.
@@ -164,10 +170,19 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   Known gap: error messages raised by domain services are English-only for now.
 
 ### 8.1 Search semantics
-- Selecting a tag includes all its descendants.
+- Selecting a tag includes all its descendants. Ticking a tag *and* one below it narrows to
+  the lower one (`sender` + `sender / Jan Kowalski` = sent by Jan).
 - **OR within a facet, AND across facets.**
-- "Anything involving entity X" = documents with any tag pointing to X.
-- Additional filters: filename/title text, document date range.
+- "Anything involving entity X" = documents with any tag pointing to X; several chosen
+  entities form one more group (any of them).
+- Additional filters: text in title, original file name and note (every word must match,
+  case/diacritic-insensitive), document date range (documents without a date are then
+  excluded). Results: newest document date first, undated last; first 500 shown.
+- Search is a GET form, so every search is a bookmarkable URL.
+- Known gap (ADR 0009): text search uses a SQLite function (`tnorm`) for case/diacritic
+  folding; a PostgreSQL backend needs an equivalent (e.g. `unaccent` + `lower`).
+- "Open copy" refuses programs and scripts (`.exe`, `.bat`, `.ps1`, `.js`, `.lnk`, …):
+  copies lose the internet-origin marker that normally makes Windows warn.
 
 ## 9. Security and privacy
 - Server binds to loopback only. Host header allow-list (DNS-rebinding protection),
