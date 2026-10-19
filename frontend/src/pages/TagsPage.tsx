@@ -146,7 +146,7 @@ function TagDetail({ tag, hasChildren, onGone }: { tag: TagNode; hasChildren: bo
               existingOnly
               assigned={self}
               label="New parent tag"
-              placeholder={parentPath ? `Now under “${parentPath}” — type a new parent…` : "Type a parent tag…"}
+              placeholder="New parent tag…"
               onPick={(c) => c.kind === "tag" && move.mutate(c.tag.id)}
             />
           </div>

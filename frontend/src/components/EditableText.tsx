@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useLayoutEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react";
 import styles from "./EditableText.module.css";
 
 interface Props {
@@ -9,13 +9,15 @@ interface Props {
   onSave: (value: string) => void;
   multiline?: boolean;
   className?: string;
+  /** lets a keyboard shortcut start editing (by clicking the text) */
+  buttonRef?: RefObject<HTMLButtonElement | null>;
 }
 
 /**
  * Text that turns into a field on click. Enter (Ctrl+Enter for several lines) or leaving the
  * field saves; Escape cancels.
  */
-export function EditableText({ value, placeholder, label, onSave, multiline = false, className = "" }: Props) {
+export function EditableText({ value, placeholder, label, onSave, multiline = false, className = "", buttonRef }: Props) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const area = useRef<HTMLTextAreaElement>(null);
@@ -61,6 +63,7 @@ export function EditableText({ value, placeholder, label, onSave, multiline = fa
   }
   return (
     <button
+      ref={buttonRef}
       type="button"
       className={`${className} ${styles.display} ${value ? "" : styles.placeholder}`}
       onClick={start}

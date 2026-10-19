@@ -8,6 +8,7 @@ import { TagPicker } from "../components/TagPicker";
 import { toast } from "../components/toast";
 import { fileBadge, formatDate, shortName } from "../lib/format";
 import { isTyping } from "../lib/keys";
+import { useTitle } from "../lib/useTitle";
 import styles from "./DocumentList.module.css";
 import { useView } from "./useView";
 
@@ -60,6 +61,7 @@ export function DocumentList() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (document.querySelector("dialog[open]")) return;
       if (event.key === "/" && !isTyping(event)) {
         event.preventDefault();
         searchBox.current?.focus();
@@ -85,6 +87,7 @@ export function DocumentList() {
   const entities = useEntities().data;
   const entity = filters.entity?.length === 1 ? entities?.find((e) => e.id === filters.entity![0]) : undefined;
   const title = section === "inbox" ? "To be tagged" : tag ? tag.name : entity ? entity.name : "All documents";
+  useTitle(selected ? null : filters.q ? `“${filters.q}”` : title);
   const words = (filters.q ?? "").toLowerCase().split(/\s+/).filter((w) => w.length > 1);
 
   // several documents picked with Ctrl/Shift+click, for bulk actions; forgotten when the filters change

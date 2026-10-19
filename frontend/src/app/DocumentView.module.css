@@ -465,3 +465,30 @@
 .secondary:hover {
   background: var(--chip-bg);
 }
+
+.loadingHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 28px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.loadingBody {
+  flex: 1;
+  background: var(--bg-subtle);
+}
+
+.shimmer {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--chip-bg) 0%, var(--border) 50%, var(--chip-bg) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}

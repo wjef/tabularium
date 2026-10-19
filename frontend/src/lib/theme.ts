@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 export type ThemeChoice = "system" | "light" | "dark";
 const KEY = "tabularium.theme";
@@ -18,16 +18,29 @@ function apply(choice: ThemeChoice) {
   else root.setAttribute("data-theme", choice);
 }
 
-/** Theme choice remembered per browser; "system" follows Windows' light/dark setting. */
+let current = read();
+apply(current);
+const listeners = new Set<() => void>();
+
+function setTheme(next: ThemeChoice) {
+  current = next;
+  apply(next);
+  try {
+    localStorage.setItem(KEY, next);
+  } catch {
+    /* private mode: fine, just not remembered */
+  }
+  listeners.forEach((l) => l());
+}
+
+/** Theme choice shared by the whole app and remembered per browser; "system" follows Windows. */
 export function useTheme(): [ThemeChoice, (next: ThemeChoice) => void] {
-  const [choice, setChoice] = useState<ThemeChoice>(read);
-  useEffect(() => {
-    apply(choice);
-    try {
-      localStorage.setItem(KEY, choice);
-    } catch {
-      /* private mode: fine, just not remembered */
-    }
-  }, [choice]);
-  return [choice, setChoice];
+  const choice = useSyncExternalStore(
+    (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    () => current,
+  );
+  return [choice, setTheme];
 }

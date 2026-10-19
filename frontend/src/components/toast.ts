@@ -1,9 +1,15 @@
 import { useSyncExternalStore } from "react";
 
+export interface ToastAction {
+  label: string;
+  run: () => void;
+}
+
 export interface Toast {
   id: number;
   message: string;
   kind: "info" | "error";
+  action?: ToastAction;
 }
 
 let toasts: Toast[] = [];
@@ -16,12 +22,12 @@ export function dismiss(id: number) {
   emit();
 }
 
-/** Short message at the bottom of the screen; errors stay a little longer. */
-export function toast(message: string, kind: Toast["kind"] = "info") {
+/** Short message at the bottom of the screen; errors and ones with an action stay longer. */
+export function toast(message: string, kind: Toast["kind"] = "info", action?: ToastAction) {
   const id = nextId++;
-  toasts = [...toasts.slice(-3), { id, message, kind }];
+  toasts = [...toasts.slice(-3), { id, message, kind, action }];
   emit();
-  setTimeout(() => dismiss(id), kind === "error" ? 8000 : 4000);
+  setTimeout(() => dismiss(id), kind === "error" ? 8000 : action ? 7000 : 4000);
 }
 
 export function useToasts(): Toast[] {

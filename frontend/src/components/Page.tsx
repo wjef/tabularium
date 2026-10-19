@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTitle } from "../lib/useTitle";
 import styles from "./Page.module.css";
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 
 /** Frame of a management page: title row, then scrolling content. */
 export function Page({ title, subtitle, actions, children, wide = false }: Props) {
+  useTitle(title);
   return (
     <main className={styles.page}>
       <header className={styles.header}>

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "../components/toast";
 import type { TagChoice } from "../lib/tagChoices";
 import { api, type DocumentDetail } from "./client";
@@ -11,32 +11,65 @@ export interface DocumentChanges {
 }
 
 /** After a change: the document view shows the server's answer, lists and counts refresh. */
-function useRefresh() {
-  const client = useQueryClient();
-  return (detail?: DocumentDetail) => {
-    if (detail) client.setQueryData(["document", detail.id], detail);
-    void client.invalidateQueries({ queryKey: ["documents"] });
-    void client.invalidateQueries({ queryKey: ["info"] });
-  };
+function refreshAfter(client: QueryClient, detail?: DocumentDetail, tags = false) {
+  if (detail) client.setQueryData(["document", detail.id], detail);
+  void client.invalidateQueries({ queryKey: ["documents"] });
+  void client.invalidateQueries({ queryKey: ["info"] });
+  void client.invalidateQueries({ queryKey: ["history"] });
+  if (tags) void client.invalidateQueries({ queryKey: ["tags"] });
 }
 
 const showError = (error: Error) => toast(error.message, "error");
 
+/** A message with an "Undo" button that runs `undo` and refreshes everything it touched. */
+function offerUndo(client: QueryClient, message: string, undo: () => Promise<unknown>) {
+  toast(message, "info", {
+    label: "Undo",
+    run: () => {
+      undo()
+        .then((result) => {
+          const detail = result && typeof result === "object" && "id" in result ? (result as DocumentDetail) : undefined;
+          refreshAfter(client, detail, true);
+          void client.invalidateQueries({ queryKey: ["document"] });
+          void client.invalidateQueries({ queryKey: ["outdated"] });
+          toast("Undone.");
+        })
+        .catch(showError);
+    },
+  });
+}
+
+const FIELD_NAMES: Record<string, string> = { title: "Title", note: "Note", document_date: "Document date" };
+
 export function useUpdateDocument(id: string) {
-  const refresh = useRefresh();
+  const client = useQueryClient();
   return useMutation({
     mutationFn: (changes: DocumentChanges) => api.patch<DocumentDetail>(`/documents/${id}`, changes),
-    onSuccess: (detail) => refresh(detail),
+    onMutate: () => client.getQueryData<DocumentDetail>(["document", id]),
+    onSuccess: (detail, changes, before) => {
+      refreshAfter(client, detail);
+      if (!before) return;
+      const field = changes.clear_document_date ? "document_date" : Object.keys(changes)[0];
+      const undo: DocumentChanges =
+        field === "document_date"
+          ? before.document_date
+            ? { document_date: before.document_date }
+            : { clear_document_date: true }
+          : { [field]: (before[field as "title" | "note"] as string | null) ?? "" };
+      offerUndo(client, `${FIELD_NAMES[field] ?? "Document"} changed.`, () =>
+        api.patch<DocumentDetail>(`/documents/${id}`, undo),
+      );
+    },
     onError: showError,
   });
 }
 
 export function useExtractAgain(id: string) {
-  const refresh = useRefresh();
+  const client = useQueryClient();
   return useMutation({
     mutationFn: () => api.post<DocumentDetail>(`/documents/${id}/extract`),
     onSuccess: (detail) => {
-      refresh(detail);
+      refreshAfter(client, detail);
       toast("The text will be read again in the background.");
     },
     onError: showError,
@@ -45,15 +78,14 @@ export function useExtractAgain(id: string) {
 
 export function useOutdate(id: string) {
   const client = useQueryClient();
-  const refresh = useRefresh();
   return useMutation({
     mutationFn: (reason: string) =>
       api.post<{ message: string }>(`/documents/${id}/outdate`, { reason: reason.trim() || null }),
     onSuccess: (result) => {
       client.removeQueries({ queryKey: ["document", id] });
-      refresh();
-      void client.invalidateQueries({ queryKey: ["tags"] });
-      toast(result.message);
+      refreshAfter(client, undefined, true);
+      void client.invalidateQueries({ queryKey: ["outdated"] });
+      offerUndo(client, result.message, () => api.post(`/outdated/${id}/restore`));
     },
     onError: showError,
   });
@@ -66,30 +98,26 @@ function assignBody(choice: TagChoice) {
   return { name: choice.name, parent_id: choice.parent?.id ?? null };
 }
 
-/** Tag changes also change the tag tree (new tags, counts). */
-function useTagRefresh() {
-  const client = useQueryClient();
-  const refresh = useRefresh();
-  return (detail?: DocumentDetail) => {
-    refresh(detail);
-    void client.invalidateQueries({ queryKey: ["tags"] });
-  };
-}
-
 export function useAddTag(id: string) {
-  const refresh = useTagRefresh();
+  const client = useQueryClient();
   return useMutation({
     mutationFn: (choice: TagChoice) => api.post<DocumentDetail>(`/documents/${id}/tags`, assignBody(choice)),
-    onSuccess: (detail) => refresh(detail),
+    onSuccess: (detail) => refreshAfter(client, detail, true),
     onError: showError,
   });
 }
 
 export function useRemoveTag(id: string) {
-  const refresh = useTagRefresh();
+  const client = useQueryClient();
   return useMutation({
     mutationFn: (tagId: string) => api.delete<DocumentDetail>(`/documents/${id}/tags/${tagId}`),
-    onSuccess: (detail) => refresh(detail),
+    onMutate: (tagId) => client.getQueryData<DocumentDetail>(["document", id])?.tags.find((t) => t.id === tagId),
+    onSuccess: (detail, tagId, tag) => {
+      refreshAfter(client, detail, true);
+      offerUndo(client, `Tag “${tag?.name ?? "tag"}” removed.`, () =>
+        api.post<DocumentDetail>(`/documents/${id}/tags`, { tag_id: tagId }),
+      );
+    },
     onError: showError,
   });
 }
@@ -106,7 +134,6 @@ async function resolveTag(choice: TagChoice): Promise<string> {
 
 export function useBulkTag() {
   const client = useQueryClient();
-  const refresh = useTagRefresh();
   return useMutation({
     mutationFn: async ({ ids, choice }: { ids: string[]; choice: TagChoice }) => {
       const tagId = await resolveTag(choice);
@@ -114,7 +141,7 @@ export function useBulkTag() {
       return Number(result.message);
     },
     onSuccess: (added, { ids, choice }) => {
-      refresh();
+      refreshAfter(client, undefined, true);
       ids.forEach((id) => void client.invalidateQueries({ queryKey: ["document", id] }));
       const name = choice.kind === "tag" ? choice.tag.name : choice.kind === "entity" ? choice.entity.name : choice.name;
       toast(`Tag “${name}” added to ${added} ${added === 1 ? "document" : "documents"}.`);
@@ -124,13 +151,12 @@ export function useBulkTag() {
 }
 
 export function useAddLink(id: string) {
-  const refresh = useRefresh();
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ otherId, kind }: { otherId: string; kind: string }) =>
       api.post<DocumentDetail>(`/documents/${id}/links`, { other_id: otherId, kind }),
     onSuccess: (detail, { otherId }) => {
-      refresh(detail);
+      refreshAfter(client, detail);
       void client.invalidateQueries({ queryKey: ["document", otherId] });
     },
     onError: showError,
@@ -138,14 +164,23 @@ export function useAddLink(id: string) {
 }
 
 export function useRemoveLink(id: string) {
-  const refresh = useRefresh();
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ relationId }: { relationId: string; otherId: string }) =>
       api.delete<DocumentDetail>(`/documents/${id}/links/${relationId}`),
-    onSuccess: (detail, { otherId }) => {
-      refresh(detail);
+    onMutate: ({ relationId }) =>
+      client.getQueryData<DocumentDetail>(["document", id])?.links.find((l) => l.relation_id === relationId),
+    onSuccess: (detail, { otherId }, link) => {
+      refreshAfter(client, detail);
       void client.invalidateQueries({ queryKey: ["document", otherId] });
+      if (link) {
+        offerUndo(client, "Link removed.", () =>
+          api.post<DocumentDetail>(`/documents/${id}/links`, {
+            other_id: link.other.id,
+            kind: `${link.kind}:${link.direction}`,
+          }),
+        );
+      }
     },
     onError: showError,
   });
@@ -167,7 +202,7 @@ export function useAction<A = void, R = { message: string }>(
   return useMutation({
     mutationFn: fn,
     onSuccess: (result, args) => {
-      for (const key of invalidate) void client.invalidateQueries({ queryKey: key });
+      for (const key of [...invalidate, ["history"]]) void client.invalidateQueries({ queryKey: key });
       const message = success?.(result, args);
       if (message) toast(message);
     },

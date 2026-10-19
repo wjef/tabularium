@@ -53,3 +53,16 @@
     transform: translateY(8px);
   }
 }
+
+.toast .action {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--side-accent);
+  font: inherit;
+  font-weight: 600;
+}
+
+.toast .action:hover {
+  background: var(--side-bg-active);
+  color: var(--side-accent);
+}

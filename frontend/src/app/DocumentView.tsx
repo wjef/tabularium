@@ -19,8 +19,10 @@ import { useAddTag, useExtractAgain, useOutdate, useRemoveTag, useUpdateDocument
 import { EditableText } from "../components/EditableText";
 import { TagChip } from "../components/TagChip";
 import { TagPicker } from "../components/TagPicker";
+import { toast } from "../components/toast";
 import { fileBadge, formatDate, formatSize, shortName } from "../lib/format";
 import { isTyping } from "../lib/keys";
+import { useTitle } from "../lib/useTitle";
 import styles from "./DocumentView.module.css";
 import { RelatedDocuments } from "./RelatedDocuments";
 import { useView } from "./useView";
@@ -40,16 +42,29 @@ export function DocumentView() {
   const { data: doc, isPending, isError, error } = useDocument(selected);
   const [infoOpen, setInfoOpen] = useInfoOpen();
   const [mode, setMode] = useState<Mode>("preview");
+  useTitle(doc ? (doc.title ?? shortName(doc.display_name)) : null);
   const tagInput = useRef<HTMLInputElement>(null);
 
-  // T: add a tag to the open document
+  const titleButton = useRef<HTMLButtonElement>(null);
+
+  // T: add a tag · E: edit the title · I: details on/off · O: open in the default app
   useEffect(() => {
     if (!selected) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "t" || event.ctrlKey || event.metaKey || event.altKey || isTyping(event)) return;
-      event.preventDefault();
-      setInfoOpen(() => true);
-      requestAnimationFrame(() => tagInput.current?.focus());
+      if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event)) return;
+      if (document.querySelector("dialog[open]")) return;
+      if (event.key === "t") {
+        event.preventDefault();
+        setInfoOpen(() => true);
+        requestAnimationFrame(() => tagInput.current?.focus());
+      } else if (event.key === "e") {
+        event.preventDefault();
+        titleButton.current?.click();
+      } else if (event.key === "i") {
+        setInfoOpen((v) => !v);
+      } else if (event.key === "o") {
+        api.post(`/documents/${selected}/open`).catch((e: Error) => toast(e.message, "error"));
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -63,7 +78,17 @@ export function DocumentView() {
       </main>
     );
   }
-  if (isPending) return <main className={styles.pane} aria-busy="true" />;
+  if (isPending) {
+    return (
+      <main className={styles.pane} aria-busy="true">
+        <div className={styles.loadingHeader}>
+          <span className={styles.shimmer} style={{ width: "55%", height: 26 }} />
+          <span className={styles.shimmer} style={{ width: "25%", height: 14 }} />
+        </div>
+        <div className={styles.loadingBody} />
+      </main>
+    );
+  }
   if (isError) {
     return (
       <main className={styles.empty}>
@@ -80,7 +105,7 @@ export function DocumentView() {
     <main className={styles.pane}>
       <header className={styles.toolbar}>
         <div className={styles.heading}>
-          <DocumentTitle doc={doc} />
+          <DocumentTitle doc={doc} buttonRef={titleButton} />
           <div className={styles.sub}>
             <DateField doc={doc} />
             <span aria-hidden>·</span>
@@ -125,7 +150,7 @@ export function DocumentView() {
   );
 }
 
-function DocumentTitle({ doc }: { doc: DocumentDetail }) {
+function DocumentTitle({ doc, buttonRef }: { doc: DocumentDetail; buttonRef: RefObject<HTMLButtonElement | null> }) {
   const save = useUpdateDocument(doc.id);
   return (
     <h2 className={styles.title}>
@@ -134,6 +159,7 @@ function DocumentTitle({ doc }: { doc: DocumentDetail }) {
         value={doc.title ?? ""}
         placeholder="Untitled"
         label="Title"
+        buttonRef={buttonRef}
         onSave={(title) => save.mutate({ title })}
       />
     </h2>
