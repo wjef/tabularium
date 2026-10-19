@@ -126,7 +126,14 @@ def test_readable_names_use_title_else_hash_and_are_safe():
     sha = "ab" * 32
 
     def doc(title, name="scan_0001.PDF", when=None):
-        return Document(title=title, original_filename=name, sha256=sha, document_date=when)
+        ext = name.rsplit(".", 1)[-1].lower()
+        return Document(
+            title=title,
+            original_filename=name,
+            stored_path=f"{sha[:2]}/{sha}.{ext}",
+            sha256=sha,
+            document_date=when,
+        )
 
     assert readable_name(doc("Faktura 03/2025: prąd?", when=date(2025, 3, 1))) == (
         "2025-03-01 Faktura 03_2025_ prąd_.pdf"

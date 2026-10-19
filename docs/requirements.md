@@ -191,6 +191,9 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 - **Document name in the app** = its title, otherwise its archive file name
   (`<sha256>.<ext>`). Original file names are often random (scanner/phone names), so
   they are shown only as reference in the document's *File* section (still searchable).
+- **Every file handed out** — download, preview, export, opened copy — is named
+  `[YYYY-MM-DD ]<title or sha256>.<ext>`; the original name is kept only for tracking
+  (database, `index.csv` in exports).
 - Tagging: add/remove tags, create tags inline, pick entities, **bulk tagging** of a selection.
 - English UI; all strings translatable (gettext); language selectable in config/UI later.
   Known gap: error messages raised by domain services are English-only for now.

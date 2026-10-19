@@ -12,7 +12,7 @@
     <p>
       <button hx-post="/documents/{{ doc.id }}/open" hx-target="#desktop-result">{{ _("Open copy in default app") }}</button>
       <button hx-post="/documents/{{ doc.id }}/reveal" hx-target="#desktop-result">{{ _("Show in Explorer") }}</button>
-      <a href="{{ file_url }}?download=1">{{ _("Download original") }}</a>
+      <a href="{{ file_url }}?download=1">{{ _("Download") }}</a>
     </p>
     <div id="desktop-result"></div>
   </div>

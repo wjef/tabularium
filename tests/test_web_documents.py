@@ -196,10 +196,24 @@ def test_pdf_is_served_inline_by_id(client, archive):
     assert r.content == b"%PDF-1.4 x"
     assert r.headers["content-type"] == "application/pdf"
     assert r.headers["content-disposition"].startswith("inline;")
-    assert (
-        "filename*=UTF-8''Faktura%20%E2%80%93%20Urz%C4%85d.pdf" in r.headers["content-disposition"]
-    )
+    # handed out under the new name (hash, no title yet), never the original name
+    sha = hashlib.sha256(b"%PDF-1.4 x").hexdigest()
+    assert f"filename*=UTF-8''{sha}.pdf" in r.headers["content-disposition"]
+    assert "Faktura" not in r.headers["content-disposition"]
     assert r.headers["x-content-type-options"] == "nosniff"
+
+
+def test_download_uses_date_and_title_once_set(client, archive):
+    doc = archive("IMG_20261017_scan.pdf", b"%PDF y", "application/pdf")
+    client.post(
+        f"/documents/{doc}/details",
+        data={"title": "Umowa najmu", "document_date": "2026-10-01", "retain_auto": "1"},
+    )
+    r = client.get(f"/documents/{doc}/file?download=1")
+    disposition = r.headers["content-disposition"]
+    assert disposition.startswith("attachment;")
+    assert "filename*=UTF-8''2026-10-01%20Umowa%20najmu.pdf" in disposition
+    assert "IMG_" not in disposition
 
 
 def test_download_flag_forces_attachment(client, archive):

@@ -10,6 +10,7 @@ from urllib.parse import quote
 
 from fastapi.responses import StreamingResponse
 
+from tabularium.export import readable_name
 from tabularium.models import Document
 from tabularium.storage import CHUNK, Storage
 
@@ -55,7 +56,7 @@ def file_response(storage: Storage, document: Document, *, download: bool) -> St
 
     headers = {
         "Content-Disposition": _content_disposition(
-            "inline" if inline else "attachment", document.original_filename
+            "inline" if inline else "attachment", readable_name(document)
         ),
         "Cache-Control": "private, max-age=3600",
     }

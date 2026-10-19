@@ -30,17 +30,18 @@ MAX_STEM = 120
 def readable_name(document: Document) -> str:
     """``[YYYY-MM-DD ]<title or sha256>.<ext>``, safe as a Windows file name.
 
-    Like in the app, the original file name is never used as the name (it is often random);
-    it is listed in ``index.csv`` instead.
+    Used for everything handed out (downloads, previews, exports, opened copies). The original
+    file name is never used (it is often random); it stays in the database for tracking and is
+    listed in ``index.csv``. The extension comes from the archive file name.
     """
-    original = PurePath(document.original_filename)
+    suffix = PurePath(document.stored_path).suffix or PurePath(document.original_filename).suffix
     stem = document.title or document.sha256
     if document.document_date:
         stem = f"{document.document_date.isoformat()} {stem}"
     stem = _INVALID.sub("_", stem).strip().rstrip(".") or "document"
     if _RESERVED.match(stem):
         stem = f"_{stem}"
-    return stem[:MAX_STEM].rstrip(" .") + original.suffix.lower()
+    return stem[:MAX_STEM].rstrip(" .") + suffix.lower()
 
 
 def unique_names(documents: Iterable[Document]) -> list[tuple[Document, str]]:
