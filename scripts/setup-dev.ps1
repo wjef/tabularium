@@ -30,6 +30,16 @@ if (-not (Test-Path $py)) {
 Invoke-Native $py @("-m", "pip", "install", "--upgrade", "pip")
 Invoke-Native $py @("-m", "pip", "install", "-e", "$repo[dev]")
 
+# Windows Smart App Control may refuse SQLAlchemy's unsigned compiled speed-ups ("An Application
+# Control policy has blocked this file"). The pure-Python build behaves identically.
+$saVersion = ((& $py -m pip show sqlalchemy) | Select-String "^Version: ").ToString().Split(" ")[1]
+$env:DISABLE_SQLALCHEMY_CEXT = "1"
+Invoke-Native $py @(
+    "-m", "pip", "install", "--force-reinstall", "--no-deps", "--no-binary", "sqlalchemy",
+    "sqlalchemy==$saVersion"
+)
+Remove-Item Env:\DISABLE_SQLALCHEMY_CEXT
+
 Push-Location $repo
 try {
     Invoke-Native $py @("-m", "pre_commit", "install", "--install-hooks")

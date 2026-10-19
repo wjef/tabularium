@@ -45,6 +45,12 @@ Invoke-WebRequest https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/
 
 Then click **Maintenance → Check OCR again**; waiting documents are read automatically.
 
+## Troubleshooting
+
+**"An Application Control policy has blocked this file"** at start: Windows Smart App
+Control refused one of SQLAlchemy's compiled speed-up files. Run `setup-dev.ps1` again; it
+installs SQLAlchemy's pure-Python build, which behaves identically.
+
 ## Personal denylist (required for committing)
 
 Create `%LOCALAPPDATA%\Tabularium\denylist.txt` with one word per line (your name, family
