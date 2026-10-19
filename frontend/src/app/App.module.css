@@ -18,3 +18,7 @@
     --info-width: 280px;
   }
 }
+
+.pageShell {
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+}

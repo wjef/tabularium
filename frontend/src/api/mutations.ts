@@ -150,3 +150,27 @@ export function useRemoveLink(id: string) {
     onError: showError,
   });
 }
+
+interface ActionOptions<A, R> {
+  /** query keys to refresh afterwards */
+  invalidate?: unknown[][];
+  /** message shown on success (nothing when it returns undefined) */
+  success?: (result: R, args: A) => string | undefined;
+}
+
+/** Any change made through the API: shows errors, refreshes the given queries. */
+export function useAction<A = void, R = { message: string }>(
+  fn: (args: A) => Promise<R>,
+  { invalidate = [], success }: ActionOptions<A, R> = {},
+) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: (result, args) => {
+      for (const key of invalidate) void client.invalidateQueries({ queryKey: key });
+      const message = success?.(result, args);
+      if (message) toast(message);
+    },
+    onError: showError,
+  });
+}

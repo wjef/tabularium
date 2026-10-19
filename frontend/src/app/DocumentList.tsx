@@ -2,7 +2,7 @@ import { Check, Download, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, ApiError, thumbnailUrl, type DocumentSummary } from "../api/client";
 import { useBulkTag } from "../api/mutations";
-import { useDocuments, useTags, type DocumentFilters } from "../api/hooks";
+import { useDocuments, useEntities, useTags, type DocumentFilters } from "../api/hooks";
 import { TagChip } from "../components/TagChip";
 import { TagPicker } from "../components/TagPicker";
 import { toast } from "../components/toast";
@@ -82,7 +82,9 @@ export function DocumentList() {
   }, [items, selected, update, hasNextPage, fetchNextPage]);
 
   const tag = filters.tag?.length === 1 ? tags.find((t) => t.id === filters.tag![0]) : undefined;
-  const title = section === "inbox" ? "To be tagged" : tag ? tag.name : "All documents";
+  const entities = useEntities().data;
+  const entity = filters.entity?.length === 1 ? entities?.find((e) => e.id === filters.entity![0]) : undefined;
+  const title = section === "inbox" ? "To be tagged" : tag ? tag.name : entity ? entity.name : "All documents";
   const words = (filters.q ?? "").toLowerCase().split(/\s+/).filter((w) => w.length > 1);
 
   // several documents picked with Ctrl/Shift+click, for bulk actions; forgotten when the filters change
@@ -125,6 +127,16 @@ export function DocumentList() {
           <div className={styles.crumb}>{tag.path.split(" / ").slice(0, -1).join(" / ")}</div>
         )}
         <h1 className={styles.title}>{title}</h1>
+        {entity && (
+          <label className={styles.related}>
+            <input
+              type="checkbox"
+              checked={!!filters.related}
+              onChange={(e) => update({ related: e.target.checked ? "1" : null })}
+            />
+            Include related entities (members of this group)
+          </label>
+        )}
         <div className={styles.meta}>
           <span>{total !== undefined ? `${total} ${total === 1 ? "document" : "documents"}` : " "}</span>
           <select

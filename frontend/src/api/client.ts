@@ -103,3 +103,78 @@ export const fileUrl = (id: string, download = false) =>
 
 /** Small WebP preview of a PDF's first page or a photo (404 for other types). */
 export const thumbnailUrl = (id: string) => `${BASE}/documents/${id}/thumbnail`;
+
+// --- management endpoints that return plain JSON (not described in detail by OpenAPI) ---
+
+export interface EntityRef {
+  id: string;
+  name: string;
+  type_name: string;
+}
+
+export interface EntityDetail {
+  id: string;
+  name: string;
+  type_id: string;
+  type_name: string;
+  aliases: string[];
+  attributes: Record<string, unknown>;
+  tag_ids: string[];
+  groups: EntityRef[];
+  indirect_groups: EntityRef[];
+  members: EntityRef[];
+  indirect_members: EntityRef[];
+  history: HistoryEntry[];
+}
+
+export type EntityType = Schemas["EntityTypeOut"];
+
+export interface OutdatedSummary {
+  id: string;
+  display_name: string;
+  document_date: string | null;
+  outdated_at: string;
+  outdated_by: string;
+  reason: string | null;
+  tag_paths: string[];
+  mime_type: string | null;
+}
+
+export interface OutdatedDetail extends OutdatedSummary {
+  title: string | null;
+  note: string | null;
+  retain_until: string;
+  stored_path: string;
+  original_filename: string;
+  events: { at: string; actor: string; action: string; data: unknown }[];
+}
+
+export interface MaintenanceStatus {
+  text_counts: Record<string, number>;
+  ocr: { enabled: boolean; available: boolean; command: string | null; languages: string; message: string };
+  metadata: { file: string; exists: boolean; last_written: string | null; last_error: string | null };
+  backups: { dir: string; keep: number; files: { name: string; size: number }[] };
+  can_restore: boolean;
+  outdated_restore_pending: boolean;
+}
+
+export interface CheckProblem {
+  path: string;
+  document_id: string | null;
+  name: string | null;
+  detail: string;
+}
+
+export interface CheckReport {
+  full: boolean;
+  checked: number;
+  ok: number;
+  healthy: boolean;
+  missing: CheckProblem[];
+  changed: CheckProblem[];
+  cloud_only: CheckProblem[];
+  orphans: CheckProblem[];
+}
+
+/** URL of an outdated document's file, for preview. */
+export const outdatedFileUrl = (id: string) => `/outdated/${id}/file`;

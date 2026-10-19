@@ -10,8 +10,10 @@ import {
   Settings2,
   Sun,
   Tag as TagIcon,
+  Wrench,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import type { TagNode } from "../api/client";
 import { useInfo, useTags } from "../api/hooks";
 import { useTheme, type ThemeChoice } from "../lib/theme";
@@ -24,16 +26,19 @@ const THEMES: { value: ThemeChoice; label: string; Icon: typeof Sun }[] = [
   { value: "dark", label: "Dark theme", Icon: Moon },
 ];
 
-/** Old (server-rendered) screens, used until the SPA has its own. */
-const LEGACY = { entities: "/entities", history: "/history", maintenance: "/maintenance", outdated: "/outdated" };
-
 export function Sidebar() {
-  const { section, filters, update } = useView();
+  const { section, filters } = useView();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const info = useInfo().data;
   const tags = useTags().data ?? [];
   const [theme, setTheme] = useTheme();
-  const activeTag = filters.tag?.length === 1 ? filters.tag[0] : null;
-  const browsingAll = section === "all" && !filters.tag?.length && !filters.entity?.length;
+  const inWorkspace = pathname === "/";
+  const activeTag = inWorkspace && filters.tag?.length === 1 ? filters.tag[0] : null;
+  const browsingAll = inWorkspace && section === "all" && !filters.tag?.length && !filters.entity?.length;
+  /** Open the workspace with these filters (a new view: no document open). */
+  const browse = (params: Record<string, string> = {}) => navigate({ pathname: "/", search: new URLSearchParams(params).toString() });
+  const page = (path: string) => ({ active: pathname === path, onClick: () => navigate(path) });
 
   return (
     <nav className={styles.sidebar} aria-label="Main">
@@ -49,32 +54,37 @@ export function Sidebar() {
           icon={FileText}
           label="All documents"
           active={browsingAll}
-          onClick={() => update({ section: null, tag: null, entity: null, doc: null })}
+          onClick={() => browse()}
         />
         <NavItem
           icon={Inbox}
           label="To be tagged"
           count={info?.untagged}
           highlight={!!info?.untagged}
-          active={section === "inbox"}
-          onClick={() => update({ section: "inbox", tag: null, entity: null, doc: null, sort: null })}
+          active={inWorkspace && section === "inbox"}
+          onClick={() => browse({ section: "inbox" })}
         />
-        <NavItem icon={Archive} label="Outdated" count={info?.outdated} href={LEGACY.outdated} />
+        <NavItem icon={Archive} label="Outdated" count={info?.outdated} {...page("/outdated")} />
       </div>
 
-      <div className={styles.heading}>Tags</div>
+      <div className={styles.heading}>
+        Tags
+        <button className={styles.manage} onClick={() => navigate("/tags")} title="Manage tags" aria-label="Manage tags">
+          <Settings2 size={13} />
+        </button>
+      </div>
       <div className={styles.tree}>
         <TagTree
           tags={tags}
           activeId={activeTag}
-          onSelect={(id) => update({ section: null, tag: id, entity: null, doc: null })}
+          onSelect={(id) => browse({ tag: id })}
         />
       </div>
 
       <div className={styles.footer}>
-        <NavItem icon={Building2} label="Entities" href={LEGACY.entities} />
-        <NavItem icon={History} label="History" href={LEGACY.history} />
-        <NavItem icon={Settings2} label="Maintenance" href={LEGACY.maintenance} />
+        <NavItem icon={Building2} label="Entities" {...page("/entities")} />
+        <NavItem icon={History} label="History" {...page("/history")} />
+        <NavItem icon={Wrench} label="Maintenance" {...page("/maintenance")} />
         <div className={styles.themes} role="radiogroup" aria-label="Theme">
           {THEMES.map(({ value, label, Icon }) => (
             <button
@@ -102,11 +112,10 @@ interface NavItemProps {
   count?: number;
   highlight?: boolean;
   active?: boolean;
-  href?: string;
-  onClick?: () => void;
+  onClick: () => void;
 }
 
-function NavItem({ icon: Icon, label, count, highlight, active, href, onClick }: NavItemProps) {
+function NavItem({ icon: Icon, label, count, highlight, active, onClick }: NavItemProps) {
   const content = (
     <>
       <Icon size={16} aria-hidden />
@@ -117,11 +126,7 @@ function NavItem({ icon: Icon, label, count, highlight, active, href, onClick }:
     </>
   );
   const className = active ? `${styles.item} ${styles.active}` : styles.item;
-  return href ? (
-    <a className={className} href={href}>
-      {content}
-    </a>
-  ) : (
+  return (
     <button className={className} onClick={onClick} aria-current={active ? "page" : undefined}>
       {content}
     </button>

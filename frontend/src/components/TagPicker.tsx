@@ -16,11 +16,14 @@ interface Props {
   /** open the suggestions upwards (for boxes at the bottom of the screen) */
   above?: boolean;
   disabled?: boolean;
+  /** only offer existing tags (no new tags or entities) */
+  existingOnly?: boolean;
+  label?: string;
 }
 
 /** Type to find a tag, an entity or to create a tag; ↑/↓ and Enter pick, Escape leaves. */
 export const TagPicker = forwardRef<HTMLInputElement, Props>(function TagPicker(
-  { assigned, onPick, placeholder = "Add a tag…", above = false, disabled = false },
+  { assigned, onPick, placeholder = "Add a tag…", above = false, disabled = false, existingOnly = false, label = "Add a tag" },
   ref,
 ) {
   const tags = useTags().data ?? NO_TAGS;
@@ -30,7 +33,10 @@ export const TagPicker = forwardRef<HTMLInputElement, Props>(function TagPicker(
   const [active, setActive] = useState(0);
   const listId = useId();
 
-  const choices = useMemo(() => suggest(query, tags, entities, assigned), [query, tags, entities, assigned]);
+  const choices = useMemo(() => {
+    const all = suggest(query, tags, entities, assigned);
+    return existingOnly ? all.filter((c) => c.kind === "tag") : all;
+  }, [query, tags, entities, assigned, existingOnly]);
   const current = Math.min(active, choices.length - 1);
 
   const pick = (choice: TagChoice) => {
@@ -64,7 +70,7 @@ export const TagPicker = forwardRef<HTMLInputElement, Props>(function TagPicker(
         placeholder={placeholder}
         disabled={disabled}
         role="combobox"
-        aria-label="Add a tag"
+        aria-label={label}
         aria-expanded={open && choices.length > 0}
         aria-controls={listId}
         aria-activedescendant={open && choices[current] ? `${listId}-${current}` : undefined}

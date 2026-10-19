@@ -342,3 +342,17 @@
     opacity: 0;
   }
 }
+
+.related {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.related input {
+  accent-color: var(--accent);
+}
