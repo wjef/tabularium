@@ -1,0 +1,5695 @@
+{
+ "components": {
+  "schemas": {
+   "Body_add_entity_tag_documents__document_id__tags_entity_post": {
+    "properties": {
+     "entity_id": {
+      "default": "",
+      "title": "Entity Id",
+      "type": "string"
+     },
+     "parent_id": {
+      "default": "",
+      "title": "Parent Id",
+      "type": "string"
+     },
+     "view": {
+      "default": "document",
+      "title": "View",
+      "type": "string"
+     }
+    },
+    "title": "Body_add_entity_tag_documents__document_id__tags_entity_post",
+    "type": "object"
+   },
+   "Body_add_existing_tag_documents__document_id__tags_add_post": {
+    "properties": {
+     "tag_path": {
+      "title": "Tag Path",
+      "type": "string"
+     },
+     "view": {
+      "default": "document",
+      "title": "View",
+      "type": "string"
+     }
+    },
+    "required": [
+     "tag_path"
+    ],
+    "title": "Body_add_existing_tag_documents__document_id__tags_add_post",
+    "type": "object"
+   },
+   "Body_add_new_tag_documents__document_id__tags_new_post": {
+    "properties": {
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "parent_id": {
+      "default": "",
+      "title": "Parent Id",
+      "type": "string"
+     },
+     "view": {
+      "default": "document",
+      "title": "View",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "Body_add_new_tag_documents__document_id__tags_new_post",
+    "type": "object"
+   },
+   "Body_bulk_tag_documents_bulk_tag_post": {
+    "properties": {
+     "doc_ids": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Doc Ids"
+     },
+     "selected_id": {
+      "default": "",
+      "title": "Selected Id",
+      "type": "string"
+     },
+     "tag_path": {
+      "default": "",
+      "title": "Tag Path",
+      "type": "string"
+     }
+    },
+    "title": "Body_bulk_tag_documents_bulk_tag_post",
+    "type": "object"
+   },
+   "Body_entities_add_tag_entities__entity_id__add_tag_post": {
+    "properties": {
+     "parent_id": {
+      "title": "Parent Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "parent_id"
+    ],
+    "title": "Body_entities_add_tag_entities__entity_id__add_tag_post",
+    "type": "object"
+   },
+   "Body_entities_create_entities_create_post": {
+    "properties": {
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "type_id": {
+      "default": "",
+      "title": "Type Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "Body_entities_create_entities_create_post",
+    "type": "object"
+   },
+   "Body_entities_update_entities__entity_id__update_post": {
+    "properties": {
+     "aliases": {
+      "default": "",
+      "title": "Aliases",
+      "type": "string"
+     },
+     "attributes": {
+      "default": "",
+      "title": "Attributes",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "type_id": {
+      "default": "",
+      "title": "Type Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "Body_entities_update_entities__entity_id__update_post",
+    "type": "object"
+   },
+   "Body_entity_add_member_entities__entity_id__members_add_post": {
+    "properties": {
+     "other_id": {
+      "title": "Other Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "other_id"
+    ],
+    "title": "Body_entity_add_member_entities__entity_id__members_add_post",
+    "type": "object"
+   },
+   "Body_entity_join_group_entities__entity_id__groups_add_post": {
+    "properties": {
+     "other_id": {
+      "title": "Other Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "other_id"
+    ],
+    "title": "Body_entity_join_group_entities__entity_id__groups_add_post",
+    "type": "object"
+   },
+   "Body_entity_type_create_entities_types_create_post": {
+    "properties": {
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "selected_id": {
+      "default": "",
+      "title": "Selected Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "Body_entity_type_create_entities_types_create_post",
+    "type": "object"
+   },
+   "Body_entity_type_delete_entities_types__type_id__delete_post": {
+    "properties": {
+     "selected_id": {
+      "default": "",
+      "title": "Selected Id",
+      "type": "string"
+     }
+    },
+    "title": "Body_entity_type_delete_entities_types__type_id__delete_post",
+    "type": "object"
+   },
+   "Body_entity_type_rename_entities_types__type_id__rename_post": {
+    "properties": {
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "selected_id": {
+      "default": "",
+      "title": "Selected Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "Body_entity_type_rename_entities_types__type_id__rename_post",
+    "type": "object"
+   },
+   "Body_export_documents_documents_export_post": {
+    "properties": {
+     "doc_ids": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Doc Ids"
+     }
+    },
+    "title": "Body_export_documents_documents_export_post",
+    "type": "object"
+   },
+   "Body_extract_again_documents__document_id__text_extract_post": {
+    "properties": {
+     "view": {
+      "default": "document",
+      "title": "View",
+      "type": "string"
+     }
+    },
+    "title": "Body_extract_again_documents__document_id__text_extract_post",
+    "type": "object"
+   },
+   "Body_link_add_documents__document_id__relations_add_post": {
+    "properties": {
+     "kind": {
+      "default": "",
+      "title": "Kind",
+      "type": "string"
+     },
+     "other_id": {
+      "title": "Other Id",
+      "type": "string"
+     },
+     "view": {
+      "default": "document",
+      "title": "View",
+      "type": "string"
+     }
+    },
+    "required": [
+     "other_id"
+    ],
+    "title": "Body_link_add_documents__document_id__relations_add_post",
+    "type": "object"
+   },
+   "Body_link_remove_documents__document_id__relations__relation_id__remove_post": {
+    "properties": {
+     "view": {
+      "default": "document",
+      "title": "View",
+      "type": "string"
+     }
+    },
+    "title": "Body_link_remove_documents__document_id__relations__relation_id__remove_post",
+    "type": "object"
+   },
+   "Body_outdate_document_documents__document_id__outdate_post": {
+    "properties": {
+     "reason": {
+      "default": "",
+      "title": "Reason",
+      "type": "string"
+     }
+    },
+    "title": "Body_outdate_document_documents__document_id__outdate_post",
+    "type": "object"
+   },
+   "Body_remove_document_tag_documents__document_id__tags__tag_id__remove_post": {
+    "properties": {
+     "view": {
+      "default": "document",
+      "title": "View",
+      "type": "string"
+     }
+    },
+    "title": "Body_remove_document_tag_documents__document_id__tags__tag_id__remove_post",
+    "type": "object"
+   },
+   "Body_save_details_documents__document_id__details_post": {
+    "properties": {
+     "document_date": {
+      "default": "",
+      "title": "Document Date",
+      "type": "string"
+     },
+     "note": {
+      "default": "",
+      "title": "Note",
+      "type": "string"
+     },
+     "retain_auto": {
+      "default": "",
+      "title": "Retain Auto",
+      "type": "string"
+     },
+     "retain_until": {
+      "default": "",
+      "title": "Retain Until",
+      "type": "string"
+     },
+     "title": {
+      "default": "",
+      "title": "Title",
+      "type": "string"
+     },
+     "view": {
+      "default": "document",
+      "title": "View",
+      "type": "string"
+     }
+    },
+    "title": "Body_save_details_documents__document_id__details_post",
+    "type": "object"
+   },
+   "Body_tags_create_tags_create_post": {
+    "properties": {
+     "entity_id": {
+      "default": "",
+      "title": "Entity Id",
+      "type": "string"
+     },
+     "name": {
+      "default": "",
+      "title": "Name",
+      "type": "string"
+     },
+     "parent_id": {
+      "default": "",
+      "title": "Parent Id",
+      "type": "string"
+     }
+    },
+    "title": "Body_tags_create_tags_create_post",
+    "type": "object"
+   },
+   "Body_tags_merge_tags__tag_id__merge_post": {
+    "properties": {
+     "target_id": {
+      "title": "Target Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "target_id"
+    ],
+    "title": "Body_tags_merge_tags__tag_id__merge_post",
+    "type": "object"
+   },
+   "Body_tags_move_tags__tag_id__move_post": {
+    "properties": {
+     "parent_id": {
+      "default": "",
+      "title": "Parent Id",
+      "type": "string"
+     }
+    },
+    "title": "Body_tags_move_tags__tag_id__move_post",
+    "type": "object"
+   },
+   "Body_tags_rename_tags__tag_id__rename_post": {
+    "properties": {
+     "name": {
+      "title": "Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "Body_tags_rename_tags__tag_id__rename_post",
+    "type": "object"
+   },
+   "BulkTag": {
+    "additionalProperties": false,
+    "properties": {
+     "document_ids": {
+      "items": {
+       "format": "uuid",
+       "type": "string"
+      },
+      "title": "Document Ids",
+      "type": "array"
+     },
+     "tag_id": {
+      "format": "uuid",
+      "title": "Tag Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "document_ids",
+     "tag_id"
+    ],
+    "title": "BulkTag",
+    "type": "object"
+   },
+   "DocRef": {
+    "properties": {
+     "display_name": {
+      "title": "Display Name",
+      "type": "string"
+     },
+     "document_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Document Date"
+     },
+     "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "display_name",
+     "document_date"
+    ],
+    "title": "DocRef",
+    "type": "object"
+   },
+   "DocumentDetail": {
+    "properties": {
+     "can_outdate": {
+      "title": "Can Outdate",
+      "type": "boolean"
+     },
+     "display_name": {
+      "title": "Display Name",
+      "type": "string"
+     },
+     "document_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Document Date"
+     },
+     "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+     },
+     "ingested_at": {
+      "format": "date-time",
+      "title": "Ingested At",
+      "type": "string"
+     },
+     "links": {
+      "items": {
+       "$ref": "#/components/schemas/LinkOut"
+      },
+      "title": "Links",
+      "type": "array"
+     },
+     "mime_type": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mime Type"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     },
+     "original_filename": {
+      "title": "Original Filename",
+      "type": "string"
+     },
+     "original_relpath": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Original Relpath"
+     },
+     "preview": {
+      "enum": [
+       "pdf",
+       "image",
+       "text",
+       "none"
+      ],
+      "title": "Preview",
+      "type": "string"
+     },
+     "retain_until": {
+      "format": "date",
+      "title": "Retain Until",
+      "type": "string"
+     },
+     "retain_until_manual": {
+      "title": "Retain Until Manual",
+      "type": "boolean"
+     },
+     "sha256": {
+      "title": "Sha256",
+      "type": "string"
+     },
+     "size_bytes": {
+      "title": "Size Bytes",
+      "type": "integer"
+     },
+     "snippet": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Snippet"
+     },
+     "stored_name": {
+      "title": "Stored Name",
+      "type": "string"
+     },
+     "stored_path": {
+      "title": "Stored Path",
+      "type": "string"
+     },
+     "tags": {
+      "items": {
+       "$ref": "#/components/schemas/TagRef"
+      },
+      "title": "Tags",
+      "type": "array"
+     },
+     "text": {
+      "$ref": "#/components/schemas/TextInfo"
+     },
+     "text_status": {
+      "enum": [
+       "PENDING",
+       "DONE",
+       "EMPTY",
+       "NEEDS_OCR",
+       "FAILED"
+      ],
+      "title": "Text Status",
+      "type": "string"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     }
+    },
+    "required": [
+     "id",
+     "display_name",
+     "stored_name",
+     "title",
+     "document_date",
+     "ingested_at",
+     "mime_type",
+     "size_bytes",
+     "preview",
+     "tags",
+     "text_status",
+     "note",
+     "sha256",
+     "stored_path",
+     "original_filename",
+     "original_relpath",
+     "retain_until",
+     "retain_until_manual",
+     "can_outdate",
+     "links",
+     "text"
+    ],
+    "title": "DocumentDetail",
+    "type": "object"
+   },
+   "DocumentPage": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/DocumentSummary"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "offset": {
+      "title": "Offset",
+      "type": "integer"
+     },
+     "total": {
+      "title": "Total",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "total",
+     "offset",
+     "items"
+    ],
+    "title": "DocumentPage",
+    "type": "object"
+   },
+   "DocumentSummary": {
+    "properties": {
+     "display_name": {
+      "title": "Display Name",
+      "type": "string"
+     },
+     "document_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Document Date"
+     },
+     "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+     },
+     "ingested_at": {
+      "format": "date-time",
+      "title": "Ingested At",
+      "type": "string"
+     },
+     "mime_type": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mime Type"
+     },
+     "preview": {
+      "enum": [
+       "pdf",
+       "image",
+       "text",
+       "none"
+      ],
+      "title": "Preview",
+      "type": "string"
+     },
+     "size_bytes": {
+      "title": "Size Bytes",
+      "type": "integer"
+     },
+     "snippet": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Snippet"
+     },
+     "stored_name": {
+      "title": "Stored Name",
+      "type": "string"
+     },
+     "tags": {
+      "items": {
+       "$ref": "#/components/schemas/TagRef"
+      },
+      "title": "Tags",
+      "type": "array"
+     },
+     "text_status": {
+      "enum": [
+       "PENDING",
+       "DONE",
+       "EMPTY",
+       "NEEDS_OCR",
+       "FAILED"
+      ],
+      "title": "Text Status",
+      "type": "string"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     }
+    },
+    "required": [
+     "id",
+     "display_name",
+     "stored_name",
+     "title",
+     "document_date",
+     "ingested_at",
+     "mime_type",
+     "size_bytes",
+     "preview",
+     "tags",
+     "text_status"
+    ],
+    "title": "DocumentSummary",
+    "type": "object"
+   },
+   "DocumentUpdate": {
+    "additionalProperties": false,
+    "description": "Only the fields that are sent are changed.",
+    "properties": {
+     "clear_document_date": {
+      "default": false,
+      "title": "Clear Document Date",
+      "type": "boolean"
+     },
+     "document_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Document Date"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     },
+     "retain_auto": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retain Auto"
+     },
+     "retain_until": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retain Until"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     }
+    },
+    "title": "DocumentUpdate",
+    "type": "object"
+   },
+   "EntityCreate": {
+    "additionalProperties": false,
+    "properties": {
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "type_id": {
+      "format": "uuid",
+      "title": "Type Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name",
+     "type_id"
+    ],
+    "title": "EntityCreate",
+    "type": "object"
+   },
+   "EntityOut": {
+    "properties": {
+     "aliases": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Aliases",
+      "type": "array"
+     },
+     "attributes": {
+      "additionalProperties": true,
+      "title": "Attributes",
+      "type": "object"
+     },
+     "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "tag_count": {
+      "title": "Tag Count",
+      "type": "integer"
+     },
+     "type_id": {
+      "format": "uuid",
+      "title": "Type Id",
+      "type": "string"
+     },
+     "type_name": {
+      "title": "Type Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "type_id",
+     "type_name",
+     "aliases",
+     "attributes",
+     "tag_count"
+    ],
+    "title": "EntityOut",
+    "type": "object"
+   },
+   "EntityTypeOut": {
+    "properties": {
+     "entity_count": {
+      "title": "Entity Count",
+      "type": "integer"
+     },
+     "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "sort_order": {
+      "title": "Sort Order",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "sort_order",
+     "entity_count"
+    ],
+    "title": "EntityTypeOut",
+    "type": "object"
+   },
+   "EntityUpdate": {
+    "additionalProperties": false,
+    "properties": {
+     "aliases": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Aliases"
+     },
+     "attributes": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Attributes"
+     },
+     "name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Name"
+     },
+     "type_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Type Id"
+     }
+    },
+    "title": "EntityUpdate",
+    "type": "object"
+   },
+   "ExportRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "document_ids": {
+      "items": {
+       "format": "uuid",
+       "type": "string"
+      },
+      "title": "Document Ids",
+      "type": "array"
+     }
+    },
+    "required": [
+     "document_ids"
+    ],
+    "title": "ExportRequest",
+    "type": "object"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "title": "Detail",
+      "type": "array"
+     }
+    },
+    "title": "HTTPValidationError",
+    "type": "object"
+   },
+   "HistoryEntry": {
+    "properties": {
+     "action": {
+      "title": "Action",
+      "type": "string"
+     },
+     "actor": {
+      "title": "Actor",
+      "type": "string"
+     },
+     "at": {
+      "format": "date-time",
+      "title": "At",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "label": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Label"
+     },
+     "link": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Link"
+     },
+     "new_value": {
+      "anyOf": [
+       {},
+       {
+        "type": "null"
+       }
+      ],
+      "title": "New Value"
+     },
+     "object_id": {
+      "title": "Object Id",
+      "type": "string"
+     },
+     "object_type": {
+      "title": "Object Type",
+      "type": "string"
+     },
+     "old_value": {
+      "anyOf": [
+       {},
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Old Value"
+     }
+    },
+    "required": [
+     "id",
+     "at",
+     "actor",
+     "action",
+     "object_type",
+     "object_id",
+     "old_value",
+     "new_value"
+    ],
+    "title": "HistoryEntry",
+    "type": "object"
+   },
+   "LinkChoice": {
+    "properties": {
+     "phrase": {
+      "title": "Phrase",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "value",
+     "phrase"
+    ],
+    "title": "LinkChoice",
+    "type": "object"
+   },
+   "LinkCreate": {
+    "additionalProperties": false,
+    "properties": {
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "other_id": {
+      "format": "uuid",
+      "title": "Other Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "other_id",
+     "kind"
+    ],
+    "title": "LinkCreate",
+    "type": "object"
+   },
+   "LinkOut": {
+    "properties": {
+     "direction": {
+      "enum": [
+       "out",
+       "in"
+      ],
+      "title": "Direction",
+      "type": "string"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "other": {
+      "$ref": "#/components/schemas/DocRef"
+     },
+     "phrase": {
+      "title": "Phrase",
+      "type": "string"
+     },
+     "relation_id": {
+      "format": "uuid",
+      "title": "Relation Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "relation_id",
+     "kind",
+     "direction",
+     "phrase",
+     "other"
+    ],
+    "title": "LinkOut",
+    "type": "object"
+   },
+   "Message": {
+    "properties": {
+     "message": {
+      "title": "Message",
+      "type": "string"
+     }
+    },
+    "required": [
+     "message"
+    ],
+    "title": "Message",
+    "type": "object"
+   },
+   "OutdateRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     }
+    },
+    "title": "OutdateRequest",
+    "type": "object"
+   },
+   "TagAssign": {
+    "additionalProperties": false,
+    "description": "Assign an existing tag (``tag_id``), a new tag (``name`` under ``parent_id``) or an\nentity tag (``entity_id`` under ``parent_id``, created if missing).",
+    "properties": {
+     "entity_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Entity Id"
+     },
+     "name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Name"
+     },
+     "parent_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Parent Id"
+     },
+     "tag_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tag Id"
+     }
+    },
+    "title": "TagAssign",
+    "type": "object"
+   },
+   "TagCreate": {
+    "additionalProperties": false,
+    "properties": {
+     "entity_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Entity Id"
+     },
+     "name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Name"
+     },
+     "parent_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Parent Id"
+     }
+    },
+    "title": "TagCreate",
+    "type": "object"
+   },
+   "TagMerge": {
+    "additionalProperties": false,
+    "properties": {
+     "target_id": {
+      "format": "uuid",
+      "title": "Target Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "target_id"
+    ],
+    "title": "TagMerge",
+    "type": "object"
+   },
+   "TagNode": {
+    "properties": {
+     "color": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Color"
+     },
+     "count": {
+      "title": "Count",
+      "type": "integer"
+     },
+     "entity_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Entity Id"
+     },
+     "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "parent_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Parent Id"
+     },
+     "path": {
+      "title": "Path",
+      "type": "string"
+     },
+     "sort_order": {
+      "title": "Sort Order",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "path",
+     "parent_id",
+     "entity_id",
+     "color",
+     "sort_order",
+     "count"
+    ],
+    "title": "TagNode",
+    "type": "object"
+   },
+   "TagRef": {
+    "properties": {
+     "entity_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Entity Id"
+     },
+     "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "path": {
+      "title": "Path",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "path"
+    ],
+    "title": "TagRef",
+    "type": "object"
+   },
+   "TagUpdate": {
+    "additionalProperties": false,
+    "properties": {
+     "move_to_top": {
+      "default": false,
+      "title": "Move To Top",
+      "type": "boolean"
+     },
+     "name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Name"
+     },
+     "parent_id": {
+      "anyOf": [
+       {
+        "format": "uuid",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Parent Id"
+     }
+    },
+    "title": "TagUpdate",
+    "type": "object"
+   },
+   "TextInfo": {
+    "properties": {
+     "chars": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Chars"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     },
+     "method": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Method"
+     },
+     "ocr_pages": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ocr Pages"
+     },
+     "pages": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pages"
+     },
+     "status": {
+      "enum": [
+       "PENDING",
+       "DONE",
+       "EMPTY",
+       "NEEDS_OCR",
+       "FAILED"
+      ],
+      "title": "Status",
+      "type": "string"
+     }
+    },
+    "required": [
+     "status"
+    ],
+    "title": "TextInfo",
+    "type": "object"
+   },
+   "TypeIn": {
+    "additionalProperties": false,
+    "properties": {
+     "name": {
+      "title": "Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "TypeIn",
+    "type": "object"
+   },
+   "ValidationError": {
+    "properties": {
+     "ctx": {
+      "title": "Context",
+      "type": "object"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "title": "Location",
+      "type": "array"
+     },
+     "msg": {
+      "title": "Message",
+      "type": "string"
+     },
+     "type": {
+      "title": "Error Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError",
+    "type": "object"
+   }
+  }
+ },
+ "info": {
+  "title": "Tabularium",
+  "version": "0.1.0"
+ },
+ "openapi": "3.1.0",
+ "paths": {
+  "/": {
+   "get": {
+    "operationId": "index__get",
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Index"
+   }
+  },
+  "/api/v1/documents": {
+   "get": {
+    "operationId": "list_documents_api_v1_documents_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "q",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Q",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "tag",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "items": {
+          "format": "uuid",
+          "type": "string"
+         },
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Tag"
+      }
+     },
+     {
+      "in": "query",
+      "name": "entity",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "items": {
+          "format": "uuid",
+          "type": "string"
+         },
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Entity"
+      }
+     },
+     {
+      "in": "query",
+      "name": "related",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Related",
+       "type": "boolean"
+      }
+     },
+     {
+      "in": "query",
+      "name": "untagged",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Untagged",
+       "type": "boolean"
+      }
+     },
+     {
+      "in": "query",
+      "name": "date_from",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "format": "date",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Date From"
+      }
+     },
+     {
+      "in": "query",
+      "name": "date_to",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "format": "date",
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Date To"
+      }
+     },
+     {
+      "in": "query",
+      "name": "sort",
+      "required": false,
+      "schema": {
+       "default": "date",
+       "title": "Sort",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "offset",
+      "required": false,
+      "schema": {
+       "default": 0,
+       "minimum": 0,
+       "title": "Offset",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 50,
+       "maximum": 200,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentPage"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Documents",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/bulk-tags": {
+   "post": {
+    "operationId": "bulk_tags_api_v1_documents_bulk_tags_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BulkTag"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Bulk Tags",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}": {
+   "get": {
+    "operationId": "get_document_api_v1_documents__document_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Document",
+    "tags": [
+     "documents"
+    ]
+   },
+   "patch": {
+    "operationId": "update_document_api_v1_documents__document_id__patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DocumentUpdate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Update Document",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/extract": {
+   "post": {
+    "operationId": "extract_again_api_v1_documents__document_id__extract_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Extract Again",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/history": {
+   "get": {
+    "operationId": "document_history_api_v1_documents__document_id__history_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/HistoryEntry"
+         },
+         "title": "Response Document History Api V1 Documents  Document Id  History Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Document History",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/links": {
+   "post": {
+    "operationId": "create_link_api_v1_documents__document_id__links_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LinkCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Create Link",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/links/{relation_id}": {
+   "delete": {
+    "operationId": "delete_link_api_v1_documents__document_id__links__relation_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "relation_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Relation Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Delete Link",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/open": {
+   "post": {
+    "operationId": "open_copy_api_v1_documents__document_id__open_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Open Copy",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/outdate": {
+   "post": {
+    "operationId": "outdate_document_api_v1_documents__document_id__outdate_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/OutdateRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Outdate Document",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/reveal": {
+   "post": {
+    "operationId": "reveal_api_v1_documents__document_id__reveal_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Reveal",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/tags": {
+   "post": {
+    "operationId": "assign_tag_api_v1_documents__document_id__tags_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TagAssign"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Assign Tag",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/tags/{tag_id}": {
+   "delete": {
+    "operationId": "unassign_tag_api_v1_documents__document_id__tags__tag_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "tag_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Tag Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Unassign Tag",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/text": {
+   "get": {
+    "operationId": "get_text_api_v1_documents__document_id__text_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Get Text Api V1 Documents  Document Id  Text Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Text",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/entities": {
+   "get": {
+    "operationId": "entities_api_v1_entities_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/EntityOut"
+         },
+         "title": "Response Entities Api V1 Entities Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Entities",
+    "tags": [
+     "catalog"
+    ]
+   },
+   "post": {
+    "operationId": "entity_create_api_v1_entities_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EntityCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Create",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/entities/{entity_id}": {
+   "delete": {
+    "operationId": "entity_delete_api_v1_entities__entity_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Delete",
+    "tags": [
+     "manage"
+    ]
+   },
+   "get": {
+    "operationId": "entity_detail_api_v1_entities__entity_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Entity Detail Api V1 Entities  Entity Id  Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Detail",
+    "tags": [
+     "manage"
+    ]
+   },
+   "patch": {
+    "operationId": "entity_update_api_v1_entities__entity_id__patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EntityUpdate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Update",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/entities/{member_id}/groups/{group_id}": {
+   "delete": {
+    "operationId": "membership_remove_api_v1_entities__member_id__groups__group_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "member_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Member Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "group_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Group Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Membership Remove",
+    "tags": [
+     "manage"
+    ]
+   },
+   "put": {
+    "operationId": "membership_add_api_v1_entities__member_id__groups__group_id__put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "member_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Member Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "group_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Group Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Membership Add",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/entity-types": {
+   "get": {
+    "operationId": "entity_types_api_v1_entity_types_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/EntityTypeOut"
+         },
+         "title": "Response Entity Types Api V1 Entity Types Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Entity Types",
+    "tags": [
+     "catalog"
+    ]
+   },
+   "post": {
+    "operationId": "type_create_api_v1_entity_types_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TypeIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Type Create",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/entity-types/{type_id}": {
+   "delete": {
+    "operationId": "type_delete_api_v1_entity_types__type_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "type_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Type Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Type Delete",
+    "tags": [
+     "manage"
+    ]
+   },
+   "patch": {
+    "operationId": "type_rename_api_v1_entity_types__type_id__patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "type_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Type Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TypeIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Type Rename",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/export": {
+   "post": {
+    "operationId": "export_api_v1_export_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ExportRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Export",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/history": {
+   "get": {
+    "operationId": "history_api_v1_history_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 200,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/HistoryEntry"
+         },
+         "title": "Response History Api V1 History Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "History",
+    "tags": [
+     "catalog"
+    ]
+   }
+  },
+  "/api/v1/info": {
+   "get": {
+    "description": "Small facts for the shell: version, counts for the sidebar, language.",
+    "operationId": "info_api_v1_info_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Info Api V1 Info Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Info",
+    "tags": [
+     "catalog"
+    ]
+   }
+  },
+  "/api/v1/ingest/scan": {
+   "post": {
+    "operationId": "ingest_scan_api_v1_ingest_scan_post",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Ingest Scan Api V1 Ingest Scan Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Ingest Scan",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/link-choices": {
+   "get": {
+    "operationId": "link_choices_api_v1_link_choices_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/LinkChoice"
+         },
+         "title": "Response Link Choices Api V1 Link Choices Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Link Choices",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/maintenance": {
+   "get": {
+    "operationId": "maintenance_status_api_v1_maintenance_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Maintenance Status Api V1 Maintenance Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Status",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/maintenance/backup": {
+   "post": {
+    "operationId": "maintenance_backup_api_v1_maintenance_backup_post",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Backup",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/maintenance/check": {
+   "post": {
+    "operationId": "maintenance_check_api_v1_maintenance_check_post",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "full",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Full",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Maintenance Check Api V1 Maintenance Check Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Maintenance Check",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/maintenance/metadata": {
+   "post": {
+    "operationId": "maintenance_metadata_api_v1_maintenance_metadata_post",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Metadata",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/maintenance/ocr-check": {
+   "post": {
+    "operationId": "maintenance_ocr_check_api_v1_maintenance_ocr_check_post",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Ocr Check",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/maintenance/restore": {
+   "post": {
+    "operationId": "maintenance_restore_api_v1_maintenance_restore_post",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Restore",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/maintenance/restore-outdated": {
+   "post": {
+    "operationId": "maintenance_restore_outdated_api_v1_maintenance_restore_outdated_post",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Restore Outdated",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/outdated": {
+   "get": {
+    "operationId": "outdated_list_api_v1_outdated_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Outdated List Api V1 Outdated Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Outdated List",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/outdated/{document_id}": {
+   "get": {
+    "operationId": "outdated_detail_api_v1_outdated__document_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Outdated Detail Api V1 Outdated  Document Id  Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Outdated Detail",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/outdated/{document_id}/restore": {
+   "post": {
+    "operationId": "outdated_restore_api_v1_outdated__document_id__restore_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Outdated Restore",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/session": {
+   "get": {
+    "description": "The CSRF header the front end must send with every change.\n\nSafe to expose: other websites cannot read this response (no CORS), and DNS-rebinding\nis stopped by the Host allow-list.",
+    "operationId": "session_info_api_v1_session_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Session Info Api V1 Session Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Session Info",
+    "tags": [
+     "catalog"
+    ]
+   }
+  },
+  "/api/v1/tags": {
+   "get": {
+    "description": "All tags (flat, parents before children, by sort order then name).",
+    "operationId": "tags_api_v1_tags_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/TagNode"
+         },
+         "title": "Response Tags Api V1 Tags Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Tags",
+    "tags": [
+     "catalog"
+    ]
+   },
+   "post": {
+    "operationId": "tag_create_api_v1_tags_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TagCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tag Create",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/tags/{tag_id}": {
+   "delete": {
+    "operationId": "tag_delete_api_v1_tags__tag_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "tag_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Tag Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tag Delete",
+    "tags": [
+     "manage"
+    ]
+   },
+   "patch": {
+    "operationId": "tag_update_api_v1_tags__tag_id__patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "tag_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Tag Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TagUpdate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tag Update",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/api/v1/tags/{tag_id}/merge": {
+   "post": {
+    "operationId": "tag_merge_api_v1_tags__tag_id__merge_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "tag_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Tag Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TagMerge"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tag Merge",
+    "tags": [
+     "manage"
+    ]
+   }
+  },
+  "/documents/bulk-tag": {
+   "post": {
+    "operationId": "bulk_tag_documents_bulk_tag_post",
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_bulk_tag_documents_bulk_tag_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Bulk Tag"
+   }
+  },
+  "/documents/export": {
+   "post": {
+    "description": "Selected documents as a zip of readable copies (plus index.csv).",
+    "operationId": "export_documents_documents_export_post",
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_export_documents_documents_export_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Export Documents"
+   }
+  },
+  "/documents/{document_id}": {
+   "get": {
+    "operationId": "document_page_documents__document_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Document Page"
+   }
+  },
+  "/documents/{document_id}/details": {
+   "post": {
+    "operationId": "save_details_documents__document_id__details_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_save_details_documents__document_id__details_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Save Details"
+   }
+  },
+  "/documents/{document_id}/file": {
+   "get": {
+    "operationId": "document_file_documents__document_id__file_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "download",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Download",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Document File"
+   }
+  },
+  "/documents/{document_id}/open": {
+   "post": {
+    "operationId": "open_document_documents__document_id__open_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Open Document"
+   }
+  },
+  "/documents/{document_id}/outdate": {
+   "post": {
+    "operationId": "outdate_document_documents__document_id__outdate_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_outdate_document_documents__document_id__outdate_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Outdate Document"
+   }
+  },
+  "/documents/{document_id}/relations/add": {
+   "post": {
+    "operationId": "link_add_documents__document_id__relations_add_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_link_add_documents__document_id__relations_add_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Link Add"
+   }
+  },
+  "/documents/{document_id}/relations/candidates": {
+   "get": {
+    "description": "Documents matching ``q`` (title, hash, words inside\u2026) that could be linked.",
+    "operationId": "link_candidates_documents__document_id__relations_candidates_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "q",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Q",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "view",
+      "required": false,
+      "schema": {
+       "default": "document",
+       "title": "View",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Link Candidates"
+   }
+  },
+  "/documents/{document_id}/relations/{relation_id}/remove": {
+   "post": {
+    "operationId": "link_remove_documents__document_id__relations__relation_id__remove_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "relation_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Relation Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_link_remove_documents__document_id__relations__relation_id__remove_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Link Remove"
+   }
+  },
+  "/documents/{document_id}/reveal": {
+   "post": {
+    "operationId": "reveal_document_documents__document_id__reveal_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Reveal Document"
+   }
+  },
+  "/documents/{document_id}/tags/add": {
+   "post": {
+    "operationId": "add_existing_tag_documents__document_id__tags_add_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_add_existing_tag_documents__document_id__tags_add_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Add Existing Tag"
+   }
+  },
+  "/documents/{document_id}/tags/entity": {
+   "post": {
+    "operationId": "add_entity_tag_documents__document_id__tags_entity_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_add_entity_tag_documents__document_id__tags_entity_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Add Entity Tag"
+   }
+  },
+  "/documents/{document_id}/tags/new": {
+   "post": {
+    "operationId": "add_new_tag_documents__document_id__tags_new_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_add_new_tag_documents__document_id__tags_new_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Add New Tag"
+   }
+  },
+  "/documents/{document_id}/tags/{tag_id}/remove": {
+   "post": {
+    "operationId": "remove_document_tag_documents__document_id__tags__tag_id__remove_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "tag_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Tag Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_remove_document_tag_documents__document_id__tags__tag_id__remove_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Remove Document Tag"
+   }
+  },
+  "/documents/{document_id}/text/extract": {
+   "post": {
+    "operationId": "extract_again_documents__document_id__text_extract_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_extract_again_documents__document_id__text_extract_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Extract Again"
+   }
+  },
+  "/entities": {
+   "get": {
+    "operationId": "entities_page_entities_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entities Page"
+   }
+  },
+  "/entities/create": {
+   "post": {
+    "operationId": "entities_create_entities_create_post",
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_entities_create_entities_create_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entities Create"
+   }
+  },
+  "/entities/types/create": {
+   "post": {
+    "operationId": "entity_type_create_entities_types_create_post",
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_entity_type_create_entities_types_create_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Type Create"
+   }
+  },
+  "/entities/types/{type_id}/delete": {
+   "post": {
+    "operationId": "entity_type_delete_entities_types__type_id__delete_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "type_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Type Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_entity_type_delete_entities_types__type_id__delete_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Type Delete"
+   }
+  },
+  "/entities/types/{type_id}/rename": {
+   "post": {
+    "operationId": "entity_type_rename_entities_types__type_id__rename_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "type_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Type Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_entity_type_rename_entities_types__type_id__rename_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Type Rename"
+   }
+  },
+  "/entities/{entity_id}/add-tag": {
+   "post": {
+    "operationId": "entities_add_tag_entities__entity_id__add_tag_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_entities_add_tag_entities__entity_id__add_tag_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entities Add Tag"
+   }
+  },
+  "/entities/{entity_id}/delete": {
+   "post": {
+    "operationId": "entities_delete_entities__entity_id__delete_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entities Delete"
+   }
+  },
+  "/entities/{entity_id}/groups/add": {
+   "post": {
+    "operationId": "entity_join_group_entities__entity_id__groups_add_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_entity_join_group_entities__entity_id__groups_add_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Join Group"
+   }
+  },
+  "/entities/{entity_id}/groups/{other_id}/remove": {
+   "post": {
+    "operationId": "entity_leave_group_entities__entity_id__groups__other_id__remove_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "other_id",
+      "required": true,
+      "schema": {
+       "title": "Other Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Leave Group"
+   }
+  },
+  "/entities/{entity_id}/members/add": {
+   "post": {
+    "operationId": "entity_add_member_entities__entity_id__members_add_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_entity_add_member_entities__entity_id__members_add_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Add Member"
+   }
+  },
+  "/entities/{entity_id}/members/{other_id}/remove": {
+   "post": {
+    "operationId": "entity_remove_member_entities__entity_id__members__other_id__remove_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "other_id",
+      "required": true,
+      "schema": {
+       "title": "Other Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entity Remove Member"
+   }
+  },
+  "/entities/{entity_id}/update": {
+   "post": {
+    "operationId": "entities_update_entities__entity_id__update_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "entity_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Entity Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_entities_update_entities__entity_id__update_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Entities Update"
+   }
+  },
+  "/health": {
+   "get": {
+    "operationId": "health_health_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "title": "Response Health Health Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Health"
+   }
+  },
+  "/history": {
+   "get": {
+    "operationId": "history_page_history_get",
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "History Page"
+   }
+  },
+  "/inbox": {
+   "get": {
+    "operationId": "inbox_page_inbox_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Inbox Page"
+   }
+  },
+  "/ingest/scan": {
+   "post": {
+    "operationId": "ingest_scan_ingest_scan_post",
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Ingest Scan"
+   }
+  },
+  "/maintenance": {
+   "get": {
+    "operationId": "maintenance_page_maintenance_get",
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Page"
+   }
+  },
+  "/maintenance/backup": {
+   "post": {
+    "operationId": "maintenance_backup_maintenance_backup_post",
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Backup"
+   }
+  },
+  "/maintenance/check": {
+   "post": {
+    "operationId": "maintenance_check_maintenance_check_post",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "full",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Full",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Maintenance Check"
+   }
+  },
+  "/maintenance/metadata": {
+   "post": {
+    "operationId": "maintenance_metadata_maintenance_metadata_post",
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Metadata"
+   }
+  },
+  "/maintenance/ocr-check": {
+   "post": {
+    "operationId": "maintenance_ocr_check_maintenance_ocr_check_post",
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Ocr Check"
+   }
+  },
+  "/maintenance/restore": {
+   "post": {
+    "operationId": "maintenance_restore_maintenance_restore_post",
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Restore"
+   }
+  },
+  "/maintenance/restore-outdated": {
+   "post": {
+    "operationId": "maintenance_restore_outdated_maintenance_restore_outdated_post",
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Maintenance Restore Outdated"
+   }
+  },
+  "/outdated": {
+   "get": {
+    "operationId": "outdated_page_outdated_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "q",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Q",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "id",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "error",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Error"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Outdated Page"
+   }
+  },
+  "/outdated/{document_id}/file": {
+   "get": {
+    "operationId": "outdated_file_outdated__document_id__file_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "download",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Download",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Outdated File"
+   }
+  },
+  "/outdated/{document_id}/restore": {
+   "post": {
+    "operationId": "restore_document_outdated__document_id__restore_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Restore Document"
+   }
+  },
+  "/search": {
+   "get": {
+    "operationId": "search_page_search_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "tag",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Tag"
+      }
+     },
+     {
+      "in": "query",
+      "name": "entity",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Entity"
+      }
+     },
+     {
+      "in": "query",
+      "name": "q",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Q",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "from",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "From",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "to",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "To",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "related",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Related",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "id",
+      "required": false,
+      "schema": {
+       "default": "",
+       "title": "Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Search Page"
+   }
+  },
+  "/tags": {
+   "get": {
+    "operationId": "tags_page_tags_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tags Page"
+   }
+  },
+  "/tags/create": {
+   "post": {
+    "operationId": "tags_create_tags_create_post",
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_tags_create_tags_create_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tags Create"
+   }
+  },
+  "/tags/{tag_id}/delete": {
+   "post": {
+    "operationId": "tags_delete_tags__tag_id__delete_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "tag_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Tag Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tags Delete"
+   }
+  },
+  "/tags/{tag_id}/merge": {
+   "post": {
+    "operationId": "tags_merge_tags__tag_id__merge_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "tag_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Tag Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_tags_merge_tags__tag_id__merge_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tags Merge"
+   }
+  },
+  "/tags/{tag_id}/move": {
+   "post": {
+    "operationId": "tags_move_tags__tag_id__move_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "tag_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Tag Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_tags_move_tags__tag_id__move_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tags Move"
+   }
+  },
+  "/tags/{tag_id}/rename": {
+   "post": {
+    "operationId": "tags_rename_tags__tag_id__rename_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "tag_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Tag Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_tags_rename_tags__tag_id__rename_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tags Rename"
+   }
+  }
+ }
+}

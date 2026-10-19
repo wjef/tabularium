@@ -8,7 +8,7 @@ from importlib import resources
 
 from fastapi import FastAPI, Request
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -97,6 +97,7 @@ def create_app(
     app.state.templates = make_templates(config, csrf_token)
     app.add_middleware(LocalOnlyMiddleware, csrf_token=csrf_token)
     app.mount("/static", StaticFiles(directory=str(_WEB / "static")), name="static")
+    _install_spa(app)
     api.install(app)
     app.include_router(routes_documents.router)
     app.include_router(routes_outdated.router)
@@ -176,3 +177,30 @@ def _ocr_engine(config: Config):
         log.info("OCR not available: %s", status.message)
         return None
     return TesseractOcr(status.command, config.text.languages)
+
+
+SPA_DIR = _WEB / "spa"  # built by `npm run build` in frontend/ (not committed)
+
+
+def _install_spa(app: FastAPI) -> None:
+    """Serve the single-page front end at /app (the old interface stays at /)."""
+    assets = SPA_DIR / "assets"
+    if assets.is_dir():
+        app.mount("/app/assets", StaticFiles(directory=str(assets)), name="spa-assets")
+
+    @app.get("/app", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/app/{path:path}", response_class=HTMLResponse, include_in_schema=False)
+    def spa(path: str = ""):
+        # top-level build files (favicon.svg); everything else is a client-side route
+        if path and "/" not in path and "\\" not in path and not path.startswith("."):
+            file = SPA_DIR / path
+            if file.is_file() and path != "index.html":
+                return FileResponse(file)
+        index = SPA_DIR / "index.html"
+        if not index.is_file():
+            return HTMLResponse(
+                "<p>The new interface is not built yet. Run <code>scripts/setup-dev.ps1</code>"
+                " (needs Node.js), then reload.</p>",
+                status_code=503,
+            )
+        return HTMLResponse(index.read_text(encoding="utf-8"))

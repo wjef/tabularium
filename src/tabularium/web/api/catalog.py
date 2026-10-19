@@ -14,6 +14,7 @@ from tabularium.services.tags import document_counts, tag_paths
 from tabularium.web.api import schemas as s
 from tabularium.web.deps import get_session
 from tabularium.web.routes_history import _labels
+from tabularium.web.security import CSRF_HEADER
 
 router = APIRouter(tags=["catalog"])
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -106,3 +107,13 @@ def history(request: Request, session: SessionDep, limit: int = 200):
             entry.label, entry.link = label[0], label[1] or None
         result.append(entry)
     return result
+
+
+@router.get("/session")
+def session_info(request: Request) -> dict:
+    """The CSRF header the front end must send with every change.
+
+    Safe to expose: other websites cannot read this response (no CORS), and DNS-rebinding
+    is stopped by the Host allow-list.
+    """
+    return {"csrf_header": CSRF_HEADER, "csrf_token": request.app.state.csrf_token}

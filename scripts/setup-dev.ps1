@@ -47,6 +47,21 @@ try {
     Pop-Location
 }
 
+# The new interface (/app) is a React app built with Node.js into src/tabularium/web/spa.
+if (Get-Command npm -ErrorAction SilentlyContinue) {
+    Push-Location (Join-Path $repo "frontend")
+    try {
+        Invoke-Native "npm" @("ci", "--no-audit", "--no-fund")
+        Invoke-Native "npm" @("run", "build")
+    } finally {
+        Pop-Location
+    }
+} else {
+    Write-Host ""
+    Write-Host "Node.js not found: the new interface (/app) is not built." -ForegroundColor Yellow
+    Write-Host "     Install it (winget install OpenJS.NodeJS.LTS) and run this script again."
+}
+
 $denylist = Join-Path $homeDir "denylist.txt"
 if (-not (Test-Path $denylist)) {
     Write-Host ""

@@ -1,0 +1,20 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) var(--list-width) minmax(0, 1fr);
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+@media (max-width: 1100px) {
+  .shell {
+    --list-width: 300px;
+    --sidebar-width: 216px;
+  }
+}
+
+@media (max-width: 1400px) {
+  .shell {
+    --info-width: 280px;
+  }
+}

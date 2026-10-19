@@ -1,0 +1,139 @@
+/*
+ * Design tokens. Light is the default; dark follows the system unless the user picked a
+ * theme (html[data-theme]). The sidebar is dark in both themes.
+ */
+:root {
+  color-scheme: light;
+
+  /* surfaces */
+  --bg: #ffffff;
+  --bg-subtle: #f6f8f8;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --border: #e2e8e8;
+  --border-strong: #cbd5d5;
+
+  /* text */
+  --text: #172022;
+  --text-muted: #5b6a6b;
+  --text-faint: #8a9898;
+
+  /* accent: teal */
+  --accent: #0e8174;
+  --accent-hover: #0b6c61;
+  --accent-text: #ffffff;
+  --accent-soft: #e2f4f1;
+  --accent-soft-text: #0b6157;
+  --selected: #e8f5f3;
+  --focus: #14b8a6;
+
+  /* status */
+  --danger: #c2410c;
+  --danger-soft: #fdeee6;
+  --warning: #a16207;
+  --warning-soft: #fdf5d9;
+  --success: #15803d;
+
+  /* chips */
+  --chip-bg: #eef2f2;
+  --chip-text: #2c3a3b;
+
+  /* sidebar (dark in both themes) */
+  --side-bg: #182425;
+  --side-bg-hover: #223233;
+  --side-bg-active: #29403f;
+  --side-text: #dbe5e4;
+  --side-text-muted: #8fa3a2;
+  --side-accent: #3cd3c3;
+  --side-border: #26393a;
+
+  /* shape */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 25, 0.06);
+  --shadow: 0 2px 8px rgba(16, 24, 25, 0.08), 0 1px 2px rgba(16, 24, 25, 0.06);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 25, 0.16);
+
+  /* type */
+  --font: "Inter Variable", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "Consolas", monospace;
+  --text-xs: 11.5px;
+  --text-sm: 12.5px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+
+  /* layout */
+  --sidebar-width: 248px;
+  --list-width: 360px;
+  --info-width: 340px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121819;
+    --bg-subtle: #171e1f;
+    --surface: #1a2223;
+    --surface-raised: #1f2829;
+    --border: #2a3536;
+    --border-strong: #3a4849;
+    --text: #e4ebea;
+    --text-muted: #9aaaa9;
+    --text-faint: #6f7f7e;
+    --accent: #2ec4b4;
+    --accent-hover: #4fd6c7;
+    --accent-text: #08201d;
+    --accent-soft: rgba(46, 196, 180, 0.14);
+    --accent-soft-text: #7fe3d8;
+    --selected: rgba(46, 196, 180, 0.12);
+    --chip-bg: #253031;
+    --chip-text: #cfdbda;
+    --danger: #fb8a4c;
+    --danger-soft: rgba(234, 88, 12, 0.15);
+    --warning: #f2c94c;
+    --success: #4ade80;
+    --warning-soft: rgba(202, 138, 4, 0.15);
+    --side-bg: #0d1314;
+    --side-bg-hover: #172122;
+    --side-bg-active: #1f3030;
+    --side-border: #1a2526;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121819;
+  --bg-subtle: #171e1f;
+  --surface: #1a2223;
+  --surface-raised: #1f2829;
+  --border: #2a3536;
+  --border-strong: #3a4849;
+  --text: #e4ebea;
+  --text-muted: #9aaaa9;
+  --text-faint: #6f7f7e;
+  --accent: #2ec4b4;
+  --accent-hover: #4fd6c7;
+  --accent-text: #08201d;
+  --accent-soft: rgba(46, 196, 180, 0.14);
+  --accent-soft-text: #7fe3d8;
+  --selected: rgba(46, 196, 180, 0.12);
+  --chip-bg: #253031;
+  --chip-text: #cfdbda;
+  --danger: #fb8a4c;
+  --danger-soft: rgba(234, 88, 12, 0.15);
+  --warning: #f2c94c;
+  --success: #4ade80;
+  --warning-soft: rgba(202, 138, 4, 0.15);
+  --side-bg: #0d1314;
+  --side-bg-hover: #172122;
+  --side-bg-active: #1f3030;
+  --side-border: #1a2526;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
