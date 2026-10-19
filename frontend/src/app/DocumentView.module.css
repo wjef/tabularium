@@ -214,6 +214,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  margin-bottom: 10px;
 }
 
 .muted {
@@ -225,46 +226,6 @@
 .note {
   font-size: var(--text-base);
   line-height: 1.5;
-}
-
-.links {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.phrase {
-  display: block;
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-}
-
-.linkButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--accent);
-  font: inherit;
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-}
-
-.linkButton span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.linkButton:hover span {
-  text-decoration: underline;
 }
 
 .facts {

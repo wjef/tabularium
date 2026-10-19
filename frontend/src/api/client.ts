@@ -36,7 +36,7 @@ function session() {
   return csrf;
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function send(method: string, path: string, body?: unknown): Promise<Response> {
   const headers: Record<string, string> = {};
   if (method !== "GET") {
     const { csrf_header, csrf_token } = await session();
@@ -58,7 +58,22 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     }
     throw new ApiError(response.status, message);
   }
-  return response.json() as Promise<T>;
+  return response;
+}
+
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  return (await send(method, path, body)).json() as Promise<T>;
+}
+
+/** POST that answers with a file (e.g. an export zip): saves it with the server's file name. */
+async function download(path: string, body: unknown): Promise<void> {
+  const response = await send("POST", path, body);
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const name = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1] ?? /filename="([^"]+)"/i.exec(disposition)?.[1];
+  const url = URL.createObjectURL(await response.blob());
+  const link = Object.assign(document.createElement("a"), { href: url, download: name ? decodeURIComponent(name) : "export.zip" });
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 export const api = {
@@ -67,6 +82,7 @@ export const api = {
   patch: <T>(path: string, body: unknown) => request<T>("PATCH", path, body),
   put: <T>(path: string) => request<T>("PUT", path),
   delete: <T>(path: string) => request<T>("DELETE", path),
+  download,
 };
 
 /** Query string from a params object; arrays become repeated keys, empty values are skipped. */

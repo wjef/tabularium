@@ -5,7 +5,6 @@ import {
   ExternalLink,
   FileQuestion,
   FolderOpen,
-  Link2,
   MoreHorizontal,
   PanelRightClose,
   PanelRightOpen,
@@ -13,14 +12,17 @@ import {
   ScanText,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { api, fileUrl, type DocumentDetail } from "../api/client";
 import { useDocument } from "../api/hooks";
-import { useExtractAgain, useOutdate, useUpdateDocument } from "../api/mutations";
+import { useAddTag, useExtractAgain, useOutdate, useRemoveTag, useUpdateDocument } from "../api/mutations";
 import { EditableText } from "../components/EditableText";
 import { TagChip } from "../components/TagChip";
+import { TagPicker } from "../components/TagPicker";
 import { fileBadge, formatDate, formatSize, shortName } from "../lib/format";
+import { isTyping } from "../lib/keys";
 import styles from "./DocumentView.module.css";
+import { RelatedDocuments } from "./RelatedDocuments";
 import { useView } from "./useView";
 
 const TEXT_STATUS: Record<DocumentDetail["text_status"], string> = {
@@ -38,6 +40,20 @@ export function DocumentView() {
   const { data: doc, isPending, isError, error } = useDocument(selected);
   const [infoOpen, setInfoOpen] = useInfoOpen();
   const [mode, setMode] = useState<Mode>("preview");
+  const tagInput = useRef<HTMLInputElement>(null);
+
+  // T: add a tag to the open document
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "t" || event.ctrlKey || event.metaKey || event.altKey || isTyping(event)) return;
+      event.preventDefault();
+      setInfoOpen(() => true);
+      requestAnimationFrame(() => tagInput.current?.focus());
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected, setInfoOpen]);
 
   if (!selected) {
     return (
@@ -103,7 +119,7 @@ export function DocumentView() {
           </div>
           {mode === "preview" ? <Preview doc={doc} /> : <TextView doc={doc} />}
         </div>
-        {infoOpen && <InfoPanel doc={doc} onOpenDocument={(id) => update({ doc: id })} />}
+        {infoOpen && <InfoPanel doc={doc} onOpenDocument={(id) => update({ doc: id })} tagInput={tagInput} />}
       </div>
     </main>
   );
@@ -229,20 +245,18 @@ function TextView({ doc }: { doc: DocumentDetail }) {
   );
 }
 
-function InfoPanel({ doc, onOpenDocument }: { doc: DocumentDetail; onOpenDocument: (id: string) => void }) {
+interface InfoProps {
+  doc: DocumentDetail;
+  onOpenDocument: (id: string) => void;
+  tagInput: RefObject<HTMLInputElement | null>;
+}
+
+function InfoPanel({ doc, onOpenDocument, tagInput }: InfoProps) {
   const save = useUpdateDocument(doc.id);
   return (
     <aside className={styles.info} aria-label="Details">
       <Section title="Tags">
-        {doc.tags.length ? (
-          <div className={styles.tags}>
-            {doc.tags.map((t) => (
-              <TagChip key={t.id} tag={t} full />
-            ))}
-          </div>
-        ) : (
-          <p className={styles.muted}>No tags yet.</p>
-        )}
+        <TagsEditor doc={doc} pickerRef={tagInput} />
       </Section>
 
       <Section title="Note">
@@ -258,21 +272,7 @@ function InfoPanel({ doc, onOpenDocument }: { doc: DocumentDetail; onOpenDocumen
       </Section>
 
       <Section title="Related documents">
-        {doc.links.length ? (
-          <ul className={styles.links}>
-            {doc.links.map((link) => (
-              <li key={link.relation_id}>
-                <span className={styles.phrase}>{link.phrase}</span>
-                <button className={styles.linkButton} onClick={() => onOpenDocument(link.other.id)}>
-                  <Link2 size={13} aria-hidden />
-                  <span>{shortName(link.other.display_name)}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className={styles.muted}>None.</p>
-        )}
+        <RelatedDocuments key={doc.id} doc={doc} onOpenDocument={onOpenDocument} />
       </Section>
 
       <Section title="Details">
@@ -304,6 +304,30 @@ function InfoPanel({ doc, onOpenDocument }: { doc: DocumentDetail; onOpenDocumen
         </dl>
       </Section>
     </aside>
+  );
+}
+
+function TagsEditor({ doc, pickerRef }: { doc: DocumentDetail; pickerRef: RefObject<HTMLInputElement | null> }) {
+  const add = useAddTag(doc.id);
+  const remove = useRemoveTag(doc.id);
+  const assigned = useMemo(() => new Set(doc.tags.map((t) => t.id)), [doc.tags]);
+  return (
+    <>
+      {doc.tags.length > 0 && (
+        <div className={styles.tags}>
+          {doc.tags.map((t) => (
+            <TagChip key={t.id} tag={t} full onRemove={() => remove.mutate(t.id)} />
+          ))}
+        </div>
+      )}
+      <TagPicker
+        key={doc.id}
+        ref={pickerRef}
+        assigned={assigned}
+        onPick={(choice) => add.mutate(choice)}
+        placeholder={doc.tags.length ? "Add a tag…  (T)" : "Add the first tag…  (T)"}
+      />
+    </>
   );
 }
 

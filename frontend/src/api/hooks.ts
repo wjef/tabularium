@@ -48,3 +48,19 @@ export const useDocument = (id: string | null) =>
     queryFn: () => api.get<DocumentDetail>(`/documents/${id}`),
     enabled: !!id,
   });
+
+export const useLinkChoices = () =>
+  useQuery({
+    queryKey: ["link-choices"],
+    queryFn: () => api.get<{ value: string; phrase: string }[]>("/link-choices"),
+    staleTime: Infinity,
+  });
+
+/** A few documents matching a search, for pickers. */
+export const useDocumentSearch = (q: string) =>
+  useQuery({
+    queryKey: ["document-search", q],
+    queryFn: () => api.get<DocumentPage>(`/documents${qs({ q, limit: 8 })}`),
+    enabled: q.trim().length > 0,
+    placeholderData: keepPreviousData,
+  });

@@ -110,6 +110,7 @@
 }
 
 .card {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
@@ -273,4 +274,71 @@
   font-family: var(--font);
   font-size: var(--text-xs);
   line-height: 16px;
+}
+
+.card.picked {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: var(--shadow-sm);
+}
+
+.selectionBar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+  animation: slideUp 140ms var(--ease);
+}
+
+.selectionTop {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.selectionTop strong {
+  flex: 1;
+  font-size: var(--text-base);
+}
+
+.barButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.barButton:hover {
+  background: var(--chip-bg);
+  color: var(--text);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
 }

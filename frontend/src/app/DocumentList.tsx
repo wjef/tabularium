@@ -1,8 +1,11 @@
-import { Search, X } from "lucide-react";
+import { Check, Download, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ApiError, thumbnailUrl, type DocumentSummary } from "../api/client";
+import { api, ApiError, thumbnailUrl, type DocumentSummary } from "../api/client";
+import { useBulkTag } from "../api/mutations";
 import { useDocuments, useTags, type DocumentFilters } from "../api/hooks";
 import { TagChip } from "../components/TagChip";
+import { TagPicker } from "../components/TagPicker";
+import { toast } from "../components/toast";
 import { fileBadge, formatDate, shortName } from "../lib/format";
 import { isTyping } from "../lib/keys";
 import styles from "./DocumentList.module.css";
@@ -82,6 +85,39 @@ export function DocumentList() {
   const title = section === "inbox" ? "To be tagged" : tag ? tag.name : "All documents";
   const words = (filters.q ?? "").toLowerCase().split(/\s+/).filter((w) => w.length > 1);
 
+  // several documents picked with Ctrl/Shift+click, for bulk actions; forgotten when the filters change
+  const filtersKey = JSON.stringify(filters);
+  const [picked, setPicked] = useState<{ key: string; ids: string[]; anchor: string | null }>({
+    key: "",
+    ids: [],
+    anchor: null,
+  });
+  const pickedIds = picked.key === filtersKey ? picked.ids : [];
+  const pickedSet = new Set(pickedIds);
+  const clearPicked = () => setPicked({ key: "", ids: [], anchor: null });
+
+  const onCardClick = (doc: DocumentSummary, event: MouseEvent) => {
+    if (event.ctrlKey || event.metaKey) {
+      const base = pickedIds.length ? pickedIds : selected && selected !== doc.id ? [selected] : [];
+      const ids = base.includes(doc.id) ? base.filter((id) => id !== doc.id) : [...base, doc.id];
+      setPicked({ key: filtersKey, ids, anchor: doc.id });
+    } else if (event.shiftKey) {
+      const anchor = picked.key === filtersKey && picked.anchor ? picked.anchor : selected;
+      const from = items.findIndex((d) => d.id === anchor);
+      const to = items.findIndex((d) => d.id === doc.id);
+      if (from < 0) {
+        setPicked({ key: filtersKey, ids: [doc.id], anchor: doc.id });
+      } else {
+        const range = items.slice(Math.min(from, to), Math.max(from, to) + 1).map((d) => d.id);
+        setPicked({ key: filtersKey, ids: range, anchor });
+      }
+      window.getSelection()?.removeAllRanges();
+    } else {
+      if (pickedIds.length) clearPicked();
+      update({ doc: doc.id });
+    }
+  };
+
   return (
     <section className={styles.pane} aria-label="Documents">
       <header className={styles.header}>
@@ -150,12 +186,14 @@ export function DocumentList() {
             doc={doc}
             words={words}
             selected={doc.id === selected}
-            onSelect={() => update({ doc: doc.id })}
+            picked={pickedSet.has(doc.id)}
+            onClick={(event) => onCardClick(doc, event)}
           />
         ))}
         <div ref={sentinel} />
         {isFetchingNextPage && <Skeleton count={2} />}
       </div>
+      {pickedIds.length > 0 && <SelectionBar ids={pickedIds} onClear={clearPicked} />}
     </section>
   );
 }
@@ -164,10 +202,11 @@ interface CardProps {
   doc: DocumentSummary;
   words: string[];
   selected: boolean;
-  onSelect: () => void;
+  picked: boolean;
+  onClick: (event: MouseEvent) => void;
 }
 
-function DocumentCard({ doc, words, selected, onSelect }: CardProps) {
+function DocumentCard({ doc, words, selected, picked, onClick }: CardProps) {
   const name = doc.title ?? shortName(doc.display_name);
   const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -177,9 +216,10 @@ function DocumentCard({ doc, words, selected, onSelect }: CardProps) {
     <button
       ref={ref}
       role="listitem"
-      className={selected ? `${styles.card} ${styles.selected}` : styles.card}
-      onClick={onSelect}
+      className={[styles.card, selected && styles.selected, picked && styles.picked].filter(Boolean).join(" ")}
+      onClick={(event) => onClick(event.nativeEvent)}
       aria-current={selected ? "true" : undefined}
+      aria-pressed={picked}
     >
       <div className={styles.cardText}>
         <span className={doc.title ? styles.cardTitle : `${styles.cardTitle} ${styles.untitled}`}>
@@ -199,9 +239,62 @@ function DocumentCard({ doc, words, selected, onSelect }: CardProps) {
         )}
       </div>
       <Thumbnail doc={doc} />
+      {picked && (
+        <span className={styles.check} aria-hidden>
+          <Check size={12} strokeWidth={3} />
+        </span>
+      )}
     </button>
   );
 }
+
+/** Bulk actions for the picked documents. */
+function SelectionBar({ ids, onClear }: { ids: string[]; onClear: () => void }) {
+  const bulk = useBulkTag();
+  const [exporting, setExporting] = useState(false);
+  const exportZip = async () => {
+    setExporting(true);
+    try {
+      await api.download("/export", { document_ids: ids });
+    } catch (error) {
+      toast((error as Error).message, "error");
+    } finally {
+      setExporting(false);
+    }
+  };
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isTyping(event)) onClear();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClear]);
+
+  return (
+    <div className={styles.selectionBar} role="region" aria-label="Selected documents">
+      <div className={styles.selectionTop}>
+        <strong>
+          {ids.length} selected
+        </strong>
+        <button className={styles.barButton} onClick={exportZip} disabled={exporting}>
+          <Download size={14} aria-hidden /> Export
+        </button>
+        <button className={styles.barButton} onClick={onClear} title="Clear selection (Esc)">
+          <X size={14} aria-hidden /> Clear
+        </button>
+      </div>
+      <TagPicker
+        assigned={NO_IDS}
+        above
+        placeholder={`Add a tag to all ${ids.length}…`}
+        disabled={bulk.isPending}
+        onPick={(choice) => bulk.mutate({ ids, choice }, { onSuccess: onClear })}
+      />
+    </div>
+  );
+}
+
+const NO_IDS = new Set<string>();
 
 /** First page / photo for PDFs and images; a file-type tile for everything else. */
 function Thumbnail({ doc }: { doc: DocumentSummary }) {
