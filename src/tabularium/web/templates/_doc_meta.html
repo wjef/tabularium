@@ -52,6 +52,32 @@
     <button>{{ _("Create and add") }}</button>
   </form>
 
+  <h3>{{ _("Related documents") }}</h3>
+  <ul>
+    {% for link in links %}
+    <li>{{ _("This document") }} {{ _(link.phrase) }}
+      <a href="/documents/{{ link.other.id }}">{{ link.other.display_name }}</a>
+      {% if link.other.document_date %}<span class="muted">({{ link.other.document_date.isoformat() }})</span>{% endif %}
+      <form class="inline" hx-post="/documents/{{ doc.id }}/relations/{{ link.relation.id }}/remove" {{ target|safe }}>
+        <input type="hidden" name="view" value="{{ view }}">
+        <button title="{{ _('Remove link') }}">×</button>
+      </form>
+    </li>
+    {% else %}
+    <li class="muted">{{ _("No linked documents.") }}</li>
+    {% endfor %}
+  </ul>
+  <div class="link-add">
+    {{ _("This document") }}
+    <select name="kind" id="link-kind-{{ doc.id }}">
+      {% for value, phrase in link_choices %}<option value="{{ value }}">{{ _(phrase) }}</option>{% endfor %}
+    </select>
+    <input type="search" name="q" placeholder="{{ _('find the other document: title, hash, words inside…') }}"
+           hx-get="/documents/{{ doc.id }}/relations/candidates" hx-trigger="input changed delay:300ms, search"
+           hx-target="#link-candidates-{{ doc.id }}" hx-vals='{"view": "{{ view }}"}'>
+    <div id="link-candidates-{{ doc.id }}"></div>
+  </div>
+
   <h3>{{ _("Details") }}</h3>
   <form hx-post="/documents/{{ doc.id }}/details" {{ target|safe }} class="stacked">
     <input type="hidden" name="view" value="{{ view }}">

@@ -30,6 +30,9 @@ from tabularium.services.documents import (
     untagged_documents,
     update_details,
 )
+from tabularium.services.relations import add_link, links_of, parse_choice, remove_link
+from tabularium.services.relations import choices as relation_choices
+from tabularium.services.search import SearchQuery, search
 from tabularium.services.tags import (
     create_tag,
     find_by_path,
@@ -116,6 +119,8 @@ def meta_context(
         "retention_years": request.app.state.config.retention.years,
         "can_outdate": can_outdate(document.retain_until, date.today()),
         "text": session.get(DocumentText, document.id),
+        "links": links_of(session, document),
+        "link_choices": relation_choices(),
         "message": message,
         "error": error,
     }
@@ -413,3 +418,62 @@ def extract_again(
     response = _meta(request, session, document_id, view, action, N_("Text extraction queued."))
     request.app.state.text_indexer.wake()
     return response
+
+
+# --- related documents ------------------------------------------------------------------
+
+CANDIDATE_LIMIT = 15
+
+
+@router.get("/documents/{document_id}/relations/candidates", response_class=HTMLResponse)
+def link_candidates(
+    request: Request,
+    session: SessionDep,
+    document_id: uuid.UUID,
+    q: str = "",
+    view: str = DOCUMENT,
+):
+    """Documents matching ``q`` (title, hash, words inside…) that could be linked."""
+    document = _get_document(session, document_id)
+    results = []
+    if q.strip():
+        found, _ = search(session, SearchQuery(text=q), limit=CANDIDATE_LIMIT + 1)
+        results = [d for d in found if d.id != document.id][:CANDIDATE_LIMIT]
+    return render(
+        request,
+        "_link_candidates.html",
+        {"doc": document, "candidates": results, "q": q, "view": view},
+    )
+
+
+@router.post("/documents/{document_id}/relations/add", response_class=HTMLResponse)
+def link_add(
+    request: Request,
+    session: SessionDep,
+    document_id: uuid.UUID,
+    other_id: Annotated[str, Form()],
+    kind: Annotated[str, Form()] = "",
+    view: ViewField = DOCUMENT,
+):
+    def action(document):
+        other = session.get(Document, parse_uuid(other_id)) if parse_uuid(other_id) else None
+        if other is None:
+            raise DomainError("Choose the document to link.")
+        relation_type, direction = parse_choice(kind)
+        add_link(session, document, other, relation_type, direction)
+
+    return _meta(request, session, document_id, view, action, N_("Documents linked."))
+
+
+@router.post("/documents/{document_id}/relations/{relation_id}/remove", response_class=HTMLResponse)
+def link_remove(
+    request: Request,
+    session: SessionDep,
+    document_id: uuid.UUID,
+    relation_id: uuid.UUID,
+    view: ViewField = DOCUMENT,
+):
+    def action(document):
+        remove_link(session, relation_id)
+
+    return _meta(request, session, document_id, view, action, N_("Link removed."))

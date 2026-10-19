@@ -1,0 +1,18 @@
+{# expects: doc, candidates, q, view #}
+{% if q.strip() and not candidates %}
+  <p class="muted">{{ _("No matching documents.") }}</p>
+{% endif %}
+<ul class="candidates">
+  {% for c in candidates %}
+  <li>
+    <form class="inline" hx-post="/documents/{{ doc.id }}/relations/add" hx-target="#doc-meta" hx-swap="outerHTML"
+          hx-include="#link-kind-{{ doc.id }}">
+      <input type="hidden" name="other_id" value="{{ c.id }}">
+      <input type="hidden" name="view" value="{{ view }}">
+      <button>{{ _("Link") }}</button>
+    </form>
+    {{ c.display_name }}
+    {% if c.document_date %}<span class="muted">({{ c.document_date.isoformat() }})</span>{% endif %}
+  </li>
+  {% endfor %}
+</ul>

@@ -46,6 +46,7 @@ class RelationType(StrEnum):
     SIGNED_VERSION_OF = "SIGNED_VERSION_OF"
     ATTACHMENT_OF = "ATTACHMENT_OF"
     REPLACES = "REPLACES"
+    CORRECTION_OF = "CORRECTION_OF"  # e.g. a correction invoice → the original invoice
 
 
 class TextStatus(StrEnum):
@@ -229,7 +230,7 @@ class DocumentText(Base):
 
 
 class DocumentRelation(Base):
-    """Link between documents (e.g. payment confirmation → invoice). UI comes later."""
+    """Directed link: ``from`` <type> ``to`` (payment confirmation PAYMENT_FOR invoice)."""
 
     __tablename__ = "document_relation"
     __table_args__ = (

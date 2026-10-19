@@ -43,3 +43,5 @@ ul.checktree { list-style: none; padding-left: 1em; margin: .1em 0; }
 ul.checktree label { cursor: pointer; }
 .snippet { color: #333; background: #ffd; }
 pre.extracted { white-space: pre-wrap; max-height: 24em; overflow: auto; border: 1px solid #ccc; padding: .5em; }
+ul.candidates { list-style: none; padding-left: 0; }
+.link-add select { max-width: 14em; }

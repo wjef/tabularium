@@ -89,8 +89,8 @@ Document    id (UUID), sha256 (UNIQUE), stored_path (relative to archive),
             retain_until_manual (bool), ingested_at
 
 DocumentTag     document_id, tag_id, tagged_at
-DocumentRelation  from_document_id, to_document_id, type (e.g. PAYMENT_FOR, SIGNED_VERSION_OF)
-                  — table in v1, UI later
+DocumentRelation  from_document_id, to_document_id, type (PAYMENT_FOR, CORRECTION_OF,
+                  SIGNED_VERSION_OF, ATTACHMENT_OF, REPLACES, RELATED), note
 AuditLog    id, at (UTC), actor (OS user name), action, object_type, object_id,
             old_value, new_value
 IngestLog   id, run_id, source_path, sha256, result (IMPORTED | DUPLICATE | FAILED | SKIPPED),
@@ -188,6 +188,11 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   from a suggestion list, by picking *under which tag + which entity* (the entity tag is
   reused or created), or by creating a new tag on the spot.
 - Document details: title, note, document date, *keep until* (automatic or manual).
+- **Related documents** on the document page: links such as invoice ↔ payment, correction,
+  signed version, attachment, replaces, related. Stored once (directed) and phrased from
+  each document's side ("is the payment for" / "is paid by"). The other document is found
+  with the normal search (title, hash, words inside). Duplicates and self-links are refused;
+  adding/removing is recorded in both documents' history.
 - **Document name in the app** = its title, otherwise its archive file name
   (`<sha256>.<ext>`). Original file names are often random (scanner/phone names), so
   they are shown only as reference in the document's *File* section (still searchable).
