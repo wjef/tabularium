@@ -335,6 +335,11 @@ def export_documents(
 ):
     """Selected documents as a zip of readable copies (plus index.csv)."""
     ids = [i for i in (parse_uuid(v) for v in doc_ids or []) if i is not None]
+    return export_zip(request, session, ids)
+
+
+def export_zip(request: Request, session: Session, ids: list[uuid.UUID]) -> StreamingResponse:
+    """Zip of readable copies of ``ids`` (shared by the page and the JSON API)."""
     if not ids:
         raise HTTPException(status_code=400, detail="Select at least one document.")
     documents = list(
@@ -345,7 +350,7 @@ def export_documents(
         )
     )
     storage = request.app.state.storage
-    missing = [d.original_filename for d in documents if not storage.exists(d.stored_path)]
+    missing = [d.display_name for d in documents if not storage.exists(d.stored_path)]
     if missing:
         raise HTTPException(status_code=409, detail=f"Missing from the archive: {missing}")
 

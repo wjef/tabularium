@@ -8,11 +8,12 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from tabularium.services import DomainError
-from tabularium.web.api import catalog, documents
+from tabularium.web.api import catalog, documents, manage
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(catalog.router)
 router.include_router(documents.router)
+router.include_router(manage.router)
 
 
 async def _domain_error(_request: Request, exc: DomainError) -> JSONResponse:
