@@ -33,12 +33,35 @@ class SearchQuery:
     date_from: date | None = None
     date_to: date | None = None
     include_related: bool = False
+    untagged: bool = False  # only documents without any tag ("To be tagged")
+    sort: str = "date"  # date | imported | title
 
     @property
     def is_empty(self) -> bool:
         return not (
-            self.tag_ids or self.entity_ids or self.text.strip() or self.date_from or self.date_to
+            self.tag_ids
+            or self.entity_ids
+            or self.text.strip()
+            or self.date_from
+            or self.date_to
+            or self.untagged
         )
+
+
+SORTS = {
+    # newest document date first, undated last
+    "date": (
+        Document.document_date.is_(None),
+        Document.document_date.desc(),
+        Document.ingested_at.desc(),
+    ),
+    "imported": (Document.ingested_at.desc(),),
+    "imported_asc": (Document.ingested_at.asc(),),  # oldest first, e.g. for tagging
+    "title": (
+        func.coalesce(func.tnorm(Document.title, type_=String), Document.sha256),
+        Document.ingested_at.desc(),
+    ),
+}
 
 
 def _has_any_tag(tag_ids) -> exists:
@@ -86,15 +109,15 @@ def build_query(session: Session, query: SearchQuery) -> Select[tuple[Document]]
         stmt = stmt.where(Document.document_date >= query.date_from)
     if query.date_to:
         stmt = stmt.where(Document.document_date <= query.date_to)
-    return stmt.order_by(
-        Document.document_date.is_(None),
-        Document.document_date.desc(),
-        Document.ingested_at.desc(),
-    )
+    if query.untagged:
+        stmt = stmt.where(~exists().where(DocumentTag.document_id == Document.id))
+    return stmt.order_by(*SORTS.get(query.sort, SORTS["date"]))
 
 
-def search(session: Session, query: SearchQuery, *, limit: int = 500) -> tuple[list[Document], int]:
-    """Matching documents (newest document date first) and the total number of matches."""
+def search(
+    session: Session, query: SearchQuery, *, limit: int = 500, offset: int = 0
+) -> tuple[list[Document], int]:
+    """Matching documents in the requested order and the total number of matches."""
     stmt = build_query(session, query)
     total = session.scalar(select(func.count()).select_from(stmt.order_by(None).subquery())) or 0
-    return list(session.scalars(stmt.limit(limit))), total
+    return list(session.scalars(stmt.offset(offset).limit(limit))), total

@@ -23,6 +23,7 @@ from tabularium.storage import LocalStorage
 from tabularium.textextract import TesseractOcr, tesseract_status
 from tabularium.textindex import TextIndexer
 from tabularium.web import (
+    api,
     routes_documents,
     routes_entities,
     routes_history,
@@ -96,6 +97,7 @@ def create_app(
     app.state.templates = make_templates(config, csrf_token)
     app.add_middleware(LocalOnlyMiddleware, csrf_token=csrf_token)
     app.mount("/static", StaticFiles(directory=str(_WEB / "static")), name="static")
+    api.install(app)
     app.include_router(routes_documents.router)
     app.include_router(routes_outdated.router)
     app.include_router(routes_search.router)
