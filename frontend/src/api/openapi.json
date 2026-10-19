@@ -2426,6 +2426,43 @@
     ]
    }
   },
+  "/api/v1/documents/{document_id}/thumbnail": {
+   "get": {
+    "description": "Small WebP preview (first PDF page or the photo); 404 when the type has none.",
+    "operationId": "get_thumbnail_api_v1_documents__document_id__thumbnail_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Thumbnail",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
   "/api/v1/entities": {
    "get": {
     "operationId": "entities_api_v1_entities_get",

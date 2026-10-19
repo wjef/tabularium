@@ -9,6 +9,7 @@ import logging
 import os
 import shutil
 import subprocess
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO, Protocol
@@ -102,6 +103,10 @@ class TesseractOcr:
 # --- extraction -------------------------------------------------------------------------
 
 
+# PDFium is not thread-safe: every call into it (text index thread, thumbnails) holds this lock.
+PDFIUM_LOCK = threading.RLock()
+
+
 def _decode(data: bytes) -> str:
     for encoding in ("utf-8-sig", "cp1250"):
         try:
@@ -114,27 +119,33 @@ def _decode(data: bytes) -> str:
 def _pdf(source, ocr: OcrEngine | None, dpi: int, max_pages: int) -> Extraction:
     import pypdfium2 as pdfium
 
-    pdf = pdfium.PdfDocument(source)
+    with PDFIUM_LOCK:
+        pdf = pdfium.PdfDocument(source)
     try:
-        total = len(pdf)
+        with PDFIUM_LOCK:
+            total = len(pdf)
         parts, text_pages, ocr_pages, scans_without_ocr = [], 0, 0, 0
         for index in range(min(total, max_pages)):
-            page = pdf[index]
-            textpage = page.get_textpage()
-            text = textpage.get_text_bounded() or ""
-            textpage.close()
+            image = None
+            with PDFIUM_LOCK:
+                page = pdf[index]
+                textpage = page.get_textpage()
+                text = textpage.get_text_bounded() or ""
+                textpage.close()
+                if len(text.strip()) < MIN_PAGE_CHARS and ocr is not None:
+                    image = page.render(scale=dpi / 72).to_pil()
+                page.close()
             if len(text.strip()) >= MIN_PAGE_CHARS:
                 parts.append(text)
                 text_pages += 1
-            elif ocr is not None:
-                image = page.render(scale=dpi / 72).to_pil()
-                parts.append(ocr.image_to_text(image))
+            elif image is not None:
+                parts.append(ocr.image_to_text(image))  # slow, so outside the lock
                 ocr_pages += 1
             else:
                 scans_without_ocr += 1
-            page.close()
     finally:
-        pdf.close()
+        with PDFIUM_LOCK:
+            pdf.close()
 
     content = "\n\f\n".join(p.strip() for p in parts if p.strip())
     method = "mixed" if text_pages and ocr_pages else ("ocr" if ocr_pages else "text")

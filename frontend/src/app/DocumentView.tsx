@@ -1,17 +1,23 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  Archive,
   Download,
   ExternalLink,
   FileQuestion,
   FolderOpen,
   Link2,
+  MoreHorizontal,
   PanelRightClose,
   PanelRightOpen,
+  RefreshCw,
   ScanText,
+  X,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api, fileUrl, type DocumentDetail } from "../api/client";
 import { useDocument } from "../api/hooks";
+import { useExtractAgain, useOutdate, useUpdateDocument } from "../api/mutations";
+import { EditableText } from "../components/EditableText";
 import { TagChip } from "../components/TagChip";
 import { fileBadge, formatDate, formatSize, shortName } from "../lib/format";
 import styles from "./DocumentView.module.css";
@@ -25,10 +31,13 @@ const TEXT_STATUS: Record<DocumentDetail["text_status"], string> = {
   FAILED: "Reading failed",
 };
 
+type Mode = "preview" | "text";
+
 export function DocumentView() {
   const { selected, update } = useView();
   const { data: doc, isPending, isError, error } = useDocument(selected);
   const [infoOpen, setInfoOpen] = useInfoOpen();
+  const [mode, setMode] = useState<Mode>("preview");
 
   if (!selected) {
     return (
@@ -42,23 +51,26 @@ export function DocumentView() {
   if (isError) {
     return (
       <main className={styles.empty}>
-        <p>Could not load the document: {error.message}</p>
+        <p>
+          {error.message === "Document not found"
+            ? "This document is no longer in the archive (it may have been outdated)."
+            : `Could not load the document: ${error.message}`}
+        </p>
       </main>
     );
   }
 
-  const name = doc.title ?? shortName(doc.display_name);
   return (
     <main className={styles.pane}>
       <header className={styles.toolbar}>
         <div className={styles.heading}>
-          <h2 className={doc.title ? styles.title : `${styles.title} ${styles.untitled}`} title={doc.display_name}>
-            {name}
-          </h2>
+          <DocumentTitle doc={doc} />
           <div className={styles.sub}>
-            {doc.document_date ? formatDate(doc.document_date) : "No document date"}
+            <DateField doc={doc} />
             <span aria-hidden>·</span>
-            {fileBadge(doc.stored_name)} · {formatSize(doc.size_bytes)}
+            <span>
+              {fileBadge(doc.stored_name)} · {formatSize(doc.size_bytes)}
+            </span>
           </div>
         </div>
         <div className={styles.actions}>
@@ -67,6 +79,7 @@ export function DocumentView() {
           <a className={styles.iconButton} href={fileUrl(doc.id, true)} title="Download" aria-label="Download">
             <Download size={16} />
           </a>
+          <MoreMenu doc={doc} onOutdated={() => update({ doc: null })} />
           <button
             className={styles.iconButton}
             onClick={() => setInfoOpen((v) => !v)}
@@ -80,10 +93,64 @@ export function DocumentView() {
       </header>
 
       <div className={infoOpen ? styles.body : `${styles.body} ${styles.noInfo}`}>
-        <Preview doc={doc} />
+        <div className={styles.main}>
+          <div className={styles.modes} role="tablist" aria-label="Show">
+            {(["preview", "text"] as const).map((m) => (
+              <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)}>
+                {m === "preview" ? "Preview" : "Text"}
+              </button>
+            ))}
+          </div>
+          {mode === "preview" ? <Preview doc={doc} /> : <TextView doc={doc} />}
+        </div>
         {infoOpen && <InfoPanel doc={doc} onOpenDocument={(id) => update({ doc: id })} />}
       </div>
     </main>
+  );
+}
+
+function DocumentTitle({ doc }: { doc: DocumentDetail }) {
+  const save = useUpdateDocument(doc.id);
+  return (
+    <h2 className={styles.title}>
+      <EditableText
+        key={doc.id}
+        value={doc.title ?? ""}
+        placeholder="Untitled"
+        label="Title"
+        onSave={(title) => save.mutate({ title })}
+      />
+    </h2>
+  );
+}
+
+function DateField({ doc }: { doc: DocumentDetail }) {
+  const save = useUpdateDocument(doc.id);
+  return (
+    <span className={styles.dateField}>
+      <input
+        key={doc.id}
+        type="date"
+        defaultValue={doc.document_date ?? ""}
+        aria-label="Document date"
+        title="Document date"
+        className={doc.document_date ? undefined : styles.noDate}
+        onBlur={(e) => {
+          const value = e.target.value;
+          if (value && value !== doc.document_date) save.mutate({ document_date: value });
+        }}
+        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+      />
+      {doc.document_date && (
+        <button
+          onClick={() => save.mutate({ clear_document_date: true })}
+          aria-label="Remove document date"
+          title="Remove document date"
+        >
+          <X size={12} />
+        </button>
+      )}
+    </span>
   );
 }
 
@@ -140,7 +207,30 @@ function Preview({ doc }: { doc: DocumentDetail }) {
   );
 }
 
+/** The text found in the document (text layer or OCR), as used by search. */
+function TextView({ doc }: { doc: DocumentDetail }) {
+  const { data, isPending } = useQuery({
+    queryKey: ["document-text", doc.id, doc.text_status],
+    queryFn: () => api.get<{ content: string | null }>(`/documents/${doc.id}/text`),
+  });
+  if (isPending) return <div className={styles.preview} />;
+  return (
+    <div className={styles.preview}>
+      {data?.content ? (
+        <pre className={styles.text}>{data.content}</pre>
+      ) : (
+        <div className={styles.noPreview}>
+          <ScanText size={32} strokeWidth={1.4} aria-hidden />
+          <p>{TEXT_STATUS[doc.text_status]}.</p>
+          {doc.text.error && <p className={styles.muted}>{doc.text.error}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function InfoPanel({ doc, onOpenDocument }: { doc: DocumentDetail; onOpenDocument: (id: string) => void }) {
+  const save = useUpdateDocument(doc.id);
   return (
     <aside className={styles.info} aria-label="Details">
       <Section title="Tags">
@@ -155,11 +245,17 @@ function InfoPanel({ doc, onOpenDocument }: { doc: DocumentDetail; onOpenDocumen
         )}
       </Section>
 
-      {doc.note && (
-        <Section title="Note">
-          <p className={styles.note}>{doc.note}</p>
-        </Section>
-      )}
+      <Section title="Note">
+        <EditableText
+          key={doc.id}
+          value={doc.note ?? ""}
+          placeholder="Add a note…"
+          label="Note"
+          multiline
+          className={styles.note}
+          onSave={(note) => save.mutate({ note })}
+        />
+      </Section>
 
       <Section title="Related documents">
         {doc.links.length ? (
@@ -181,14 +277,12 @@ function InfoPanel({ doc, onOpenDocument }: { doc: DocumentDetail; onOpenDocumen
 
       <Section title="Details">
         <dl className={styles.facts}>
-          <dt>Document date</dt>
-          <dd>{formatDate(doc.document_date) || "—"}</dd>
           <dt>Imported</dt>
           <dd>{formatDate(doc.ingested_at)}</dd>
           <dt>Keep until</dt>
           <dd>{formatDate(doc.retain_until)}</dd>
           <dt>Type</dt>
-          <dd>{doc.mime_type ?? fileBadge(doc.stored_name)}</dd>
+          <dd title={doc.mime_type ?? undefined}>{fileBadge(doc.stored_name)}</dd>
           <dt>Size</dt>
           <dd>{formatSize(doc.size_bytes)}</dd>
           <dt>Text</dt>
@@ -234,5 +328,113 @@ function OsAction({ id, action, label, icon }: { id: string; action: "open" | "r
     >
       {icon}
     </button>
+  );
+}
+
+function MoreMenu({ doc, onOutdated }: { doc: DocumentDetail; onOutdated: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const menu = useRef<HTMLDivElement>(null);
+  const extract = useExtractAgain(doc.id);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent ? event.key === "Escape" : !menu.current?.contains(event.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+
+  return (
+    <div className={styles.menuWrap} ref={menu}>
+      <button
+        className={styles.iconButton}
+        onClick={() => setOpen((v) => !v)}
+        aria-label="More actions"
+        title="More actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <MoreHorizontal size={16} />
+      </button>
+      {open && (
+        <div className={styles.menu} role="menu">
+          <button
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              extract.mutate();
+            }}
+          >
+            <RefreshCw size={15} aria-hidden /> Read text again
+          </button>
+          <button
+            role="menuitem"
+            disabled={!doc.can_outdate}
+            onClick={() => {
+              setOpen(false);
+              setConfirming(true);
+            }}
+          >
+            <Archive size={15} aria-hidden />
+            <span>
+              Outdate…
+              {!doc.can_outdate && (
+                <small className={styles.menuHint}>Kept until {formatDate(doc.retain_until)}</small>
+              )}
+            </span>
+          </button>
+        </div>
+      )}
+      {confirming && <OutdateDialog doc={doc} onClose={() => setConfirming(false)} onDone={onOutdated} />}
+    </div>
+  );
+}
+
+function OutdateDialog({ doc, onClose, onDone }: { doc: DocumentDetail; onClose: () => void; onDone: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [reason, setReason] = useState("");
+  const outdate = useOutdate(doc.id);
+  useEffect(() => dialog.current?.showModal(), []);
+
+  return (
+    <dialog ref={dialog} className={styles.dialog} onClose={onClose}>
+      <form
+        method="dialog"
+        onSubmit={(e) => {
+          e.preventDefault();
+          outdate.mutate(reason, {
+            onSuccess: () => {
+              dialog.current?.close();
+              onDone();
+            },
+          });
+        }}
+      >
+        <h3>Outdate this document?</h3>
+        <p>
+          It leaves the archive and moves to the Outdated section, where it can be restored. Nothing is
+          deleted.
+        </p>
+        <label>
+          Reason (optional)
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} autoFocus />
+        </label>
+        <div className={styles.dialogButtons}>
+          <button type="button" className={styles.secondary} onClick={() => dialog.current?.close()}>
+            Cancel
+          </button>
+          <button type="submit" className={styles.button} disabled={outdate.isPending}>
+            Outdate
+          </button>
+        </div>
+      </form>
+    </dialog>
   );
 }

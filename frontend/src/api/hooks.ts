@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   api,
   qs,
@@ -26,10 +26,19 @@ export const useTags = () => useQuery({ queryKey: ["tags"], queryFn: () => api.g
 export const useEntities = () =>
   useQuery({ queryKey: ["entities"], queryFn: () => api.get<EntityOut[]>("/entities") });
 
+const PAGE = 50;
+
+/** Documents matching the filters, loaded page by page as the list scrolls. */
 export const useDocuments = (filters: DocumentFilters) =>
-  useQuery({
+  useInfiniteQuery({
     queryKey: ["documents", filters],
-    queryFn: () => api.get<DocumentPage>(`/documents${qs({ ...filters, limit: 100 })}`),
+    queryFn: ({ pageParam }) =>
+      api.get<DocumentPage>(`/documents${qs({ ...filters, offset: pageParam, limit: PAGE })}`),
+    initialPageParam: 0,
+    getNextPageParam: (last) => {
+      const next = last.offset + last.items.length;
+      return next < last.total ? next : undefined;
+    },
     placeholderData: keepPreviousData, // keep the list while a new search loads
   });
 

@@ -1,3 +1,4 @@
+import { Toaster } from "../components/Toaster";
 import styles from "./App.module.css";
 import { DocumentList } from "./DocumentList";
 import { DocumentView } from "./DocumentView";
@@ -10,6 +11,7 @@ export function App() {
       <Sidebar />
       <DocumentList />
       <DocumentView />
+      <Toaster />
     </div>
   );
 }

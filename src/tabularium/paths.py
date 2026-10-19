@@ -39,3 +39,8 @@ def lock_file() -> Path:
 
 def denylist_file() -> Path:
     return app_home() / "denylist.txt"
+
+
+def cache_dir() -> Path:
+    """Rebuildable data (thumbnails); safe to delete at any time."""
+    return app_home() / "cache"

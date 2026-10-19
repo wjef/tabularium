@@ -84,3 +84,6 @@ export function qs(params: Record<string, string | number | boolean | string[] |
 /** URL of a document's file (preview inline or as a download). */
 export const fileUrl = (id: string, download = false) =>
   `/documents/${id}/file${download ? "?download=1" : ""}`;
+
+/** Small WebP preview of a PDF's first page or a photo (404 for other types). */
+export const thumbnailUrl = (id: string) => `${BASE}/documents/${id}/thumbnail`;

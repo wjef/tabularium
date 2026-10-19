@@ -5,6 +5,7 @@ from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -30,6 +31,7 @@ from tabularium.services.search import SORTS, SearchQuery, search
 from tabularium.services.tags import create_tag, get_or_create_entity_tag, tag_paths
 from tabularium.text import normalize
 from tabularium.textindex import request_extraction, snippet
+from tabularium.thumbnails import thumbnail_path
 from tabularium.web.api import schemas as s
 from tabularium.web.deps import get_session
 from tabularium.web.files import preview_kind
@@ -182,6 +184,19 @@ def get_text(session: SessionDep, document_id: uuid.UUID) -> dict:
     _get(session, document_id)
     text = session.get(DocumentText, document_id)
     return {"content": text.content if text else None}
+
+
+@router.get("/documents/{document_id}/thumbnail", response_class=FileResponse)
+def get_thumbnail(request: Request, session: SessionDep, document_id: uuid.UUID):
+    """Small WebP preview (first PDF page or the photo); 404 when the type has none."""
+    document = _get(session, document_id)
+    path = thumbnail_path(request.app.state.storage, document)
+    if path is None:
+        raise HTTPException(status_code=404, detail="No thumbnail for this document")
+    # the file behind a document never changes, so browsers may keep the thumbnail
+    return FileResponse(
+        path, media_type="image/webp", headers={"Cache-Control": "private, max-age=604800"}
+    )
 
 
 @router.get("/documents/{document_id}/history", response_model=list[s.HistoryEntry])

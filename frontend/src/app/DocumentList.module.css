@@ -110,7 +110,9 @@
 }
 
 .card {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
   width: 100%;
   margin-bottom: 4px;
   padding: 12px 14px;
@@ -134,10 +136,8 @@
   box-shadow: var(--shadow-sm), inset 3px 0 0 var(--accent);
 }
 
-.cardTop {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+.cardText {
+  min-width: 0;
 }
 
 .cardTitle {
@@ -160,8 +160,30 @@
   font-weight: 500;
 }
 
+.thumb {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 76px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  background: #fff;
+}
+
+.thumb[data-kind="image"] img {
+  object-position: center;
+}
+
 .badge {
-  flex: none;
   padding: 1px 6px;
   border-radius: 4px;
   background: var(--chip-bg);
@@ -172,14 +194,9 @@
   line-height: 16px;
 }
 
-.badge[data-kind="pdf"] {
+.thumb[data-kind="pdf"] .badge {
   background: var(--danger-soft);
   color: var(--danger);
-}
-
-.badge[data-kind="image"] {
-  background: var(--accent-soft);
-  color: var(--accent-soft-text);
 }
 
 .date {
@@ -246,4 +263,14 @@
   to {
     background-position: -200% 0;
   }
+}
+
+.kbd {
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-faint);
+  font-family: var(--font);
+  font-size: var(--text-xs);
+  line-height: 16px;
 }
