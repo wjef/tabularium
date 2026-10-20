@@ -22,6 +22,19 @@ def _snapshot(entity: Entity) -> dict:
     }
 
 
+def check_entity_name_free(session: Session, name: str, exclude: uuid.UUID | None = None) -> None:
+    """Entity names are unique (ignoring case, diacritics and spacing), whatever their type."""
+    query = select(Entity).where(Entity.normalized_name == normalize(name))
+    if exclude is not None:
+        query = query.where(Entity.id != exclude)
+    existing = session.scalars(query).first()
+    if existing is not None:
+        raise DomainError(
+            f"An entity named '{existing.name}' already exists ({existing.type.name}). "
+            "To tell two apart, add something to the name, e.g. a city or a year."
+        )
+
+
 def create_entity(
     session: Session,
     type_: EntityType,
@@ -31,6 +44,7 @@ def create_entity(
     attributes: dict[str, Any] | None = None,
 ) -> Entity:
     name = clean_name(name)
+    check_entity_name_free(session, name)
     entity = Entity(
         id=uuid.uuid4(),
         type=type_,
@@ -60,6 +74,7 @@ def update_entity(
     name = clean_name(name) if name is not None else None
     # Any visible change counts as a rename (also case or diacritics, e.g. "Lodz" → "Łódź").
     if name is not None and name != entity.name:
+        check_entity_name_free(session, name, exclude=entity.id)
         # Query instead of entity.tags: a collection loaded earlier may miss newer tags.
         tags = session.scalars(select(Tag).where(Tag.entity_id == entity.id)).all()
         for tag in tags:

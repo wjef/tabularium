@@ -125,9 +125,19 @@ def test_entity_rename_propagates_to_its_tags(session, tree):
     assert tree["sender/jan"].normalized_name == "jan kowalski-nowak"
 
 
-def test_entity_rename_blocked_when_it_would_clash(session, tree):
+def test_entity_rename_blocked_when_its_tag_would_clash(session, tree):
+    create_tag(session, "Anna Nowak", parent=tree["sender"])  # a plain tag next to Jan's tag
     with pytest.raises(DomainError, match="Cannot rename"):
+        update_entity(session, tree["jan"], name="anna nowak")
+
+
+def test_entity_names_are_unique_whatever_the_type(session, tree):
+    with pytest.raises(DomainError, match="already exists"):
+        create_entity(session, etype(session, "Organization"), "URZAD  skarbowy")
+    with pytest.raises(DomainError, match="already exists"):
         update_entity(session, tree["jan"], name="urząd skarbowy")
+    update_entity(session, tree["jan"], name="Jan  KOWALSKI")  # its own name, other spelling
+    assert tree["jan"].name == "Jan KOWALSKI"
 
 
 def test_tag_operations_are_audited(session, tree):

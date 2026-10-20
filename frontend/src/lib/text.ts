@@ -1,8 +1,11 @@
-/** Lower case without accents ("Łódź" → "lodz"), for forgiving matching. */
+/** Lower case without accents ("Łódź" → "lodz"), like the server's `normalize`. */
 export function fold(text: string): string {
   return text
     .toLowerCase()
     .replace(/ł/g, "l")
+    .replace(/ß/g, "ss")
+    .replace(/đ/g, "d")
+    .replace(/ø/g, "o")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
 }
@@ -20,4 +23,9 @@ export function matchScore(text: string, query: string): number {
     score += wordStart ? 2 : 1;
   }
   return score;
+}
+
+/** Key under which two names count as the same (case, accents and spacing ignored), as on the server. */
+export function nameKey(name: string): string {
+  return fold(name).split(/\s+/).filter(Boolean).join(" ");
 }

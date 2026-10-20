@@ -152,3 +152,17 @@ def test_blank_names_are_refused_not_crashing(config, session_factory):
     ]:
         response = getattr(client, method)(url, json=body)
         assert response.status_code in (409, 422), (url, response.status_code)
+
+
+def test_duplicate_entity_names_are_refused(client, session_factory):
+    new_entity(client, session_factory, "Ewa Wiśniewska")
+    body = {"name": "ewa  WIŚNIEWSKA", "type_id": type_id(session_factory, "Other")}
+    r = client.post(f"{API}/entities", json=body)
+    assert r.status_code == 409 and "already exists" in r.json()["detail"]
+    other = new_entity(client, session_factory, "Zofia Wiśniewska")
+    r = client.patch(f"{API}/entities/{other}", json={"name": "Ewa Wiśniewska"})
+    assert r.status_code == 409
+    assert [e["name"] for e in client.get(f"{API}/entities").json()] == [
+        "Ewa Wiśniewska",
+        "Zofia Wiśniewska",
+    ]

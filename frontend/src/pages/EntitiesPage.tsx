@@ -9,7 +9,7 @@ import { Dialog } from "../components/Dialog";
 import { EditableText } from "../components/EditableText";
 import { Card, Empty, Page } from "../components/Page";
 import { formatDate } from "../lib/format";
-import { matchScore } from "../lib/text";
+import { matchScore, nameKey } from "../lib/text";
 import ui from "../styles/ui.module.css";
 import styles from "./EntitiesPage.module.css";
 
@@ -29,6 +29,12 @@ export function EntitiesPage() {
   const [filter, setFilter] = useState("");
   const [creating, setCreating] = useState(false);
   const [showTypes, setShowTypes] = useState(false);
+
+  const duplicates = useMemo(() => {
+    const seen = new Map<string, number>();
+    for (const e of entities ?? []) seen.set(nameKey(e.name), (seen.get(nameKey(e.name)) ?? 0) + 1);
+    return new Set([...seen].filter(([, n]) => n > 1).map(([key]) => key));
+  }, [entities]);
 
   const groups = useMemo(() => {
     const visible = (entities ?? []).filter(
@@ -71,6 +77,11 @@ export function EntitiesPage() {
                 onClick={() => setParams({ id: e.id })}
               >
                 <span className={styles.itemName}>{e.name}</span>
+                {duplicates.has(nameKey(e.name)) && (
+                  <span className={styles.dupe} title="Another entity has the same name">
+                    duplicate
+                  </span>
+                )}
                 {e.tag_count > 0 && <span className={styles.count}>{e.tag_count}</span>}
               </button>
             ))}
@@ -116,6 +127,7 @@ function EntityView({ id, types, onGone }: { id: string; types: EntityType[]; on
   if (isError) return <Empty>{error.message}</Empty>;
   if (!e) return null;
   const excluded = new Set([e.id, ...e.groups.map((g) => g.id)]);
+  const twins = entities.filter((x) => x.id !== e.id && nameKey(x.name) === nameKey(e.name));
 
   return (
     <div className={styles.detailBody}>
@@ -144,6 +156,19 @@ function EntityView({ id, types, onGone }: { id: string; types: EntityType[]; on
           <FileText size={14} aria-hidden /> Show documents
         </button>
       </div>
+
+      {twins.length > 0 && (
+        <div className={styles.clash} role="alert">
+          Another entity has the same name:{" "}
+          {twins.map((t) => (
+            <button key={t.id} className={styles.refLink} onClick={() => navigate(`/entities?id=${t.id}`)}>
+              {t.name} ({t.type_name}, {t.tag_count} {t.tag_count === 1 ? "tag" : "tags"})
+            </button>
+          ))}
+          . New duplicates can no longer be created. Keep one: delete the other (possible while no tag points to
+          it), or rename one to tell them apart.
+        </div>
+      )}
 
       <Card title="Aliases">
         <p className={ui.muted}>Other names that find this entity (abbreviations, former names, spellings).</p>
@@ -335,6 +360,7 @@ function NewEntityDialog({ types, onClose, onCreated }: { types: EntityType[]; o
   const entities = useEntities();
   const [name, setName] = useState("");
   const [typeId, setTypeId] = useState(types[0]?.id ?? "");
+  const clash = name.trim() ? entities.data?.find((e) => nameKey(e.name) === nameKey(name)) : undefined;
   const create = useAction(() => api.post<{ message: string }>("/entities", { name: name.trim(), type_id: typeId }), {
     invalidate: [["entities"], ["entity-types"]],
     success: () => "Entity created.",
@@ -343,13 +369,13 @@ function NewEntityDialog({ types, onClose, onCreated }: { types: EntityType[]; o
     <Dialog
       title="New entity"
       confirmLabel="Create"
-      busy={create.isPending || !name.trim() || !typeId}
+      busy={create.isPending || !name.trim() || !typeId || !!clash}
       onClose={onClose}
       onConfirm={() =>
         create.mutate(undefined, {
           onSuccess: async () => {
             const list = (await entities.refetch()).data ?? [];
-            const made = list.find((e) => e.name === name.trim() && e.type_id === typeId);
+            const made = list.find((e) => nameKey(e.name) === nameKey(name));
             if (made) onCreated(made.id);
           },
         })
@@ -359,6 +385,23 @@ function NewEntityDialog({ types, onClose, onCreated }: { types: EntityType[]; o
         Name
         <input className={ui.input} value={name} onChange={(e) => setName(e.target.value)} autoFocus />
       </label>
+      {clash && (
+        <p className={styles.clash}>
+          “{clash.name}” already exists ({clash.type_name}).{" "}
+          <button
+            type="button"
+            className={styles.refLink}
+            onClick={() => {
+              onCreated(clash.id);
+              onClose();
+            }}
+          >
+            Open it
+          </button>
+          <br />
+          To tell two apart, add something to the name, e.g. a city or a year.
+        </p>
+      )}
       <label className={ui.field}>
         Type
         <select className={ui.select} value={typeId} onChange={(e) => setTypeId(e.target.value)}>
