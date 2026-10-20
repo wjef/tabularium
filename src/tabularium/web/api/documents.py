@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse
@@ -152,7 +152,7 @@ def list_documents(
     tag: Annotated[list[uuid.UUID] | None, Query()] = None,
     entity: Annotated[list[uuid.UUID] | None, Query()] = None,
     related: bool = False,
-    inbox: bool = False,
+    tagging: Literal["done", "todo", "any"] = "any",
     date_from: date | None = None,
     date_to: date | None = None,
     sort: str = "date",
@@ -168,7 +168,7 @@ def list_documents(
         date_from=date_from,
         date_to=date_to,
         include_related=related,
-        inbox=inbox,
+        tagging=tagging,
         sort=sort,
     )
     documents, total = search(session, query, limit=limit, offset=offset)

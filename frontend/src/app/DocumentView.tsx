@@ -191,7 +191,12 @@ function TaggingButton({ doc, buttonRef }: { doc: DocumentDetail; buttonRef: Ref
     <button
       ref={buttonRef}
       className={styles.reviseButton}
-      onClick={() => tagging.mutate(false)}
+      onClick={() =>
+        tagging.mutate(false, {
+          // it now lives in To be tagged only: continue there with it open
+          onSuccess: () => update({ section: "inbox", tag: null, entity: null, related: null, q: null, sort: null }),
+        })
+      }
       disabled={tagging.isPending}
       title="Move back to To be tagged to rework its tags (D)"
     >

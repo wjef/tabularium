@@ -1330,12 +1330,17 @@
      },
      {
       "in": "query",
-      "name": "inbox",
+      "name": "tagging",
       "required": false,
       "schema": {
-       "default": false,
-       "title": "Inbox",
-       "type": "boolean"
+       "default": "any",
+       "enum": [
+        "done",
+        "todo",
+        "any"
+       ],
+       "title": "Tagging",
+       "type": "string"
       }
      },
      {

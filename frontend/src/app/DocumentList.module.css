@@ -357,15 +357,6 @@
   accent-color: var(--accent);
 }
 
-.toTag {
-  margin-left: 8px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-soft-text);
-  font-size: var(--text-xs);
-  font-weight: 600;
-}
 
 .barDone {
   display: inline-flex;

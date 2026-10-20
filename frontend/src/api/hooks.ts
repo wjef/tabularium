@@ -14,7 +14,8 @@ export interface DocumentFilters {
   tag?: string[];
   entity?: string[];
   related?: boolean;
-  inbox?: boolean;
+  /** "done": finished documents (browsing) · "todo": To be tagged · "any": both */
+  tagging?: "done" | "todo" | "any";
   sort?: "date" | "imported" | "imported_asc" | "title";
 }
 
@@ -57,10 +58,10 @@ export const useLinkChoices = () =>
   });
 
 /** A few documents matching a search, for pickers. */
-export const useDocumentSearch = (q: string) =>
+export const useDocumentSearch = (q: string, tagging: DocumentFilters["tagging"] = "done") =>
   useQuery({
-    queryKey: ["document-search", q],
-    queryFn: () => api.get<DocumentPage>(`/documents${qs({ q, limit: 8 })}`),
+    queryKey: ["document-search", q, tagging],
+    queryFn: () => api.get<DocumentPage>(`/documents${qs({ q, tagging, limit: 8 })}`),
     enabled: q.trim().length > 0,
     placeholderData: keepPreviousData,
   });

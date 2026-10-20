@@ -29,8 +29,8 @@ class TagNode(_Out):
     entity_id: uuid.UUID | None
     color: str | None
     sort_order: int
-    count: int  # documents tagged directly
-    total: int  # distinct documents tagged with it or any tag below it
+    count: int  # documents tagged directly (also those still "To be tagged")
+    total: int  # distinct finished documents tagged with it or any tag below it
 
 
 class EntityTypeOut(_Out):

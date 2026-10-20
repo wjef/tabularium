@@ -66,7 +66,7 @@ function LinkForm({ doc, onDone }: { doc: DocumentDetail; onDone: () => void }) 
     return () => clearTimeout(timer);
   }, [query]);
   const linked = new Set([doc.id, ...doc.links.map((l) => l.other.id)]);
-  const results = (useDocumentSearch(debounced).data?.items ?? []).filter((d) => !linked.has(d.id));
+  const results = (useDocumentSearch(debounced, "any").data?.items ?? []).filter((d) => !linked.has(d.id));
   const current = Math.min(active, results.length - 1);
 
   const pick = (otherId: string) => add.mutate({ otherId, kind }, { onSuccess: onDone });

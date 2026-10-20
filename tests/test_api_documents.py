@@ -97,12 +97,12 @@ def test_tagging_flow_and_inbox(client, data):
     assert r.status_code == 409 and "already has this tag" in r.json()["detail"]
 
     # tagging alone keeps the document in "To be tagged" until it is marked done
-    inbox = client.get(f"{API}/documents", params={"inbox": True}).json()
+    inbox = client.get(f"{API}/documents", params={"tagging": "todo"}).json()
     assert inbox["total"] == 3
     assert client.get(f"{API}/documents/{doc}").json()["tagging_done"] is False
     r = client.post(f"{API}/documents/{doc}/tagging", json={"done": True})
     assert r.json()["tagging_done"] is True
-    inbox = client.get(f"{API}/documents", params={"inbox": True}).json()
+    inbox = client.get(f"{API}/documents", params={"tagging": "todo"}).json()
     assert inbox["total"] == 2 and doc not in [i["id"] for i in inbox["items"]]
     by_tag = client.get(f"{API}/documents", params={"tag": data["taxes"]}).json()
     assert [i["id"] for i in by_tag["items"]] == [doc]
@@ -198,15 +198,26 @@ def test_api_changes_require_csrf(config, session_factory, data):
     )
 
 
-def test_tag_counts_include_sub_tags_once(client, data):
-    a, b = data["docs"]["a"], data["docs"]["b"]
+def test_tag_counts_include_sub_tags_once_and_only_finished_documents(client, data):
+    a, b, c = (data["docs"][k] for k in "abc")
     category = next(t["id"] for t in client.get(f"{API}/tags").json() if t["path"] == "category")
     client.post(f"{API}/documents/{a}/tags", json={"tag_id": data["taxes"]})
     client.post(f"{API}/documents/{b}/tags", json={"tag_id": data["taxes"]})
     client.post(f"{API}/documents/{b}/tags", json={"tag_id": category})  # both levels: counts once
+    client.post(f"{API}/documents/{c}/tags", json={"tag_id": data["taxes"]})  # still to be tagged
+    body = {"document_ids": [a, b], "done": True}
+    client.post(f"{API}/documents/bulk-tagging", json=body)
+
     tags = {t["path"]: t for t in client.get(f"{API}/tags").json()}
     assert (tags["category"]["count"], tags["category"]["total"]) == (1, 2)
-    assert (tags["category / taxes"]["count"], tags["category / taxes"]["total"]) == (2, 2)
+    # count (used by the delete guard) includes c; the shown total does not
+    assert (tags["category / taxes"]["count"], tags["category / taxes"]["total"]) == (3, 2)
     assert (tags["sender"]["count"], tags["sender"]["total"]) == (0, 0)
-    # the list for the parent tag shows the same documents the count promises
-    assert client.get(f"{API}/documents", params={"tag": category}).json()["total"] == 2
+
+    # browsing a tag shows the same finished documents the total promises; c only in the inbox
+    listed = client.get(f"{API}/documents", params={"tag": category, "tagging": "done"}).json()
+    assert sorted(i["id"] for i in listed["items"]) == sorted([a, b])
+    todo = client.get(f"{API}/documents", params={"tagging": "todo"}).json()
+    assert [i["id"] for i in todo["items"]] == [c]
+    everything = client.get(f"{API}/documents", params={"tag": category}).json()
+    assert everything["total"] == 3  # "any" (the default) is used to find documents to link

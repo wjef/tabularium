@@ -126,7 +126,6 @@ function TagDetail({ tag, hasChildren, onGone }: { tag: TagNode; hasChildren: bo
       <div className={`${ui.row} ${styles.actionsRow}`}>
         <span className={ui.pill}>
           {tag.total} {tag.total === 1 ? "document" : "documents"}
-          {tag.total !== tag.count && ` (${tag.count} tagged directly, the rest through sub-tags)`}
         </span>
         {tag.entity_id && (
           <button className={ui.ghost} onClick={() => navigate(`/entities?id=${tag.entity_id}`)}>

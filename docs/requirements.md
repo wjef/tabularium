@@ -179,8 +179,10 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   date, note, tags, related documents).
 - **To be tagged** view: every active document whose tagging is not marked done. Adding tags
   does not take a document out, so several can be worked on at once; **Done tagging** (or
-  `D`, also for a selection) does. **Revise tagging** sends a document back. Both are in its
-  history. Documents restored from Outdated come back as done.
+  `D`, also for a selection) does. Until then a document is shown **only** there: browsing,
+  tags, entities, search and their counts leave it out (linking related documents can still
+  find it). **Revise tagging** sends a document back. Both are in its history. Documents
+  restored from Outdated come back as done.
 - Keyboard: Ctrl+K command palette, `/` search, J/K next/previous, T add tag, E edit title,
   `?` lists all shortcuts. Changes that remove or overwrite something offer **Undo**.
 - Preview inline for PDF, PNG/JPEG/GIF/WebP/BMP images and plain text. Every other type

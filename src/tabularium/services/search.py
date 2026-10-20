@@ -33,7 +33,8 @@ class SearchQuery:
     date_from: date | None = None
     date_to: date | None = None
     include_related: bool = False
-    inbox: bool = False  # only documents whose tagging is not done yet ("To be tagged")
+    # "done": tagging finished (what browsing shows) · "todo": still "To be tagged" · "any"
+    tagging: str = "any"
     sort: str = "date"  # date | imported | title
 
     @property
@@ -44,7 +45,7 @@ class SearchQuery:
             or self.text.strip()
             or self.date_from
             or self.date_to
-            or self.inbox
+            or self.tagging != "any"
         )
 
 
@@ -109,8 +110,10 @@ def build_query(session: Session, query: SearchQuery) -> Select[tuple[Document]]
         stmt = stmt.where(Document.document_date >= query.date_from)
     if query.date_to:
         stmt = stmt.where(Document.document_date <= query.date_to)
-    if query.inbox:
+    if query.tagging == "todo":
         stmt = stmt.where(Document.tagging_done_at.is_(None))
+    elif query.tagging == "done":
+        stmt = stmt.where(Document.tagging_done_at.is_not(None))
     return stmt.order_by(*SORTS.get(query.sort, SORTS["date"]))
 
 

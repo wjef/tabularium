@@ -15,7 +15,8 @@ export function useView() {
       tag: params.getAll("tag"),
       entity: params.getAll("entity"),
       related: params.get("related") === "1",
-      inbox: section === "inbox",
+      // documents being tagged are only shown in To be tagged
+      tagging: section === "inbox" ? "todo" : "done",
       sort: (params.get("sort") as DocumentFilters["sort"]) ?? (section === "inbox" ? "imported_asc" : "date"),
     };
     return { section, filters, selected: params.get("doc") };

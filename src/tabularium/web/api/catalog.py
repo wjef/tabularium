@@ -40,7 +40,7 @@ def tags(session: SessionDep):
     """All tags (flat, parents before children, by sort order then name)."""
     paths = tag_paths(session)
     counts = document_counts(session)
-    totals = subtree_document_counts(session)
+    totals = subtree_document_counts(session, done_only=True)
     rows = session.scalars(select(Tag).order_by(Tag.sort_order, Tag.normalized_name)).all()
     nodes = [
         s.TagNode(

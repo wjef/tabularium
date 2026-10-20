@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from tabularium.audit import Action, record
-from tabularium.models import DocumentTag, Entity, Tag
+from tabularium.models import Document, DocumentTag, Entity, Tag
 from tabularium.services import DomainError
 from tabularium.text import clean_name, normalize
 
@@ -134,17 +134,23 @@ def document_counts(session: Session) -> dict[uuid.UUID, int]:
     return {tag_id: count for tag_id, count in rows}
 
 
-def subtree_document_counts(session: Session) -> dict[uuid.UUID, int]:
+def subtree_document_counts(session: Session, *, done_only: bool = False) -> dict[uuid.UUID, int]:
     """Number of distinct documents tagged with each tag or any tag below it.
 
-    A document tagged both ``FV`` and ``FV / KOREKTA`` counts once for ``FV``. Tags without
-    documents are absent.
+    A document tagged both ``FV`` and ``FV / KOREKTA`` counts once for ``FV``. With
+    ``done_only`` documents still "To be tagged" are left out (browsing does not show them).
+    Tags without documents are absent.
     """
     parents = {
         tag_id: parent_id for tag_id, parent_id in session.execute(select(Tag.id, Tag.parent_id))
     }
+    rows = select(DocumentTag.document_id, DocumentTag.tag_id)
+    if done_only:
+        rows = rows.join(Document, Document.id == DocumentTag.document_id).where(
+            Document.tagging_done_at.is_not(None)
+        )
     documents: dict[uuid.UUID, set[uuid.UUID]] = {}
-    for document_id, tag_id in session.execute(select(DocumentTag.document_id, DocumentTag.tag_id)):
+    for document_id, tag_id in session.execute(rows):
         current = tag_id
         while current is not None:
             documents.setdefault(current, set()).add(document_id)

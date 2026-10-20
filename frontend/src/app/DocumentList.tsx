@@ -202,14 +202,13 @@ export function DocumentList() {
             words={words}
             selected={doc.id === selected}
             picked={pickedSet.has(doc.id)}
-            markToTag={section !== "inbox" && !doc.tagging_done}
             onClick={(event) => onCardClick(doc, event)}
           />
         ))}
         <div ref={sentinel} />
         {isFetchingNextPage && <Skeleton count={2} />}
       </div>
-      {pickedIds.length > 0 && <SelectionBar ids={pickedIds} onClear={clearPicked} />}
+      {pickedIds.length > 0 && <SelectionBar ids={pickedIds} inbox={section === "inbox"} onClear={clearPicked} />}
     </section>
   );
 }
@@ -219,12 +218,10 @@ interface CardProps {
   words: string[];
   selected: boolean;
   picked: boolean;
-  /** show that the document is still waiting in To be tagged */
-  markToTag: boolean;
   onClick: (event: MouseEvent) => void;
 }
 
-function DocumentCard({ doc, words, selected, picked, markToTag, onClick }: CardProps) {
+function DocumentCard({ doc, words, selected, picked, onClick }: CardProps) {
   const name = doc.title ?? shortName(doc.display_name);
   const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -245,7 +242,6 @@ function DocumentCard({ doc, words, selected, picked, markToTag, onClick }: Card
         </span>
         <div className={styles.date}>
           {formatDate(doc.document_date) || `Imported ${formatDate(doc.ingested_at)}`}
-          {markToTag && <span className={styles.toTag}>To tag</span>}
         </div>
         {doc.snippet && <p className={styles.snippet}>{highlight(doc.snippet, words)}</p>}
         {doc.tags.length > 0 && (
@@ -268,7 +264,7 @@ function DocumentCard({ doc, words, selected, picked, markToTag, onClick }: Card
 }
 
 /** Bulk actions for the picked documents. */
-function SelectionBar({ ids, onClear }: { ids: string[]; onClear: () => void }) {
+function SelectionBar({ ids, inbox, onClear }: { ids: string[]; inbox: boolean; onClear: () => void }) {
   const bulk = useBulkTag();
   const done = useBulkTaggingDone();
   const [exporting, setExporting] = useState(false);
@@ -296,14 +292,16 @@ function SelectionBar({ ids, onClear }: { ids: string[]; onClear: () => void }) 
         <strong>
           {ids.length} selected
         </strong>
-        <button
-          className={styles.barDone}
-          onClick={() => done.mutate({ ids, done: true }, { onSuccess: onClear })}
-          disabled={done.isPending}
-          title="Take the selected documents out of To be tagged"
-        >
-          <Check size={14} aria-hidden /> Done tagging
-        </button>
+        {inbox && (
+          <button
+            className={styles.barDone}
+            onClick={() => done.mutate({ ids, done: true }, { onSuccess: onClear })}
+            disabled={done.isPending}
+            title="Take the selected documents out of To be tagged"
+          >
+            <Check size={14} aria-hidden /> Done tagging
+          </button>
+        )}
         <button className={styles.barButton} onClick={exportZip} disabled={exporting}>
           <Download size={14} aria-hidden /> Export
         </button>
