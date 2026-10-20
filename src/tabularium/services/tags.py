@@ -134,6 +134,24 @@ def document_counts(session: Session) -> dict[uuid.UUID, int]:
     return {tag_id: count for tag_id, count in rows}
 
 
+def subtree_document_counts(session: Session) -> dict[uuid.UUID, int]:
+    """Number of distinct documents tagged with each tag or any tag below it.
+
+    A document tagged both ``FV`` and ``FV / KOREKTA`` counts once for ``FV``. Tags without
+    documents are absent.
+    """
+    parents = {
+        tag_id: parent_id for tag_id, parent_id in session.execute(select(Tag.id, Tag.parent_id))
+    }
+    documents: dict[uuid.UUID, set[uuid.UUID]] = {}
+    for document_id, tag_id in session.execute(select(DocumentTag.document_id, DocumentTag.tag_id)):
+        current = tag_id
+        while current is not None:
+            documents.setdefault(current, set()).add(document_id)
+            current = parents.get(current)
+    return {tag_id: len(ids) for tag_id, ids in documents.items()}
+
+
 def _usage(session: Session, tag: Tag) -> int:
     query = select(func.count()).select_from(DocumentTag).where(DocumentTag.tag_id == tag.id)
     return session.scalar(query) or 0

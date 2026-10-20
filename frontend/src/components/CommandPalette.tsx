@@ -112,13 +112,13 @@ function Palette({ onClose, onShowShortcuts }: { onClose: () => void; onShowShor
     const tagItems: Item[] = (tags ?? [])
       .map((t) => ({ t, score: matchScore(t.path, q) }))
       .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score || b.t.count - a.t.count)
+      .sort((a, b) => b.score - a.score || b.t.total - a.t.total)
       .slice(0, 5)
       .map(({ t }) => ({
         key: `t:${t.id}`,
         group: "Tags",
         label: t.path,
-        hint: t.count ? String(t.count) : undefined,
+        hint: t.total ? String(t.total) : undefined,
         icon: t.entity_id ? <Building2 size={16} /> : <TagIcon size={16} />,
         run: go(`/?tag=${t.id}`),
       }));

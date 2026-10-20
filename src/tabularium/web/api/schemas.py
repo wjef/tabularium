@@ -30,6 +30,7 @@ class TagNode(_Out):
     color: str | None
     sort_order: int
     count: int  # documents tagged directly
+    total: int  # distinct documents tagged with it or any tag below it
 
 
 class EntityTypeOut(_Out):

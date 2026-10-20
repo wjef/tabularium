@@ -197,7 +197,7 @@ function TagTree({ tags, activeId, onSelect }: TreeProps) {
             <button className={styles.tagName} onClick={() => onSelect(tag.id)} title={tag.path}>
               {tag.entity_id ? <Building2 size={13} aria-hidden /> : <TagIcon size={13} aria-hidden />}
               <span className={styles.label}>{tag.name}</span>
-              {tag.count > 0 && <span className={styles.count}>{tag.count}</span>}
+              {tag.total > 0 && <span className={styles.count}>{tag.total}</span>}
             </button>
           </div>
           {hasChildren && expanded && <ul>{render(tag.id, depth + 1)}</ul>}

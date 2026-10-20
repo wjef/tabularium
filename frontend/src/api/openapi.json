@@ -989,6 +989,10 @@
      "sort_order": {
       "title": "Sort Order",
       "type": "integer"
+     },
+     "total": {
+      "title": "Total",
+      "type": "integer"
      }
     },
     "required": [
@@ -999,7 +1003,8 @@
      "entity_id",
      "color",
      "sort_order",
-     "count"
+     "count",
+     "total"
     ],
     "title": "TagNode",
     "type": "object"

@@ -70,7 +70,7 @@ export function TagsPage() {
               >
                 {tag.entity_id ? <Building2 size={14} aria-hidden /> : <TagIcon size={14} aria-hidden />}
                 <span className={styles.label}>{filter.trim() ? tag.path : tag.name}</span>
-                {tag.count > 0 && <span className={styles.count}>{tag.count}</span>}
+                {tag.total > 0 && <span className={styles.count}>{tag.total}</span>}
               </button>
             </li>
           ))}
@@ -125,7 +125,8 @@ function TagDetail({ tag, hasChildren, onGone }: { tag: TagNode; hasChildren: bo
       </h2>
       <div className={`${ui.row} ${styles.actionsRow}`}>
         <span className={ui.pill}>
-          {tag.count} {tag.count === 1 ? "document" : "documents"}
+          {tag.total} {tag.total === 1 ? "document" : "documents"}
+          {tag.total !== tag.count && ` (${tag.count} tagged directly, the rest through sub-tags)`}
         </span>
         {tag.entity_id && (
           <button className={ui.ghost} onClick={() => navigate(`/entities?id=${tag.entity_id}`)}>

@@ -8,6 +8,7 @@ const tag = (id: string, path: string, parent: string | null, count = 1, entity:
   name: path.split(" / ").at(-1)!,
   parent_id: parent,
   count,
+  total: count,
   entity_id: entity,
   color: null,
   sort_order: 0,

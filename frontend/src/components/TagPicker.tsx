@@ -118,7 +118,7 @@ function ChoiceView({ choice }: { choice: TagChoice }) {
           {parts.length > 1 && <span className={styles.parent}>{parts.slice(0, -1).join(" / ")} / </span>}
           {choice.tag.name}
         </span>
-        {choice.tag.count > 0 && <span className={styles.count}>{choice.tag.count}</span>}
+        {choice.tag.total > 0 && <span className={styles.count}>{choice.tag.total}</span>}
       </>
     );
   }

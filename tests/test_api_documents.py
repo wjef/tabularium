@@ -174,3 +174,17 @@ def test_api_changes_require_csrf(config, session_factory, data):
         plain.post(f"{API}/documents/{doc}/tags", json={"tag_id": data["sender"]}).status_code
         == 403
     )
+
+
+def test_tag_counts_include_sub_tags_once(client, data):
+    a, b = data["docs"]["a"], data["docs"]["b"]
+    category = next(t["id"] for t in client.get(f"{API}/tags").json() if t["path"] == "category")
+    client.post(f"{API}/documents/{a}/tags", json={"tag_id": data["taxes"]})
+    client.post(f"{API}/documents/{b}/tags", json={"tag_id": data["taxes"]})
+    client.post(f"{API}/documents/{b}/tags", json={"tag_id": category})  # both levels: counts once
+    tags = {t["path"]: t for t in client.get(f"{API}/tags").json()}
+    assert (tags["category"]["count"], tags["category"]["total"]) == (1, 2)
+    assert (tags["category / taxes"]["count"], tags["category / taxes"]["total"]) == (2, 2)
+    assert (tags["sender"]["count"], tags["sender"]["total"]) == (0, 0)
+    # the list for the parent tag shows the same documents the count promises
+    assert client.get(f"{API}/documents", params={"tag": category}).json()["total"] == 2

@@ -12,7 +12,7 @@ from tabularium.models import AuditLog, Document, Entity, EntityType, Tag
 from tabularium.outdated import OutdatedDocument
 from tabularium.services.documents import untagged_documents
 from tabularium.services.entity_types import list_types
-from tabularium.services.tags import document_counts, tag_paths
+from tabularium.services.tags import document_counts, subtree_document_counts, tag_paths
 from tabularium.web.api import schemas as s
 from tabularium.web.deps import get_session
 from tabularium.web.security import CSRF_HEADER
@@ -40,6 +40,7 @@ def tags(session: SessionDep):
     """All tags (flat, parents before children, by sort order then name)."""
     paths = tag_paths(session)
     counts = document_counts(session)
+    totals = subtree_document_counts(session)
     rows = session.scalars(select(Tag).order_by(Tag.sort_order, Tag.normalized_name)).all()
     nodes = [
         s.TagNode(
@@ -51,6 +52,7 @@ def tags(session: SessionDep):
             color=t.color,
             sort_order=t.sort_order,
             count=counts.get(t.id, 0),
+            total=totals.get(t.id, 0),
         )
         for t in rows
     ]
