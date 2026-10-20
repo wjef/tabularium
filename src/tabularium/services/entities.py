@@ -77,7 +77,7 @@ def update_entity(
     if type_ is not None:
         entity.type, entity.type_id = type_, type_.id
     if aliases is not None:
-        entity.aliases = [clean_name(a) for a in aliases]
+        entity.aliases = [clean_name(a) for a in aliases if a.strip()]  # blank lines dropped
     if attributes is not None:
         entity.attributes = dict(attributes)
     new = _snapshot(entity)

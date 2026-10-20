@@ -125,39 +125,28 @@ def client(config, session_factory):
     return TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN})
 
 
-def test_link_through_the_document_page(client, docs):
+def test_link_through_the_api(client, docs):
     invoice, payment = str(docs["invoice"].id), str(docs["payment"].id)
-    page = client.get(f"/documents/{invoice}").text
-    assert "Related documents" in page and "No linked documents." in page
+    assert client.get(f"/api/v1/documents/{invoice}").json()["links"] == []
 
-    r = client.get(f"/documents/{invoice}/relations/candidates", params={"q": "przelew"})
-    assert "Przelew za FV 03/2025" in r.text
-    assert f'value="{invoice}"' not in r.text  # never offers the document itself
-    assert (
-        "No matching documents."
-        in client.get(f"/documents/{invoice}/relations/candidates", params={"q": "zzz"}).text
-    )
+    found = client.get("/api/v1/documents", params={"q": "przelew"}).json()["items"]
+    assert [d["title"] for d in found] == ["Przelew za FV 03/2025"]
 
-    r = client.post(
-        f"/documents/{invoice}/relations/add",
-        data={"other_id": payment, "kind": "PAYMENT_FOR:in"},
-    )
-    assert "Documents linked." in r.text
-    assert "This document is paid by" in r.text and f'href="/documents/{payment}"' in r.text
-    assert "This document is the payment for" in client.get(f"/documents/{payment}").text
+    body = {"other_id": payment, "kind": "PAYMENT_FOR:in"}
+    [link] = client.post(f"/api/v1/documents/{invoice}/links", json=body).json()["links"]
+    assert (link["phrase"], link["other"]["id"]) == ("is paid by", payment)
+    [back] = client.get(f"/api/v1/documents/{payment}").json()["links"]
+    assert back["phrase"] == "is the payment for"
 
-    r = client.post(
-        f"/documents/{invoice}/relations/add",
-        data={"other_id": payment, "kind": "PAYMENT_FOR:in"},
-    )
-    assert "already linked" in r.text
+    again = client.post(f"/api/v1/documents/{invoice}/links", json=body)
+    assert again.status_code == 409 and "already linked" in again.json()["detail"]
 
 
-def test_remove_link_through_the_page(client, session, docs):
+def test_remove_link_through_the_api(client, session, docs):
     rel = add_link(session, docs["payment"], docs["invoice"], RelationType.PAYMENT_FOR, "out")
     session.commit()
-    r = client.post(f"/documents/{docs['invoice'].id}/relations/{rel.id}/remove")
-    assert "Link removed." in r.text and "No linked documents." in r.text
+    r = client.delete(f"/api/v1/documents/{docs['invoice'].id}/links/{rel.id}")
+    assert r.status_code == 200 and r.json()["links"] == []
 
 
 def test_linking_requires_csrf(config, session_factory, docs):
@@ -166,7 +155,7 @@ def test_linking_requires_csrf(config, session_factory, docs):
     )
     plain = TestClient(app, base_url="http://127.0.0.1:8765")
     r = plain.post(
-        f"/documents/{docs['invoice'].id}/relations/add",
-        data={"other_id": str(docs["payment"].id), "kind": "RELATED:out"},
+        f"/api/v1/documents/{docs['invoice'].id}/links",
+        json={"other_id": str(docs["payment"].id), "kind": "RELATED:out"},
     )
     assert r.status_code == 403

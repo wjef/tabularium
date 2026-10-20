@@ -47,7 +47,7 @@ try {
     Pop-Location
 }
 
-# The new interface (/app) is a React app built with Node.js into src/tabularium/web/spa.
+# The interface is a React app built with Node.js into src/tabularium/web/spa (ADR 0010).
 if (Get-Command npm -ErrorAction SilentlyContinue) {
     Push-Location (Join-Path $repo "frontend")
     try {
@@ -58,7 +58,7 @@ if (Get-Command npm -ErrorAction SilentlyContinue) {
     }
 } else {
     Write-Host ""
-    Write-Host "Node.js not found: the new interface (/app) is not built." -ForegroundColor Yellow
+    Write-Host "Node.js not found: the interface is not built." -ForegroundColor Yellow
     Write-Host "     Install it (winget install OpenJS.NodeJS.LTS) and run this script again."
 }
 

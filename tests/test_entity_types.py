@@ -101,29 +101,26 @@ def client(config, session_factory):
     return TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN})
 
 
-def test_types_are_managed_from_the_entities_page(client, session_factory):
-    r = client.post("/entities/types/create", data={"name": "School"})
-    assert "Entity type created." in r.text
+def test_types_are_managed_through_the_api(client, session_factory):
+    assert client.post("/api/v1/entity-types", json={"name": "School"}).status_code == 200
     with session_factory() as s:
         school = s.scalars(select(EntityType).where(EntityType.name == "School")).one()
 
-    r = client.post(
-        "/entities/create", data={"name": "Szkoła Podstawowa nr 1", "type_id": str(school.id)}
-    )
-    assert "Entity created." in r.text
-    assert "<td>School</td>" in r.text
+    body = {"name": "Szkoła Podstawowa nr 1", "type_id": str(school.id)}
+    assert client.post("/api/v1/entities", json=body).status_code == 200
+    types = {t["name"]: t for t in client.get("/api/v1/entity-types").json()}
+    assert types["School"]["entity_count"] == 1
 
-    r = client.post(f"/entities/types/{school.id}/delete")
-    assert "used by 1 entity" in r.text
+    r = client.delete(f"/api/v1/entity-types/{school.id}")
+    assert r.status_code == 409 and "used by 1 entity" in r.json()["detail"]
+    body = {"name": "School / University"}
+    assert client.patch(f"/api/v1/entity-types/{school.id}", json=body).status_code == 200
+    entities = client.get("/api/v1/entities").json()
+    assert [e["type_name"] for e in entities] == ["School / University"]
 
-    r = client.post(f"/entities/types/{school.id}/rename", data={"name": "School / University"})
-    assert "Entity type renamed." in r.text
-    assert "<td>School / University</td>" in r.text
 
-
-def test_creating_entity_without_type_shows_error(client):
-    r = client.post("/entities/create", data={"name": "Nobody"})
-    assert "Choose an entity type." in r.text
+def test_creating_entity_without_type_is_refused(client):
+    assert client.post("/api/v1/entities", json={"name": "Nobody"}).status_code == 422
 
 
 def _db_at_0002_with_tagged_entity(tmp_path):

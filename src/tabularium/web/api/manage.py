@@ -36,7 +36,7 @@ from tabularium.textextract import tesseract_status
 from tabularium.textindex import status_counts
 from tabularium.web.api import schemas as s
 from tabularium.web.deps import get_session
-from tabularium.web.routes_documents import export_zip
+from tabularium.web.files import export_zip, file_response
 
 router = APIRouter(tags=["manage"])
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -300,6 +300,16 @@ def outdated_detail(request: Request, document_id: uuid.UUID) -> dict:
                 {"at": e.at, "actor": e.actor, "action": e.action, "data": e.data} for e in events
             ]
         }
+
+
+@router.get("/outdated/{document_id}/file")
+def outdated_file(request: Request, document_id: uuid.UUID, download: bool = False):
+    store = request.app.state.outdated_store
+    with store.session_factory() as outdated:
+        row = _one(outdated, OutdatedDocument, document_id, "Outdated document")
+    if not store.storage.exists(row.stored_path):
+        raise HTTPException(status_code=404, detail="File is missing from the Outdated folder")
+    return file_response(store.storage, row, download=download)
 
 
 @router.post("/outdated/{document_id}/restore", response_model=s.Message)

@@ -10,7 +10,8 @@ Local single-user document archive. Spec: `docs/requirements.md`. Decisions: `do
 - **Documents are never deleted** — only outdated (ADR 0005).
 - All schema changes go through Alembic migrations; all archive file access through the storage
   interface `tabularium.storage` (ADR 0009); Windows path quirks via `tabularium.fsutil.lp`.
-- All UI strings wrapped for gettext (ADR 0008).
+- Backend messages shown to the user are marked with `N_()` (ADR 0008). The interface is the
+  React app in `frontend/` (ADR 0010); English strings there until Polish is added.
 - Timestamps in UTC; `document_date` / `retain_until` are plain dates.
 - Domain changes go through `tabularium.services.*`: they enforce invariants and write the
   audit entry in the caller's transaction (caller commits). Don't mutate models directly elsewhere
@@ -35,5 +36,8 @@ Local single-user document archive. Spec: `docs/requirements.md`. Decisions: `do
 - venv: `%LOCALAPPDATA%\Tabularium\venv` (create with `scripts\setup-dev.ps1`).
 - Python: `$env:LOCALAPPDATA\Tabularium\venv\Scripts\python.exe`.
 - Tests: `python -m pytest`. Lint: `python -m ruff check . ; python -m ruff format --check .`
+- Front end (`frontend/`): `npm run build` (regenerates API types, type-checks, builds into
+  `src/tabularium/web/spa`), `npm test`, `npm run lint`. After changing the API run
+  `python scripts/export_openapi.py` and commit `frontend/src/api/openapi.json` (CI checks it).
 - Tests set `TABULARIUM_HOME` to a temp dir — never touch the real app home in tests.
 - Run the app: `Tabularium.bat` or `python -m tabularium`.

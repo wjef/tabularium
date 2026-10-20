@@ -9,6 +9,7 @@ companies, institutions). Search by tags, preview in the app.
 
 ## Requirements
 - Windows 10/11, Python 3.12+
+- Node.js 24 LTS to build the interface (`winget install OpenJS.NodeJS.LTS`)
 
 ## Setup (development)
 
@@ -19,7 +20,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\setup-dev.ps1
 ```
 
 This creates the virtual environment in `%LOCALAPPDATA%\Tabularium\venv`, installs the project
-and the git hooks.
+and the git hooks, and builds the interface (`frontend/`, React + TypeScript).
 
 Then:
 

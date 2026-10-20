@@ -230,24 +230,22 @@ def client(config, session_factory):
     return TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN})
 
 
-def test_maintenance_page_and_actions(client, rich, config):
-    r = client.get("/maintenance")
-    assert r.status_code == 200
-    assert "Restore from metadata.json" not in r.text  # database is not empty
+def test_maintenance_status_and_actions(client, rich, config):
+    status = client.get("/api/v1/maintenance").json()
+    assert status["can_restore"] is False  # database is not empty
 
-    r = client.post("/maintenance/check")
-    assert "All good: 2 of 2 documents verified." in r.text
-    r = client.post("/maintenance/metadata")
-    assert "metadata.json written." in r.text
+    report = client.post("/api/v1/maintenance/check").json()
+    assert report["healthy"] and (report["checked"], report["ok"]) == (2, 2)
+    r = client.post("/api/v1/maintenance/metadata")
+    assert r.json()["message"] == "metadata.json written."
     assert (config.paths.archive / "metadata.json").exists()
 
 
 def test_manual_backup(client, config):
     config.database_path.parent.mkdir(parents=True, exist_ok=True)
     config.database_path.write_bytes(b"")  # backup needs an existing file
-    r = client.post("/maintenance/backup")
-    assert "Backup created." in r.text
-    assert "-manual.db" in r.text
+    r = client.post("/api/v1/maintenance/backup")
+    assert r.status_code == 200 and r.json()["message"].endswith("-manual.db")
 
 
 def test_moving_to_a_new_pc(session, rich, config, tmp_path, monkeypatch):
@@ -264,12 +262,12 @@ def test_moving_to_a_new_pc(session, rich, config, tmp_path, monkeypatch):
     app = create_app(config, csrf_token=TOKEN, session_factory=factory, scan_on_startup=False)
     new_pc = TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN})
 
-    assert "Restore from metadata.json" in new_pc.get("/maintenance").text
-    r = new_pc.post("/maintenance/restore")
-    assert "Database restored from metadata.json." in r.text
-    assert "All good: 2 of 2 documents verified." in r.text
-    r = new_pc.get("/search", params={"q": "zeznanie"})
-    assert "1 document(s) found." in r.text
+    assert new_pc.get("/api/v1/maintenance").json()["can_restore"] is True
+    r = new_pc.post("/api/v1/maintenance/restore")
+    assert r.json()["message"] == "Database restored from metadata.json."
+    report = new_pc.post("/api/v1/maintenance/check").json()
+    assert report["healthy"] and report["ok"] == 2
+    assert new_pc.get("/api/v1/documents", params={"q": "zeznanie"}).json()["total"] == 1
     with factory() as s:
         assert s.scalars(select(AuditLog.action).order_by(AuditLog.id.desc())).first() == "RESTORE"
     engine.dispose()
@@ -299,12 +297,11 @@ def test_empty_database_never_overwrites_the_archive_metadata(session, rich, con
         import time
 
         time.sleep(0.5)
-        home = c.get("/").text
-        assert "Restore" in home and "/maintenance" in home  # banner
-        r = c.post("/ingest/scan")
-        assert "restore" in r.text.lower()
-        r = c.post("/maintenance/metadata")
-        assert "not overwriting" in r.text.lower()
+        assert c.get("/api/v1/info").json()["restore_pending"] is True  # the app warns
+        r = c.post("/api/v1/ingest/scan")
+        assert r.status_code == 409 and "restore" in r.json()["detail"].lower()
+        r = c.post("/api/v1/maintenance/metadata")
+        assert r.status_code == 409 and "not overwriting" in r.json()["detail"].lower()
     assert original.read_bytes() == before  # untouched, also by the shutdown write
     assert (config.paths.ingest / "waiting.pdf").exists()
     engine.dispose()
@@ -314,7 +311,8 @@ def test_after_restore_metadata_is_written_again(session, rich, config, tmp_path
     metadata.write(config.paths.archive, metadata.dump(session, db.revision_of(session)))
     app, factory, engine = _new_pc_app(config, tmp_path, scan_on_startup=False)
     with TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN}) as c:
-        assert "Database restored" in c.post("/maintenance/restore").text
+        r = c.post("/api/v1/maintenance/restore")
+        assert "Database restored" in r.json()["message"]
     data = metadata.read(config.paths.archive / "metadata.json")
     assert data["counts"]["document"] == 2
     assert data["tables"]["audit_log"][-1]["action"] == "RESTORE"

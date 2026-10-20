@@ -1,4 +1,4 @@
-"""Serving the single-page front end at /app and the session endpoint it starts with."""
+"""Serving the single-page front end at / and the session endpoint it starts with."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -35,20 +35,20 @@ def test_session_gives_the_csrf_header_and_token(make_client):
 
 def test_client_side_routes_get_the_index_page(make_client):
     client = make_client(built=True)
-    for path in ("/app", "/app/", "/app/documents/123", "/app/tags"):
+    for path in ("/", "/tags", "/entities", "/outdated", "/history", "/maintenance", "/x/y"):
         response = client.get(path)
         assert response.status_code == 200 and "root" in response.text
-    assert client.get("/app/favicon.svg").text == "<svg/>"
-    assert client.get("/app/assets/index.js").text == "console.log(1)"
+    assert client.get("/favicon.svg").text == "<svg/>"
+    assert client.get("/assets/index.js").text == "console.log(1)"
 
 
 def test_build_files_cannot_be_escaped(make_client):
     client = make_client(built=True)
-    for path in ("/app/..%2F..%2Fpyproject.toml", "/app/.hidden", "/app/a%5Cb"):
+    for path in ("/..%2F..%2Fpyproject.toml", "/.hidden", "/a%5Cb", "/index.html/../x"):
         response = client.get(path)
         assert "root" in response.text  # falls back to the index page, never another file
 
 
 def test_missing_build_explains_how_to_build(make_client):
-    response = make_client(built=False).get("/app")
+    response = make_client(built=False).get("/")
     assert response.status_code == 503 and "setup-dev.ps1" in response.text

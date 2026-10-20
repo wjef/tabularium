@@ -6,11 +6,9 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib import resources
 
-from fastapi import FastAPI, Request
-from fastapi.concurrency import run_in_threadpool
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from tabularium import __version__, db
@@ -18,21 +16,10 @@ from tabularium.config import Config
 from tabularium.ingest import IngestBusyError, Ingestor
 from tabularium.metadata import MetadataExporter, restore_pending
 from tabularium.outdated import OutdatedStore
-from tabularium.services.documents import untagged_documents
 from tabularium.storage import LocalStorage
 from tabularium.textextract import TesseractOcr, tesseract_status
 from tabularium.textindex import TextIndexer
-from tabularium.web import (
-    api,
-    routes_documents,
-    routes_entities,
-    routes_history,
-    routes_maintenance,
-    routes_outdated,
-    routes_search,
-    routes_tags,
-)
-from tabularium.web.deps import make_templates, render
+from tabularium.web import api
 from tabularium.web.security import LocalOnlyMiddleware, new_csrf_token
 
 log = logging.getLogger(__name__)
@@ -94,18 +81,8 @@ def create_app(
     app.state.metadata_exporter = exporter
     app.state.outdated_store = outdated_store
     app.state.text_indexer = text_indexer
-    app.state.templates = make_templates(config, csrf_token)
     app.add_middleware(LocalOnlyMiddleware, csrf_token=csrf_token)
-    app.mount("/static", StaticFiles(directory=str(_WEB / "static")), name="static")
-    _install_spa(app)
     api.install(app)
-    app.include_router(routes_documents.router)
-    app.include_router(routes_outdated.router)
-    app.include_router(routes_search.router)
-    app.include_router(routes_tags.router)
-    app.include_router(routes_entities.router)
-    app.include_router(routes_history.router)
-    app.include_router(routes_maintenance.router)
 
     def is_restore_pending() -> bool:
         with session_factory() as session:
@@ -113,44 +90,11 @@ def create_app(
 
     app.state.restore_pending = is_restore_pending
 
-    def untagged_count() -> int:
-        with session_factory() as session:
-            query = select(func.count()).select_from(untagged_documents().subquery())
-            return session.scalar(query) or 0
-
-    @app.get("/", response_class=HTMLResponse)
-    def index(request: Request):
-        return render(
-            request,
-            "index.html",
-            {
-                "config": config,
-                "untagged": untagged_count(),
-                "restore_pending": is_restore_pending(),
-            },
-        )
-
-    @app.post("/ingest/scan", response_class=HTMLResponse)
-    async def ingest_scan(request: Request):
-        if is_restore_pending():
-            return render(
-                request,
-                "_ingest_report.html",
-                {"report": None, "blocked": True, "untagged": untagged_count()},
-            )
-        try:
-            report = await run_in_threadpool(ingestor.scan)
-            text_indexer.wake()
-        except IngestBusyError:
-            report = None
-        return render(
-            request, "_ingest_report.html", {"report": report, "untagged": untagged_count()}
-        )
-
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "version": __version__}
 
+    _install_spa(app)  # last: its catch-all route must not hide the API
     return app
 
 
@@ -183,14 +127,15 @@ SPA_DIR = _WEB / "spa"  # built by `npm run build` in frontend/ (not committed)
 
 
 def _install_spa(app: FastAPI) -> None:
-    """Serve the single-page front end at /app (the old interface stays at /)."""
+    """Serve the single-page front end; every path that is not API is one of its screens."""
     assets = SPA_DIR / "assets"
     if assets.is_dir():
-        app.mount("/app/assets", StaticFiles(directory=str(assets)), name="spa-assets")
+        app.mount("/assets", StaticFiles(directory=str(assets)), name="assets")
 
-    @app.get("/app", response_class=HTMLResponse, include_in_schema=False)
-    @app.get("/app/{path:path}", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/{path:path}", response_class=HTMLResponse, include_in_schema=False)
     def spa(path: str = ""):
+        if path == "api" or path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not found")
         # top-level build files (favicon.svg); everything else is a client-side route
         if path and "/" not in path and "\\" not in path and not path.startswith("."):
             file = SPA_DIR / path
@@ -199,8 +144,10 @@ def _install_spa(app: FastAPI) -> None:
         index = SPA_DIR / "index.html"
         if not index.is_file():
             return HTMLResponse(
-                "<p>The new interface is not built yet. Run <code>scripts/setup-dev.ps1</code>"
+                "<p>The interface is not built yet. Run <code>scripts/setup-dev.ps1</code>"
                 " (needs Node.js), then reload.</p>",
                 status_code=503,
             )
-        return HTMLResponse(index.read_text(encoding="utf-8"))
+        return HTMLResponse(
+            index.read_text(encoding="utf-8"), headers={"Cache-Control": "no-cache"}
+        )

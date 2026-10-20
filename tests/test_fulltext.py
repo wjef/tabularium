@@ -211,7 +211,7 @@ def client(config, session_factory, monkeypatch):
         lambda *a: textextract.OcrStatus(False, message="Tesseract is not installed."),
     )
     monkeypatch.setattr(
-        "tabularium.web.routes_maintenance.tesseract_status",
+        "tabularium.web.api.manage.tesseract_status",
         lambda *a: textextract.OcrStatus(False, message="Tesseract is not installed."),
     )
     app = create_app(
@@ -220,27 +220,28 @@ def client(config, session_factory, monkeypatch):
     return TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN})
 
 
-def test_search_page_shows_snippets_and_document_page_shows_text(client, docs):
+def test_search_shows_snippets_and_documents_show_their_text(client, docs):
     client.app.state.text_indexer.run_until_idle()
-    r = client.get("/search", params={"q": "platna"})
-    assert "1 document(s) found." in r.text
-    assert 'class="snippet">Kaucja zwrotna płatna</small>' in r.text
+    found = client.get("/api/v1/documents", params={"q": "platna"}).json()
+    assert found["total"] == 1 and found["items"][0]["snippet"] == "Kaucja zwrotna płatna"
 
-    page = client.get(f"/documents/{docs['note'].id}").text
-    assert "Show extracted text" in page and "text layer" in page
-    scan_page = client.get(f"/documents/{docs['scan'].id}").text
-    assert "needs OCR" in scan_page
+    note = client.get(f"/api/v1/documents/{docs['note'].id}").json()
+    assert note["text"]["method"] == "text"
+    text = client.get(f"/api/v1/documents/{docs['note'].id}/text").json()
+    assert text["content"] == "Kaucja zwrotna płatna"
+    scan = client.get(f"/api/v1/documents/{docs['scan'].id}").json()
+    assert scan["text_status"] == "NEEDS_OCR"
 
-    r = client.post(f"/documents/{docs['note'].id}/text/extract")
-    assert "Text extraction queued." in r.text and "Waiting for text extraction" in r.text
+    again = client.post(f"/api/v1/documents/{docs['note'].id}/extract").json()
+    assert again["text_status"] == "PENDING"
 
 
-def test_maintenance_shows_index_and_how_to_install_ocr(client, docs):
+def test_maintenance_reports_index_and_missing_ocr(client, docs):
     client.app.state.text_indexer.run_until_idle()
-    page = client.get("/maintenance").text
-    assert "Full-text search" in page and "Tesseract is not installed." in page
-    assert "winget install --id UB-Mannheim.TesseractOCR" in page
-    assert "tessdata_best/main/pol.traineddata" in page
+    status = client.get("/api/v1/maintenance").json()
+    assert status["text_counts"]["DONE"] == 2 and status["text_counts"]["NEEDS_OCR"] == 1
+    assert status["ocr"]["available"] is False
+    assert status["ocr"]["message"] == "Tesseract is not installed."
 
 
 # --- real Tesseract (only where installed with Polish) ----------------------------------

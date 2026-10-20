@@ -34,7 +34,7 @@ from tabularium.textindex import request_extraction, snippet
 from tabularium.thumbnails import thumbnail_path
 from tabularium.web.api import schemas as s
 from tabularium.web.deps import get_session
-from tabularium.web.files import preview_kind
+from tabularium.web.files import file_response, preview_kind
 
 router = APIRouter(tags=["documents"])
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -184,6 +184,16 @@ def get_text(session: SessionDep, document_id: uuid.UUID) -> dict:
     _get(session, document_id)
     text = session.get(DocumentText, document_id)
     return {"content": text.content if text else None}
+
+
+@router.get("/documents/{document_id}/file")
+def get_file(request: Request, session: SessionDep, document_id: uuid.UUID, download: bool = False):
+    """The archived file: shown inline when that is safe (see web.files), else a download."""
+    document = _get(session, document_id)
+    storage = request.app.state.storage
+    if not storage.exists(document.stored_path):
+        raise HTTPException(status_code=404, detail="File is missing from the archive")
+    return file_response(storage, document, download=download)
 
 
 @router.get("/documents/{document_id}/thumbnail", response_class=FileResponse)

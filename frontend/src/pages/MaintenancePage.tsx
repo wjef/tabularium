@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, CircleAlert, DatabaseBackup, FileJson, FolderSync, ScanText, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { api, type CheckProblem, type CheckReport, type MaintenanceStatus } from "../api/client";
+import { api, type CheckProblem, type CheckReport, type IngestReport, type MaintenanceStatus } from "../api/client";
 import { useAction } from "../api/mutations";
 import { Dialog } from "../components/Dialog";
 import { Card, Empty, Page } from "../components/Page";
@@ -24,6 +24,10 @@ const PROBLEMS: { key: keyof Pick<CheckReport, "missing" | "changed" | "cloud_on
   { key: "cloud_only", label: "Online-only files", hint: "OneDrive has not downloaded them; they could not be checked." },
   { key: "orphans", label: "Unknown files", hint: "In the archive folder but not in the database." },
 ];
+
+const POLISH_DATA_COMMAND =
+  "Invoke-WebRequest https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/main/pol.traineddata " +
+  '-OutFile "C:\\Program Files\\Tesseract-OCR\\tessdata\\pol.traineddata"';
 
 const time = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
@@ -53,8 +57,8 @@ export function MaintenancePage() {
 }
 
 function IngestCard() {
-  const [report, setReport] = useState<Record<string, number> | null>(null);
-  const scan = useAction(() => api.post<Record<string, number>>("/ingest/scan"), {
+  const [report, setReport] = useState<IngestReport | null>(null);
+  const scan = useAction(() => api.post<IngestReport>("/ingest/scan"), {
     invalidate: [["documents"], ["info"], ["maintenance"]],
   });
   return (
@@ -68,10 +72,16 @@ function IngestCard() {
     >
       <p className={ui.muted}>New files in the ingest folder are imported automatically; scan to do it right away.</p>
       {report && (
-        <p className={styles.result}>
-          {report.imported} imported · {report.duplicates} duplicates · {report.failed} failed · {report.skipped} skipped
-          {report.waiting ? ` · ${report.waiting} still being written` : ""}
-        </p>
+        <>
+          <p className={styles.result}>
+            {report.imported.length} imported · {report.duplicates.length} already in the archive ·{" "}
+            {report.failed.length} failed · {report.skipped.length} skipped
+            {report.waiting.length ? ` · ${report.waiting.length} still being written` : ""}
+          </p>
+          {report.failed.length > 0 && (
+            <p className={styles.error}>Could not import: {report.failed.join(", ")}</p>
+          )}
+        </>
       )}
     </Card>
   );
@@ -114,6 +124,22 @@ function TextCard({ status }: { status: MaintenanceStatus }) {
           Languages {ocr.languages}. {ocr.message}
         </span>
       </p>
+      {ocr.enabled && !ocr.available && (
+        <div className={styles.howto}>
+          <p>
+            To read scans and photos: install Tesseract, add the Polish language file, then click “Check OCR again”
+            (no restart needed).
+          </p>
+          {!ocr.command && (
+            <>
+              <p>1. Install Tesseract (PowerShell):</p>
+              <pre>winget install --id UB-Mannheim.TesseractOCR</pre>
+            </>
+          )}
+          <p>Add the Polish language file, in PowerShell started with “Run as administrator” (winget installs English only):</p>
+          <pre>{POLISH_DATA_COMMAND}</pre>
+        </div>
+      )}
     </Card>
   );
 }

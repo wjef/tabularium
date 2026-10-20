@@ -34,12 +34,6 @@ const ACTIONS: Record<string, string> = {
 
 const time = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
-/** The server's links point at the old screens; these are the same places in this app. */
-function appLink(link: string): string {
-  const doc = /^\/documents\/([\w-]+)$/.exec(link);
-  return doc ? `/?doc=${doc[1]}` : link;
-}
-
 /** What changed, in a few words: "title: Old → New". */
 function describe(entry: HistoryEntry): string {
   const oldValue = (entry.old_value ?? {}) as Record<string, unknown>;
@@ -117,7 +111,7 @@ export function HistoryPage() {
                   <td>
                     <span className={ui.muted}>{OBJECTS[e.object_type] ?? e.object_type} </span>
                     {e.link ? (
-                      <button className={styles.link} onClick={() => navigate(appLink(e.link!))}>
+                      <button className={styles.link} onClick={() => navigate(e.link!)}>
                         {shortName(e.label ?? "")}
                       </button>
                     ) : (

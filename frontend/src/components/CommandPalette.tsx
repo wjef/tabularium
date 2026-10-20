@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { api } from "../api/client";
+import { api, type IngestReport } from "../api/client";
 import { useDocumentSearch, useEntities, useTags } from "../api/hooks";
 import { formatDate, shortName } from "../lib/format";
 import { matchScore } from "../lib/text";
@@ -86,11 +86,11 @@ function Palette({ onClose, onShowShortcuts }: { onClose: () => void; onShowShor
         icon: <FolderSync size={16} />,
         run: () =>
           api
-            .post<{ imported: number }>("/ingest/scan")
+            .post<IngestReport>("/ingest/scan")
             .then((r) => {
               void client.invalidateQueries({ queryKey: ["documents"] });
               void client.invalidateQueries({ queryKey: ["info"] });
-              toast(`${r.imported} ${r.imported === 1 ? "document" : "documents"} imported.`);
+              toast(`${r.imported.length} ${r.imported.length === 1 ? "document" : "documents"} imported.`);
             })
             .catch((e: Error) => toast(e.message, "error")),
       },

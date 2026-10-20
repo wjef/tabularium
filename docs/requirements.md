@@ -171,10 +171,15 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   check reports it as an orphan); when both documents of a relation are outdated one
   after the other, the second snapshot no longer contains the link.
 
-## 8. User interface (v1: simple and brutal)
-- Server-rendered HTML + htmx, served on `127.0.0.1` only, opened in the default browser.
+## 8. User interface
+- Single-page app (React + TypeScript, ADR 0010) on a JSON API, served on `127.0.0.1` only,
+  opened in the default browser. Light and dark themes follow Windows.
+- Workspace: sidebar (sections, tag tree) → document list with thumbnails and search snippets
+  → the open document (preview or extracted text) with an editable details panel (title,
+  date, note, tags, related documents).
 - **To be tagged** view: all active documents with zero tags.
-- **Archive** view: tag-tree filter → document list (left) → preview (right).
+- Keyboard: Ctrl+K command palette, `/` search, J/K next/previous, T add tag, E edit title,
+  `?` lists all shortcuts. Changes that remove or overwrite something offer **Undo**.
 - Preview inline for PDF, PNG/JPEG/GIF/WebP/BMP images and plain text. Every other type
   (including HTML, SVG, Office files) is only offered as a download, never rendered in the
   app's origin.

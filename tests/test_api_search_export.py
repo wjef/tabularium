@@ -1,3 +1,5 @@
+"""Search filters, readable export copies and the desktop actions, through the JSON API."""
+
 import csv
 import hashlib
 import io
@@ -27,6 +29,7 @@ from tabularium.web.app import create_app
 from tabularium.web.security import CSRF_HEADER
 
 TOKEN = "test-token"
+API = "/api/v1"
 
 
 @pytest.fixture
@@ -75,48 +78,33 @@ def world(config, session_factory):
     return ids
 
 
-def result_names(html: str) -> list[str]:
-    import re
+def names(client, **params) -> list[str]:
+    response = client.get(f"{API}/documents", params=params)
+    assert response.status_code == 200, response.text
+    return [d["display_name"] for d in response.json()["items"]]
 
-    return re.findall(r'id=[0-9a-f-]{36}">([^<]+)</a>', html)
 
-
-# --- search page -----------------------------------------------------------------------
+# --- search ----------------------------------------------------------------------------
 
 
 BILL = hashlib.sha256(b"%PDF bill").hexdigest() + ".pdf"
 OTHER = hashlib.sha256(b"%PDF other").hexdigest() + ".pdf"
 
 
-def test_search_page_filters_by_tags_entities_text_dates(client, world):
-    # documents without a title are listed by their archive (hash) name
-    assert result_names(client.get("/search").text) == ["Zeznanie PIT", BILL, OTHER]
-    r = client.get("/search", params={"tag": world["taxes"]})
-    assert result_names(r.text) == ["Zeznanie PIT"]
-    r = client.get("/search", params={"tag": world["sender"]})
-    assert result_names(r.text) == ["Zeznanie PIT", BILL]
-    r = client.get("/search", params={"entity": world["anna"], "from": "2025-01-01"})
-    assert result_names(r.text) == ["Zeznanie PIT"]
-    r = client.get("/search", params={"q": "zeznanie"})
-    assert result_names(r.text) == ["Zeznanie PIT"]
-    assert "1 document(s) found." in r.text
-    r = client.get("/search", params={"q": BILL[:10]})  # by hash prefix
-    assert result_names(r.text) == [BILL]
-    r = client.get("/search", params={"q": "bill.pdf"})  # original name still searchable
-    assert result_names(r.text) == [BILL]
+def test_search_filters_by_tags_entities_text_dates(client, world):
+    # documents without a title are listed by their archive (hash) name; newest first
+    assert names(client) == ["Zeznanie PIT", BILL, OTHER]
+    assert names(client, tag=world["taxes"]) == ["Zeznanie PIT"]
+    assert names(client, tag=world["sender"]) == ["Zeznanie PIT", BILL]  # sub-tags included
+    assert names(client, entity=world["anna"], date_from="2025-01-01") == ["Zeznanie PIT"]
+    assert names(client, q="zeznanie") == ["Zeznanie PIT"]
+    assert names(client, q=BILL[:10]) == [BILL]  # by hash prefix
+    assert names(client, q="bill.pdf") == [BILL]  # original name still searchable
 
 
-def test_selected_result_keeps_filters_and_shows_preview(client, world):
-    r = client.get("/search", params={"tag": world["sender"], "id": world["bill"]})
-    assert f'<iframe src="/documents/{world["bill"]}/file"' in r.text
-    assert f'href="/search?tag={world["sender"]}&amp;id={world["pit"]}"' in r.text
-    assert "checked" in r.text  # selected tag stays ticked
-
-
-def test_bad_filter_values_are_ignored(client, world):
-    r = client.get("/search", params={"tag": "not-a-uuid", "from": "yesterday"})
-    assert r.status_code == 200
-    assert len(result_names(r.text)) == 3
+def test_bad_filter_values_are_refused(client, world):
+    assert client.get(f"{API}/documents", params={"tag": "not-a-uuid"}).status_code == 422
+    assert client.get(f"{API}/documents", params={"date_from": "yesterday"}).status_code == 422
 
 
 # --- export ----------------------------------------------------------------------------
@@ -148,7 +136,7 @@ def test_readable_names_use_title_else_hash_and_are_safe():
 
 
 def test_export_zip_has_readable_copies_and_index(client, world):
-    r = client.post("/documents/export", data={"doc_ids": [world["pit"], world["bill"]]})
+    r = client.post(f"{API}/export", json={"document_ids": [world["pit"], world["bill"]]})
     assert r.status_code == 200
     assert r.headers["content-type"] == "application/zip"
     assert r.headers["content-disposition"].startswith('attachment; filename="Tabularium export')
@@ -167,28 +155,29 @@ def test_export_zip_has_readable_copies_and_index(client, world):
 
 
 def test_export_requires_selection_and_csrf(client, config, session_factory, world):
-    assert client.post("/documents/export", data={}).status_code == 400
+    assert client.post(f"{API}/export", json={"document_ids": []}).status_code == 400
     app = create_app(
         config, csrf_token=TOKEN, session_factory=session_factory, scan_on_startup=False
     )
     plain = TestClient(app, base_url="http://127.0.0.1:8765")
-    assert plain.post("/documents/export", data={"doc_ids": [world["pit"]]}).status_code == 403
+    body = {"document_ids": [world["pit"]]}
+    assert plain.post(f"{API}/export", json=body).status_code == 403
 
 
 def test_export_does_not_touch_the_archive(client, world, config):
     before = {p: p.read_bytes() for p in config.paths.archive.rglob("*.pdf")}
-    client.post("/documents/export", data={"doc_ids": [world["pit"]]})
+    client.post(f"{API}/export", json={"document_ids": [world["pit"]]})
     assert {p: p.read_bytes() for p in config.paths.archive.rglob("*.pdf")} == before
 
 
-# --- open copy / show in explorer --------------------------------------------------------
+# --- open copy / show in Explorer --------------------------------------------------------
 
 
 def test_open_hands_a_read_only_readable_copy_to_windows(client, world, monkeypatch, app_home):
     opened = []
     monkeypatch.setattr(desktop, "open_with_default_app", opened.append)
-    r = client.post(f"/documents/{world['pit']}/open")
-    assert "read-only copy" in r.text
+    r = client.post(f"{API}/documents/{world['pit']}/open")
+    assert "read-only copy" in r.json()["message"]
     [copy] = opened
     assert copy.name == "2025-04-01 Zeznanie PIT.pdf"
     assert copy.read_bytes() == b"%PDF pit"
@@ -199,7 +188,7 @@ def test_open_hands_a_read_only_readable_copy_to_windows(client, world, monkeypa
 def test_reveal_points_at_the_archived_file(client, world, monkeypatch, config):
     shown = []
     monkeypatch.setattr(desktop, "show_in_explorer", shown.append)
-    client.post(f"/documents/{world['bill']}/reveal")
+    client.post(f"{API}/documents/{world['bill']}/reveal")
     [path] = shown
     sha = hashlib.sha256(b"%PDF bill").hexdigest()
     assert path == config.paths.archive / sha[:2] / f"{sha}.pdf"
@@ -210,12 +199,13 @@ def test_desktop_errors_are_shown(client, world, monkeypatch):
         raise desktop.DesktopError("Opening files is only supported on Windows.")
 
     monkeypatch.setattr(desktop, "open_with_default_app", fail)
-    r = client.post(f"/documents/{world['pit']}/open")
-    assert 'class="flash error"' in r.text
+    r = client.post(f"{API}/documents/{world['pit']}/open")
+    assert r.status_code == 409 and "only supported on Windows" in r.json()["detail"]
 
 
 def test_unknown_document_for_desktop_actions(client):
-    assert client.post(f"/documents/{uuid.uuid4()}/open").status_code == 404
+    assert client.post(f"{API}/documents/{uuid.uuid4()}/open").status_code == 404
+    assert client.post(f"{API}/documents/{uuid.uuid4()}/reveal").status_code == 404
 
 
 @pytest.mark.parametrize(
@@ -237,6 +227,6 @@ def test_programs_and_scripts_are_never_opened(client, config, session_factory, 
             size_bytes=staged.size,
             retention_years=5,
         ).id
-    r = client.post(f"/documents/{doc_id}/open")
-    assert "not opened from the archive" in r.text
+    r = client.post(f"{API}/documents/{doc_id}/open")
+    assert r.status_code == 409 and "not opened from the archive" in r.json()["detail"]
     assert opened == []

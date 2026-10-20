@@ -20,28 +20,31 @@ def client(config, session_factory):
     return TestClient(app, base_url="http://127.0.0.1:8765")
 
 
-def test_index_renders_with_csrf_header_for_htmx(client):
+def test_root_serves_the_interface_with_security_headers(client):
     response = client.get("/")
-    assert response.status_code == 200
-    assert "Tabularium" in response.text
-    assert CSRF_HEADER in response.text and TOKEN in response.text
+    assert response.status_code in (200, 503)  # 503 = front end not built (explains how)
+    assert "Tabularium" in response.text or "setup-dev.ps1" in response.text
     assert response.headers["X-Content-Type-Options"] == "nosniff"
-    assert "/static/htmx-2.0.11.min.js" in response.text
-    assert client.get("/static/htmx-2.0.11.min.js").status_code == 200
 
 
-def test_scan_button_imports_files(client, folders, config):
+def test_unknown_api_paths_are_not_the_interface(client):
+    response = client.get("/api/v1/nothing-here")
+    assert response.status_code == 404 and response.headers["content-type"].startswith(
+        "application/json"
+    )
+
+
+def test_scan_imports_files(client, folders, config):
     config.ingest.stable_seconds = 0
     (folders["ingest"] / "letter.pdf").write_bytes(b"%PDF-1.4 letter")
-    response = client.post("/ingest/scan", headers={CSRF_HEADER: TOKEN})
-    assert response.status_code == 200
-    assert "Imported" in response.text
-    assert '<strong id="untagged-count">1</strong>' in response.text
+    response = client.post("/api/v1/ingest/scan", headers={CSRF_HEADER: TOKEN})
+    assert response.status_code == 200 and response.json()["imported"] == ["letter.pdf"]
+    assert client.get("/api/v1/info").json()["untagged"] == 1
     assert (folders["ingest"] / "_processed" / "letter.pdf").exists()
 
 
 def test_scan_requires_csrf_token(client):
-    assert client.post("/ingest/scan").status_code == 403
+    assert client.post("/api/v1/ingest/scan").status_code == 403
 
 
 def test_health(client):

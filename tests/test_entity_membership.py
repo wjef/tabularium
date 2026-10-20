@@ -184,30 +184,26 @@ def client(config, session_factory):
     return TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN})
 
 
-def test_membership_through_the_entities_page(client, session_factory):
+def test_membership_through_the_api(client, session_factory):
     with session_factory() as s, s.begin():
         jan = create_entity(s, etype(s, "Person"), "Jan Kowalski")
         family = create_entity(s, etype(s, "Other"), "Kowalski Family")
         jan_id, family_id = str(jan.id), str(family.id)
 
-    r = client.post(f"/entities/{jan_id}/groups/add", data={"other_id": family_id})
-    assert "Added to the group." in r.text
-    r = client.get(f"/entities?id={family_id}")
-    assert f'<a href="/entities?id={jan_id}">Jan Kowalski</a>' in r.text  # listed as member
-    # the family can no longer be offered as a member of Jan (loop)
-    jan_page = client.get(f"/entities?id={jan_id}").text
-    assert f'<option value="{family_id}">' not in jan_page
-    assert f"/entities/{jan_id}/members/add" not in jan_page  # nothing left to offer
+    assert client.put(f"/api/v1/entities/{jan_id}/groups/{family_id}").status_code == 200
+    family_detail = client.get(f"/api/v1/entities/{family_id}").json()
+    assert [m["name"] for m in family_detail["members"]] == ["Jan Kowalski"]
 
-    r = client.post(f"/entities/{family_id}/members/add", data={"other_id": family_id})
-    assert "itself" in r.text
-    r = client.post(f"/entities/{family_id}/members/{jan_id}/remove")
-    assert "Member removed." in r.text
+    r = client.put(f"/api/v1/entities/{family_id}/groups/{jan_id}")  # would be a loop
+    assert r.status_code == 409
+    r = client.put(f"/api/v1/entities/{family_id}/groups/{family_id}")
+    assert r.status_code == 409 and "itself" in r.json()["detail"]
+    assert client.delete(f"/api/v1/entities/{jan_id}/groups/{family_id}").status_code == 200
     with session_factory() as s:
         assert s.scalars(select(EntityMembership)).all() == []
 
 
-def test_search_page_related_checkbox(client, session_factory):
+def test_search_with_related_switch(client, session_factory):
     with session_factory() as s, s.begin():
         jan = create_entity(s, etype(s, "Person"), "Jan Kowalski")
         family = create_entity(s, etype(s, "Other"), "Kowalski Family")
@@ -215,9 +211,7 @@ def test_search_page_related_checkbox(client, session_factory):
         recipient = create_tag(s, "recipient")
         _doc(s, "for-family.pdf", create_tag(s, parent=recipient, entity=family))
         jan_id = str(jan.id)
-    exact = client.get("/search", params={"entity": jan_id})
-    assert "0 document(s) found." in exact.text
-    related = client.get("/search", params={"entity": jan_id, "related": "1"})
-    assert "1 document(s) found." in related.text
-    assert 'name="related" value="1" checked' in related.text
-    assert "related=1" in related.text  # kept in result links
+    exact = client.get("/api/v1/documents", params={"entity": jan_id}).json()
+    assert exact["total"] == 0
+    related = client.get("/api/v1/documents", params={"entity": jan_id, "related": True}).json()
+    assert related["total"] == 1

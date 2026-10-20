@@ -10,9 +10,10 @@ rebinding, potentially readable by it.
 - Bind to loopback only; config validation rejects other hosts.
 - **Host allow-list** (`127.0.0.1`, `localhost`) — defeats DNS rebinding.
 - For state-changing methods: **Origin** (when present) must be our own origin, and an
-  `X-CSRF-Token` header must match the per-process token. htmx sends the header globally via
-  `hx-headers` on `<body>`.
+  `X-CSRF-Token` header must match the per-process token. The front end reads the token from
+  `GET /api/v1/session` (readable only by our own origin) and sends it on every change
+  (ADR 0010).
 - Files are served by document ID only, never by path.
 
 ## Consequences
-- Plain HTML form posts without htmx are rejected; all mutations go through htmx or JS.
+- Plain HTML form posts are rejected; all changes go through the JSON API with the header.

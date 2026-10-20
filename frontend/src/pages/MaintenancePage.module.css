@@ -110,3 +110,26 @@
 .error {
   color: var(--danger);
 }
+
+.howto {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.howto p {
+  margin: 0 0 6px;
+}
+
+.howto pre {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: pre-wrap;
+  word-break: break-all;
+}

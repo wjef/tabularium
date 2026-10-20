@@ -1,6 +1,6 @@
 # 0001 — Tech stack: Python + FastAPI + SQLite + htmx
 
-Date: 2026-10-17 · Status: Accepted
+Date: 2026-10-17 · Status: Accepted; the UI part is superseded by [0010](0010-single-page-front-end.md)
 
 ## Context
 Single-user local archive. Needs inline preview of PDFs/images, a deliberately simple first UI

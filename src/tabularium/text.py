@@ -13,9 +13,13 @@ def normalize(text: str) -> str:
     return " ".join(stripped.casefold().split())
 
 
+class EmptyNameError(ValueError):
+    """A name (tag, entity, type, alias) was empty; the message is meant for the user."""
+
+
 def clean_name(text: str) -> str:
     """User-facing name: trimmed, inner whitespace collapsed. Raises on empty."""
     cleaned = " ".join(text.split())
     if not cleaned:
-        raise ValueError("name must not be empty")
+        raise EmptyNameError("A name is required.")
     return cleaned

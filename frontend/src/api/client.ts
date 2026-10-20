@@ -99,7 +99,7 @@ export function qs(params: Record<string, string | number | boolean | string[] |
 
 /** URL of a document's file (preview inline or as a download). */
 export const fileUrl = (id: string, download = false) =>
-  `/documents/${id}/file${download ? "?download=1" : ""}`;
+  `${BASE}/documents/${id}/file${download ? "?download=1" : ""}`;
 
 /** Small WebP preview of a PDF's first page or a photo (404 for other types). */
 export const thumbnailUrl = (id: string) => `${BASE}/documents/${id}/thumbnail`;
@@ -158,6 +158,15 @@ export interface MaintenanceStatus {
   outdated_restore_pending: boolean;
 }
 
+/** Result of scanning the ingest folder: file names per outcome. */
+export interface IngestReport {
+  imported: string[];
+  duplicates: string[];
+  failed: string[];
+  skipped: string[];
+  waiting: string[];
+}
+
 export interface CheckProblem {
   path: string;
   document_id: string | null;
@@ -177,4 +186,4 @@ export interface CheckReport {
 }
 
 /** URL of an outdated document's file, for preview. */
-export const outdatedFileUrl = (id: string) => `/outdated/${id}/file`;
+export const outdatedFileUrl = (id: string) => `${BASE}/outdated/${id}/file`;

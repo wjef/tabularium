@@ -1,5 +1,6 @@
 """Reference data for the front end: app info, tags, entities, entity types, history."""
 
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
@@ -7,13 +8,13 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from tabularium import __version__
-from tabularium.models import AuditLog, Entity, Tag
+from tabularium.models import AuditLog, Document, Entity, EntityType, Tag
+from tabularium.outdated import OutdatedDocument
 from tabularium.services.documents import untagged_documents
 from tabularium.services.entity_types import list_types
 from tabularium.services.tags import document_counts, tag_paths
 from tabularium.web.api import schemas as s
 from tabularium.web.deps import get_session
-from tabularium.web.routes_history import _labels
 from tabularium.web.security import CSRF_HEADER
 
 router = APIRouter(tags=["catalog"])
@@ -98,7 +99,7 @@ def history(request: Request, session: SessionDep, limit: int = 200):
     entries = session.scalars(
         select(AuditLog).order_by(AuditLog.id.desc()).limit(min(limit, 1000))
     ).all()
-    labels = _labels(session, entries, request.app.state.outdated_store)
+    labels = history_labels(session, entries, request.app.state.outdated_store)
     result = []
     for e in entries:
         entry = s.HistoryEntry.model_validate(e)
@@ -117,3 +118,42 @@ def session_info(request: Request) -> dict:
     is stopped by the Host allow-list.
     """
     return {"csrf_header": CSRF_HEADER, "csrf_token": request.app.state.csrf_token}
+
+
+def history_labels(
+    session: Session, entries: list[AuditLog], outdated_store=None
+) -> dict[tuple[str, str], tuple[str, str]]:
+    """(object_type, object_id) → (label, link in the app) for objects that still exist."""
+    wanted: dict[str, set[uuid.UUID]] = {}
+    for e in entries:
+        try:
+            wanted.setdefault(e.object_type, set()).add(uuid.UUID(e.object_id))
+        except ValueError:
+            continue
+    labels: dict[tuple[str, str], tuple[str, str]] = {}
+    if ids := wanted.get("tag"):
+        paths = tag_paths(session)
+        for tag_id in ids:
+            if tag_id in paths:
+                labels[("tag", str(tag_id))] = (paths[tag_id], f"/tags?id={tag_id}")
+    if ids := wanted.get("entity"):
+        for entity in session.scalars(select(Entity).where(Entity.id.in_(ids))):
+            labels[("entity", str(entity.id))] = (entity.name, f"/entities?id={entity.id}")
+    if ids := wanted.get("entity_type"):
+        for entity_type in session.scalars(select(EntityType).where(EntityType.id.in_(ids))):
+            labels[("entity_type", str(entity_type.id))] = (entity_type.name, "/entities")
+    if ids := wanted.get("document"):
+        for doc in session.scalars(select(Document).where(Document.id.in_(ids))):
+            labels[("document", str(doc.id))] = (doc.display_name, f"/?doc={doc.id}")
+        missing = {i for i in ids if ("document", str(i)) not in labels}
+        if missing and outdated_store is not None:
+            with outdated_store.session_factory() as outdated:
+                rows = outdated.scalars(
+                    select(OutdatedDocument).where(OutdatedDocument.id.in_(missing))
+                )
+                for row in rows:
+                    labels[("document", str(row.id))] = (
+                        f"{row.display_name} (outdated)",
+                        f"/outdated?id={row.id}",
+                    )
+    return labels

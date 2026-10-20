@@ -254,45 +254,45 @@ def client(config, session_factory, store):
     return TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN})
 
 
-def test_outdate_and_restore_through_the_ui(client, world, monkeypatch):
+def test_outdate_and_restore_through_the_api(client, world, monkeypatch):
     old_id, pay_id = str(world["old"].id), str(world["payment"].id)
-    assert "Must be kept until 2099-01-01" in client.get(f"/documents/{pay_id}").text
+    payment = client.get(f"/api/v1/documents/{pay_id}").json()
+    assert (payment["can_outdate"], payment["retain_until"]) == (False, "2099-01-01")
 
-    import tabularium.web.routes_documents as doc_routes
-    import tabularium.web.routes_outdated as routes
+    import tabularium.web.api.documents as documents_api
 
     class FakeDate(date):
         @classmethod
         def today(cls):
             return TODAY
 
-    monkeypatch.setattr(routes, "date", FakeDate)
-    monkeypatch.setattr(doc_routes, "date", FakeDate)
-    assert "Outdate this document" in client.get(f"/documents/{old_id}").text
+    monkeypatch.setattr(documents_api, "date", FakeDate)
+    assert client.get(f"/api/v1/documents/{old_id}").json()["can_outdate"] is True
 
-    r = client.post(f"/documents/{old_id}/outdate", data={"reason": "done"})
-    assert r.status_code == 204 and r.headers["HX-Redirect"] == f"/outdated?id={old_id}"
-    assert client.get(f"/documents/{old_id}").status_code == 404
-    assert "Rachunek" not in client.get("/search").text
+    r = client.post(f"/api/v1/documents/{old_id}/outdate", json={"reason": "done"})
+    assert r.status_code == 200
+    assert client.get(f"/api/v1/documents/{old_id}").status_code == 404
+    names = [d["title"] for d in client.get("/api/v1/documents").json()["items"]]
+    assert "Rachunek 2024" not in names
 
-    page = client.get(f"/outdated?id={old_id}").text
-    assert "Rachunek 2024" in page and "sender / Anna Nowak" in page and "member of" in page
-    assert client.get(f"/outdated/{old_id}/file").content == b"%PDF old"
-    assert "1 of 1 outdated" in client.get("/outdated", params={"q": "anna"}).text
-    assert "0 of 1 outdated" in client.get("/outdated", params={"q": "zzz"}).text
+    [row] = client.get("/api/v1/outdated").json()
+    assert (row["id"], row["reason"]) == (old_id, "done")
+    detail = client.get(f"/api/v1/outdated/{old_id}").json()
+    assert detail["title"] == "Rachunek 2024" and "sender / Anna Nowak" in detail["tag_paths"]
+    assert client.get(f"/api/v1/outdated/{old_id}/file").content == b"%PDF old"
 
-    r = client.post(f"/outdated/{old_id}/restore")
-    assert r.headers["HX-Redirect"] == f"/documents/{old_id}"
-    assert "Rachunek 2024" in client.get(f"/documents/{old_id}").text
+    assert client.post(f"/api/v1/outdated/{old_id}/restore").status_code == 200
+    assert client.get(f"/api/v1/documents/{old_id}").json()["title"] == "Rachunek 2024"
 
 
-def test_outdate_too_early_shows_error(client, world):
-    r = client.post(f"/documents/{world['payment'].id}/outdate")
-    assert r.status_code == 200 and "kept until 2099-01-01" in r.text
+def test_outdate_too_early_is_refused(client, world):
+    r = client.post(f"/api/v1/documents/{world['payment'].id}/outdate", json={})
+    assert r.status_code == 409 and "kept until 2099-01-01" in r.json()["detail"]
 
 
 def test_unknown_outdated_document(client):
-    assert client.get(f"/outdated/{uuid.uuid4()}/file").status_code == 404
+    assert client.get(f"/api/v1/outdated/{uuid.uuid4()}").status_code == 404
+    assert client.get(f"/api/v1/outdated/{uuid.uuid4()}/file").status_code == 404
 
 
 def test_empty_outdated_store_never_overwrites_its_metadata(
@@ -327,8 +327,10 @@ def test_empty_outdated_store_never_overwrites_its_metadata(
 
 def test_history_links_outdated_documents(client, world, session, archive, store):
     outdate(session, archive, store, world["old"], today=TODAY)
-    page = client.get("/history").text
-    assert f'<a href="/outdated?id={world["old"].id}">Rachunek 2024 (outdated)</a>' in page
+    entries = client.get("/api/v1/history").json()
+    entry = next(e for e in entries if e["object_id"] == str(world["old"].id))
+    assert entry["label"] == "Rachunek 2024 (outdated)"
+    assert entry["link"] == f"/outdated?id={world['old'].id}"
 
 
 def test_maintenance_offers_outdated_store_restore(
@@ -346,8 +348,7 @@ def test_maintenance_offers_outdated_store_restore(
         outdated_store=lost,
     )
     c = TestClient(app, base_url="http://127.0.0.1:8765", headers={CSRF_HEADER: TOKEN})
-    assert "Restore the outdated store" in c.get("/maintenance").text
-    r = c.post("/maintenance/restore-outdated")
-    assert "Outdated store restored." in r.text
-    assert "Restore the outdated store" not in c.get("/maintenance").text
+    assert c.get("/api/v1/maintenance").json()["outdated_restore_pending"] is True
+    assert c.post("/api/v1/maintenance/restore-outdated").json()["message"] == "1"
+    assert c.get("/api/v1/maintenance").json()["outdated_restore_pending"] is False
     lost.dispose()
