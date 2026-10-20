@@ -2,7 +2,7 @@ import { Building2, Plus, Tag as TagIcon } from "lucide-react";
 import { forwardRef, useId, useMemo, useState, type KeyboardEvent } from "react";
 import type { EntityOut, TagNode } from "../api/client";
 import { useEntities, useTags } from "../api/hooks";
-import { choiceKey, suggest, type TagChoice } from "../lib/tagChoices";
+import { choiceKey, choiceLabel, suggest, type TagChoice } from "../lib/tagChoices";
 import styles from "./TagPicker.module.css";
 
 const NO_TAGS: TagNode[] = [];
@@ -97,6 +97,7 @@ export const TagPicker = forwardRef<HTMLInputElement, Props>(function TagPicker(
               onMouseDown={(e) => e.preventDefault()} // keep focus in the box
               onMouseEnter={() => setActive(i)}
               onClick={() => pick(choice)}
+              title={choiceLabel(choice)}
             >
               <ChoiceView choice={choice} />
             </li>
@@ -129,8 +130,11 @@ function ChoiceView({ choice }: { choice: TagChoice }) {
         <span className={styles.label}>
           <span className={styles.parent}>{choice.parent.path} / </span>
           {choice.entity.name}
+          <span className={styles.sub}>
+            {choice.entity.type_name}
+            {choice.entity.aliases.length > 0 && ` · also ${choice.entity.aliases.join(", ")}`}
+          </span>
         </span>
-        <span className={styles.hint}>{choice.entity.type_name}</span>
       </>
     );
   }

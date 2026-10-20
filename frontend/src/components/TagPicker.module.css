@@ -59,7 +59,7 @@
 
 .option {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 6px 10px;
   border-radius: var(--radius-sm);
@@ -70,6 +70,7 @@
 
 .option svg {
   flex: none;
+  margin-top: 2px;
   color: var(--text-muted);
 }
 
@@ -81,12 +82,18 @@
   color: var(--accent);
 }
 
+/* full names wrap instead of being cut: similar names must stay distinguishable */
 .label {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.sub {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
 }
 
 .parent,
