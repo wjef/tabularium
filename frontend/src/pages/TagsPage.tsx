@@ -235,7 +235,14 @@ function NewTagDialog({ onClose, onCreated }: { onClose: () => void; onCreated: 
       confirmLabel="Create"
       busy={create.isPending || !name.trim()}
       onClose={onClose}
-      onConfirm={() => create.mutate(undefined, { onSuccess: (r) => onCreated(r.message) })}
+      onConfirm={() =>
+        create.mutate(undefined, {
+          onSuccess: (r) => {
+            onCreated(r.message); // the new tag's id
+            onClose();
+          },
+        })
+      }
     >
       <label className={ui.field}>
         Name

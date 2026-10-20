@@ -360,7 +360,9 @@ function NewEntityDialog({ types, onClose, onCreated }: { types: EntityType[]; o
   const entities = useEntities();
   const [name, setName] = useState("");
   const [typeId, setTypeId] = useState(types[0]?.id ?? "");
-  const clash = name.trim() ? entities.data?.find((e) => nameKey(e.name) === nameKey(name)) : undefined;
+  const [created, setCreated] = useState(false); // the refreshed list then holds the new entity itself
+  const clash =
+    name.trim() && !created ? entities.data?.find((e) => nameKey(e.name) === nameKey(name)) : undefined;
   const create = useAction(() => api.post<{ message: string }>("/entities", { name: name.trim(), type_id: typeId }), {
     invalidate: [["entities"], ["entity-types"]],
     success: () => "Entity created.",
@@ -373,10 +375,10 @@ function NewEntityDialog({ types, onClose, onCreated }: { types: EntityType[]; o
       onClose={onClose}
       onConfirm={() =>
         create.mutate(undefined, {
-          onSuccess: async () => {
-            const list = (await entities.refetch()).data ?? [];
-            const made = list.find((e) => nameKey(e.name) === nameKey(name));
-            if (made) onCreated(made.id);
+          onSuccess: (result) => {
+            setCreated(true);
+            onCreated(result.message); // the new entity's id
+            onClose();
           },
         })
       }
