@@ -39,6 +39,7 @@
 
 .sub {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   margin-top: 4px;
@@ -46,9 +47,57 @@
   font-size: var(--text-sm);
 }
 
+.sub > span {
+  white-space: nowrap;
+}
+
 .actions {
   display: flex;
+  flex: none;
+  align-items: center;
   gap: 2px;
+}
+
+.doneButton,
+.reviseButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.doneButton {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.doneButton:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.reviseButton {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.reviseButton:hover:not(:disabled) {
+  background: var(--chip-bg);
+  color: var(--text);
+}
+
+.doneButton:disabled,
+.reviseButton:disabled {
+  opacity: 0.6;
 }
 
 .iconButton {

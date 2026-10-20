@@ -39,7 +39,7 @@ def test_scan_imports_files(client, folders, config):
     (folders["ingest"] / "letter.pdf").write_bytes(b"%PDF-1.4 letter")
     response = client.post("/api/v1/ingest/scan", headers={CSRF_HEADER: TOKEN})
     assert response.status_code == 200 and response.json()["imported"] == ["letter.pdf"]
-    assert client.get("/api/v1/info").json()["untagged"] == 1
+    assert client.get("/api/v1/info").json()["inbox"] == 1
     assert (folders["ingest"] / "_processed" / "letter.pdf").exists()
 
 

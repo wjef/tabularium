@@ -59,8 +59,8 @@ export function Sidebar() {
         <NavItem
           icon={Inbox}
           label="To be tagged"
-          count={info?.untagged}
-          highlight={!!info?.untagged}
+          count={info?.inbox}
+          highlight={!!info?.inbox}
           active={inWorkspace && section === "inbox"}
           onClick={() => browse({ section: "inbox" })}
         />

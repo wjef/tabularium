@@ -16,6 +16,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from tabularium.audit import Action, current_actor, record
+from tabularium.db import utcnow
 from tabularium.models import (
     AuditLog,
     Document,
@@ -268,7 +269,7 @@ def restore_to_active(
     if document is None:
         if session.scalar(select(Document.id).where(Document.sha256 == fields["sha256"])):
             raise DomainError("The same file is already in the active archive (imported again).")
-        document = Document(**fields)
+        document = Document(**fields, tagging_done_at=utcnow())  # comes back fully tagged
         session.add(document)
         session.flush()
         record(session, Action.RESTORE, document, new={"from": "outdated"})

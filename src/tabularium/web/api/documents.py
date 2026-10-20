@@ -22,6 +22,7 @@ from tabularium.services.documents import (
     remove_tag,
     set_document_date,
     set_retain_until,
+    set_tagging_done,
     update_details,
 )
 from tabularium.services.outdating import outdate
@@ -90,6 +91,7 @@ def summaries(
                 tags=sorted(tags_by_doc[d.id], key=lambda t: t.path.casefold()),
                 snippet=snippet(text.content, words) if words and text and text.content else None,
                 text_status=(text.status if text else TextStatus.PENDING).value,
+                tagging_done=d.tagging_done_at is not None,
             )
         )
     return result
@@ -150,7 +152,7 @@ def list_documents(
     tag: Annotated[list[uuid.UUID] | None, Query()] = None,
     entity: Annotated[list[uuid.UUID] | None, Query()] = None,
     related: bool = False,
-    untagged: bool = False,
+    inbox: bool = False,
     date_from: date | None = None,
     date_to: date | None = None,
     sort: str = "date",
@@ -166,7 +168,7 @@ def list_documents(
         date_from=date_from,
         date_to=date_to,
         include_related=related,
-        untagged=untagged,
+        inbox=inbox,
         sort=sort,
     )
     documents, total = search(session, query, limit=limit, offset=offset)
@@ -286,6 +288,23 @@ def unassign_tag(request: Request, session: SessionDep, document_id: uuid.UUID, 
     if tag is None or not remove_tag(session, document, tag):
         raise DomainError("The document does not have this tag.")
     return _changed(request, session, document_id)
+
+
+@router.post("/documents/{document_id}/tagging", response_model=s.DocumentDetail)
+def tagging_state(
+    request: Request, session: SessionDep, document_id: uuid.UUID, body: s.TaggingState
+):
+    """Finish the initial tagging (leaves "To be tagged") or send it back for revision."""
+    set_tagging_done(session, _get(session, document_id), body.done)
+    return _changed(request, session, document_id)
+
+
+@router.post("/documents/bulk-tagging", response_model=s.Message)
+def bulk_tagging_state(session: SessionDep, body: s.BulkTaggingState):
+    documents = session.scalars(select(Document).where(Document.id.in_(body.document_ids)))
+    changed = sum(set_tagging_done(session, d, body.done) for d in documents)
+    session.commit()
+    return s.Message(message=str(changed))
 
 
 @router.post("/documents/bulk-tags", response_model=s.Message)

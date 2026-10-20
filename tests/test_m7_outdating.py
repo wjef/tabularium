@@ -146,6 +146,7 @@ def test_restore_brings_document_tags_and_relations_back(session, archive, store
 
     assert restored.id == doc_id and restored.title == "Rachunek 2024"
     assert restored.retain_until == date(2030, 12, 31) and restored.retain_until_manual
+    assert restored.tagging_done_at is not None  # comes back tagged, not "To be tagged"
     assert archive.exists(key) and not store.storage.exists(key)
     paths = tag_paths(session)
     linked = session.scalars(select(DocumentTag.tag_id).where(DocumentTag.document_id == doc_id))

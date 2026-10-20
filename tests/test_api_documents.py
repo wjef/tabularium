@@ -58,7 +58,7 @@ def data(config, session_factory):
 
 def test_info_and_catalog(client, data):
     info = client.get(f"{API}/info").json()
-    assert info["untagged"] == 3 and info["outdated"] == 0 and info["restore_pending"] is False
+    assert info["inbox"] == 3 and info["outdated"] == 0 and info["restore_pending"] is False
     tags = client.get(f"{API}/tags").json()
     assert [t["path"] for t in tags] == ["category", "sender", "category / taxes"]
     assert client.get(f"{API}/entities").json()[0]["type_name"] == "Person"
@@ -77,7 +77,7 @@ def test_list_filters_paginates_and_names_by_hash(client, data):
     assert client.get(f"{API}/documents", params={"sort": "nope"}).status_code == 422
 
 
-def test_tagging_flow_and_untagged_filter(client, data):
+def test_tagging_flow_and_inbox(client, data):
     doc = data["docs"]["a"]
     r = client.post(f"{API}/documents/{doc}/tags", json={"tag_id": data["taxes"]})
     assert r.status_code == 200
@@ -96,14 +96,30 @@ def test_tagging_flow_and_untagged_filter(client, data):
     r = client.post(f"{API}/documents/{doc}/tags", json={"tag_id": data["taxes"]})
     assert r.status_code == 409 and "already has this tag" in r.json()["detail"]
 
-    untagged = client.get(f"{API}/documents", params={"untagged": True}).json()
-    assert untagged["total"] == 2 and doc not in [i["id"] for i in untagged["items"]]
+    # tagging alone keeps the document in "To be tagged" until it is marked done
+    inbox = client.get(f"{API}/documents", params={"inbox": True}).json()
+    assert inbox["total"] == 3
+    assert client.get(f"{API}/documents/{doc}").json()["tagging_done"] is False
+    r = client.post(f"{API}/documents/{doc}/tagging", json={"done": True})
+    assert r.json()["tagging_done"] is True
+    inbox = client.get(f"{API}/documents", params={"inbox": True}).json()
+    assert inbox["total"] == 2 and doc not in [i["id"] for i in inbox["items"]]
     by_tag = client.get(f"{API}/documents", params={"tag": data["taxes"]}).json()
     assert [i["id"] for i in by_tag["items"]] == [doc]
 
     r = client.delete(f"{API}/documents/{doc}/tags/{data['taxes']}")
     assert "category / taxes" not in [t["path"] for t in r.json()["tags"]]
-    assert client.get(f"{API}/info").json()["untagged"] == 2
+    assert client.get(f"{API}/info").json()["inbox"] == 2
+
+    # "Revise tagging" sends it back; both changes are in its history
+    r = client.post(f"{API}/documents/{doc}/tagging", json={"done": False})
+    assert r.json()["tagging_done"] is False
+    assert client.get(f"{API}/info").json()["inbox"] == 3
+    history = client.get(f"{API}/documents/{doc}/history").json()
+    assert [h["new_value"] for h in history if h["new_value"] and "tagging" in h["new_value"]] == [
+        {"tagging": "to do"},
+        {"tagging": "done"},
+    ]
 
 
 def test_update_details_and_retention(client, data):
@@ -131,7 +147,13 @@ def test_search_by_title_and_bulk_tag(client, data):
         json={"document_ids": list(data["docs"].values()), "tag_id": data["sender"]},
     )
     assert r.json()["message"] == "3"
-    assert client.get(f"{API}/info").json()["untagged"] == 0
+    assert client.get(f"{API}/info").json()["inbox"] == 3  # tagged, not yet marked done
+    ids = list(data["docs"].values())
+    r = client.post(f"{API}/documents/bulk-tagging", json={"document_ids": ids, "done": True})
+    assert r.json()["message"] == "3"
+    assert client.get(f"{API}/info").json()["inbox"] == 0
+    r = client.post(f"{API}/documents/bulk-tagging", json={"document_ids": ids, "done": True})
+    assert r.json()["message"] == "0"  # nothing left to change
 
 
 def test_links_and_history(client, data):

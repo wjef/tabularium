@@ -10,10 +10,11 @@ from tabularium.services import DomainError
 from tabularium.services.documents import (
     add_tag,
     create_document,
+    inbox_documents,
     remove_tag,
     set_document_date,
     set_retain_until,
-    untagged_documents,
+    set_tagging_done,
     update_details,
 )
 from tabularium.services.tags import create_tag
@@ -80,21 +81,30 @@ def test_manual_retention_wins_until_reset(session):
     assert doc.retain_until == date(2029, 12, 31) and not doc.retain_until_manual
 
 
-def test_untagged_view_tracks_tagging(session):
+def test_inbox_keeps_documents_until_tagging_is_done(session):
     first, second = make_doc(session, b"one"), make_doc(session, b"two")
     tag = create_tag(session, "category")
     session.commit()
-    assert set(session.scalars(untagged_documents())) == {first, second}
+    assert set(session.scalars(inbox_documents())) == {first, second}
 
     assert add_tag(session, first, tag) is True
     assert add_tag(session, first, tag) is False  # idempotent
     session.commit()
-    assert session.scalars(untagged_documents()).all() == [second]
+    assert set(session.scalars(inbox_documents())) == {first, second}  # still being tagged
 
-    assert remove_tag(session, first, tag) is True
-    assert remove_tag(session, first, tag) is False
+    assert set_tagging_done(session, first, True) is True
+    assert set_tagging_done(session, first, True) is False  # already done
     session.commit()
-    assert len(session.scalars(untagged_documents()).all()) == 2
+    assert session.scalars(inbox_documents()).all() == [second]
+    assert first.tagging_done_at.tzinfo is not None  # UTC
+
+    assert remove_tag(session, first, tag) is True  # removing tags does not reopen it
+    session.commit()
+    assert session.scalars(inbox_documents()).all() == [second]
+
+    assert set_tagging_done(session, first, False) is True  # "Revise tagging"
+    session.commit()
+    assert len(session.scalars(inbox_documents()).all()) == 2
 
 
 def test_tag_in_use_cannot_be_deleted(session):

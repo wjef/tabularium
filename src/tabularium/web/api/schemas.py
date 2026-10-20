@@ -76,6 +76,7 @@ class DocumentSummary(_Out):
     tags: list[TagRef]
     snippet: str | None = None
     text_status: TextState
+    tagging_done: bool  # False: still in "To be tagged"
 
 
 class DocumentPage(BaseModel):
@@ -162,6 +163,19 @@ class TagAssign(BaseModel):
     name: str | None = None
     parent_id: uuid.UUID | None = None
     entity_id: uuid.UUID | None = None
+
+
+class TaggingState(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    done: bool
+
+
+class BulkTaggingState(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    document_ids: list[uuid.UUID]
+    done: bool
 
 
 class BulkTag(BaseModel):

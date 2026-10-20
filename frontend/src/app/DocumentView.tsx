@@ -1,6 +1,7 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import {
   Archive,
+  Check,
   Download,
   ExternalLink,
   FileQuestion,
@@ -9,13 +10,21 @@ import {
   PanelRightClose,
   PanelRightOpen,
   RefreshCw,
+  RotateCcw,
   ScanText,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
-import { api, fileUrl, type DocumentDetail } from "../api/client";
+import { api, fileUrl, type DocumentDetail, type DocumentPage } from "../api/client";
 import { useDocument } from "../api/hooks";
-import { useAddTag, useExtractAgain, useOutdate, useRemoveTag, useUpdateDocument } from "../api/mutations";
+import {
+  useAddTag,
+  useExtractAgain,
+  useOutdate,
+  useRemoveTag,
+  useTaggingDone,
+  useUpdateDocument,
+} from "../api/mutations";
 import { EditableText } from "../components/EditableText";
 import { TagChip } from "../components/TagChip";
 import { TagPicker } from "../components/TagPicker";
@@ -46,8 +55,10 @@ export function DocumentView() {
   const tagInput = useRef<HTMLInputElement>(null);
 
   const titleButton = useRef<HTMLButtonElement>(null);
+  const taggingButton = useRef<HTMLButtonElement>(null);
 
   // T: add a tag · E: edit the title · I: details on/off · O: open in the default app
+  // D: tagging done / revise tagging
   useEffect(() => {
     if (!selected) return;
     const onKey = (event: KeyboardEvent) => {
@@ -62,6 +73,9 @@ export function DocumentView() {
         titleButton.current?.click();
       } else if (event.key === "i") {
         setInfoOpen((v) => !v);
+      } else if (event.key === "d") {
+        event.preventDefault();
+        taggingButton.current?.click();
       } else if (event.key === "o") {
         api.post(`/documents/${selected}/open`).catch((e: Error) => toast(e.message, "error"));
       }
@@ -115,6 +129,7 @@ export function DocumentView() {
           </div>
         </div>
         <div className={styles.actions}>
+          <TaggingButton doc={doc} buttonRef={taggingButton} />
           <OsAction id={doc.id} action="open" label="Open in default app" icon={<ExternalLink size={16} />} />
           <OsAction id={doc.id} action="reveal" label="Show in folder" icon={<FolderOpen size={16} />} />
           <a className={styles.iconButton} href={fileUrl(doc.id, true)} title="Download" aria-label="Download">
@@ -147,6 +162,55 @@ export function DocumentView() {
         {infoOpen && <InfoPanel doc={doc} onOpenDocument={(id) => update({ doc: id })} tagInput={tagInput} />}
       </div>
     </main>
+  );
+}
+
+/**
+ * "Done tagging" while the document is in To be tagged, "Revise tagging" afterwards. Finishing
+ * from the To be tagged list moves straight on to the next document there.
+ */
+function TaggingButton({ doc, buttonRef }: { doc: DocumentDetail; buttonRef: RefObject<HTMLButtonElement | null> }) {
+  const { section, filters, update } = useView();
+  const client = useQueryClient();
+  const tagging = useTaggingDone(doc.id);
+
+  const finish = () => {
+    // pick the next document before the list refreshes without this one
+    const pages = client.getQueryData<InfiniteData<DocumentPage>>(["documents", filters]);
+    const items = pages?.pages.flatMap((p) => p.items) ?? [];
+    const index = items.findIndex((d) => d.id === doc.id);
+    const next = index >= 0 ? (items[index + 1] ?? items[index - 1]) : undefined;
+    tagging.mutate(true, {
+      onSuccess: () => {
+        if (section === "inbox") update({ doc: next?.id ?? null }, { replace: true });
+      },
+    });
+  };
+
+  return doc.tagging_done ? (
+    <button
+      ref={buttonRef}
+      className={styles.reviseButton}
+      onClick={() => tagging.mutate(false)}
+      disabled={tagging.isPending}
+      title="Move back to To be tagged to rework its tags (D)"
+    >
+      <RotateCcw size={14} aria-hidden /> Revise tagging
+    </button>
+  ) : (
+    <button
+      ref={buttonRef}
+      className={styles.doneButton}
+      onClick={finish}
+      disabled={tagging.isPending}
+      title={
+        doc.tags.length
+          ? "Tagging is finished: take it out of To be tagged (D)"
+          : "No tags yet. Mark it done anyway? It leaves To be tagged (D)"
+      }
+    >
+      <Check size={15} aria-hidden /> Done tagging
+    </button>
   );
 }
 

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from tabularium import __version__
 from tabularium.models import AuditLog, Document, Entity, EntityType, Tag
 from tabularium.outdated import OutdatedDocument
-from tabularium.services.documents import untagged_documents
+from tabularium.services.documents import inbox_documents
 from tabularium.services.entity_types import list_types
 from tabularium.services.tags import document_counts, subtree_document_counts, tag_paths
 from tabularium.web.api import schemas as s
@@ -25,11 +25,11 @@ SessionDep = Annotated[Session, Depends(get_session)]
 def info(request: Request, session: SessionDep) -> dict:
     """Small facts for the shell: version, counts for the sidebar, language."""
     state = request.app.state
-    untagged = session.scalar(select(func.count()).select_from(untagged_documents().subquery()))
+    inbox = session.scalar(select(func.count()).select_from(inbox_documents().subquery()))
     return {
         "version": __version__,
         "language": state.config.ui.language,
-        "untagged": untagged or 0,
+        "inbox": inbox or 0,
         "outdated": state.outdated_store.count(),
         "restore_pending": state.restore_pending(),
     }

@@ -3,7 +3,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Select, exists, select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
 from tabularium.audit import Action, record
@@ -125,10 +125,29 @@ def remove_tag(session: Session, document: Document, tag: Tag) -> bool:
     return True
 
 
-def untagged_documents() -> Select[tuple[Document]]:
-    """The "To be tagged" view: documents without any tag, oldest import first."""
-    has_tag = exists().where(DocumentTag.document_id == Document.id)
-    return select(Document).where(~has_tag).order_by(Document.ingested_at, Document.id)
+def inbox_documents() -> Select[tuple[Document]]:
+    """The "To be tagged" view: documents whose tagging is not marked done, oldest first.
+
+    Tagging a document does not take it out of the view; the user marks it done when
+    finished (see ``set_tagging_done``), so several documents can be worked on at once.
+    """
+    return (
+        select(Document)
+        .where(Document.tagging_done_at.is_(None))
+        .order_by(Document.ingested_at, Document.id)
+    )
+
+
+def set_tagging_done(session: Session, document: Document, done: bool) -> bool:
+    """Mark the initial tagging as finished (leaves "To be tagged") or as to be revised
+    (back in "To be tagged"). Returns False when nothing changed."""
+    if (document.tagging_done_at is not None) == done:
+        return False
+    document.tagging_done_at = utcnow() if done else None
+    old, new = ("to do", "done") if done else ("done", "to do")
+    record(session, Action.UPDATE, document, old={"tagging": old}, new={"tagging": new})
+    session.flush()
+    return True
 
 
 def bulk_add_tag(session: Session, documents: list[Document], tag: Tag) -> int:

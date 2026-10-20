@@ -15,7 +15,7 @@ export function useView() {
       tag: params.getAll("tag"),
       entity: params.getAll("entity"),
       related: params.get("related") === "1",
-      untagged: section === "inbox",
+      inbox: section === "inbox",
       sort: (params.get("sort") as DocumentFilters["sort"]) ?? (section === "inbox" ? "imported_asc" : "date"),
     };
     return { section, filters, selected: params.get("doc") };

@@ -33,7 +33,7 @@ class SearchQuery:
     date_from: date | None = None
     date_to: date | None = None
     include_related: bool = False
-    untagged: bool = False  # only documents without any tag ("To be tagged")
+    inbox: bool = False  # only documents whose tagging is not done yet ("To be tagged")
     sort: str = "date"  # date | imported | title
 
     @property
@@ -44,7 +44,7 @@ class SearchQuery:
             or self.text.strip()
             or self.date_from
             or self.date_to
-            or self.untagged
+            or self.inbox
         )
 
 
@@ -109,8 +109,8 @@ def build_query(session: Session, query: SearchQuery) -> Select[tuple[Document]]
         stmt = stmt.where(Document.document_date >= query.date_from)
     if query.date_to:
         stmt = stmt.where(Document.document_date <= query.date_to)
-    if query.untagged:
-        stmt = stmt.where(~exists().where(DocumentTag.document_id == Document.id))
+    if query.inbox:
+        stmt = stmt.where(Document.tagging_done_at.is_(None))
     return stmt.order_by(*SORTS.get(query.sort, SORTS["date"]))
 
 

@@ -209,3 +209,34 @@ export function useAction<A = void, R = { message: string }>(
     onError: showError,
   });
 }
+
+/** Finish the initial tagging (the document leaves "To be tagged") or send it back. */
+export function useTaggingDone(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (done: boolean) => api.post<DocumentDetail>(`/documents/${id}/tagging`, { done }),
+    onSuccess: (detail, done) => {
+      refreshAfter(client, detail);
+      offerUndo(client, done ? "Tagging done." : "Back in To be tagged.", () =>
+        api.post<DocumentDetail>(`/documents/${id}/tagging`, { done: !done }),
+      );
+    },
+    onError: showError,
+  });
+}
+
+export function useBulkTaggingDone() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ids, done }: { ids: string[]; done: boolean }) =>
+      api.post<{ message: string }>("/documents/bulk-tagging", { document_ids: ids, done }),
+    onSuccess: (result, { ids, done }) => {
+      refreshAfter(client);
+      ids.forEach((id) => void client.invalidateQueries({ queryKey: ["document", id] }));
+      const n = Number(result.message);
+      const what = `${n} ${n === 1 ? "document" : "documents"}`;
+      toast(done ? `Tagging done for ${what}.` : `${what} back in To be tagged.`);
+    },
+    onError: showError,
+  });
+}

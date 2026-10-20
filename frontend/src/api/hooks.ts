@@ -14,7 +14,7 @@ export interface DocumentFilters {
   tag?: string[];
   entity?: string[];
   related?: boolean;
-  untagged?: boolean;
+  inbox?: boolean;
   sort?: "date" | "imported" | "imported_asc" | "title";
 }
 

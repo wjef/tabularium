@@ -15,7 +15,7 @@ export type HistoryEntry = Schemas["HistoryEntry"];
 export interface AppInfo {
   version: string;
   language: string;
-  untagged: number;
+  inbox: number; // documents whose tagging is not done yet
   outdated: number;
   restore_pending: boolean;
 }

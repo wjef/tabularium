@@ -28,6 +28,7 @@ const GROUPS: { title: string; keys: [string[], string][] }[] = [
     title: "Open document",
     keys: [
       [["T"], "Add a tag"],
+      [["D"], "Done tagging / revise tagging"],
       [["E"], "Edit the title"],
       [["I"], "Show or hide details"],
       [["O"], "Open in the default app"],

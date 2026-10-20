@@ -171,6 +171,8 @@ class Document(Base):
     retain_until: Mapped[date] = mapped_column(index=True)
     retain_until_manual: Mapped[bool] = mapped_column(default=False)
     ingested_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    # When the user finished the initial tagging; until then the document is "To be tagged".
+    tagging_done_at: Mapped[datetime | None] = mapped_column(UTCDateTime, index=True)
 
     tag_links: Mapped[list["DocumentTag"]] = relationship(
         back_populates="document", cascade="all, delete-orphan", passive_deletes=True

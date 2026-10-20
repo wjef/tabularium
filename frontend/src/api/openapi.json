@@ -25,6 +25,29 @@
     "title": "BulkTag",
     "type": "object"
    },
+   "BulkTaggingState": {
+    "additionalProperties": false,
+    "properties": {
+     "document_ids": {
+      "items": {
+       "format": "uuid",
+       "type": "string"
+      },
+      "title": "Document Ids",
+      "type": "array"
+     },
+     "done": {
+      "title": "Done",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "document_ids",
+     "done"
+    ],
+    "title": "BulkTaggingState",
+    "type": "object"
+   },
    "DocRef": {
     "properties": {
      "display_name": {
@@ -179,6 +202,10 @@
       "title": "Stored Path",
       "type": "string"
      },
+     "tagging_done": {
+      "title": "Tagging Done",
+      "type": "boolean"
+     },
      "tags": {
       "items": {
        "$ref": "#/components/schemas/TagRef"
@@ -224,6 +251,7 @@
      "preview",
      "tags",
      "text_status",
+     "tagging_done",
      "note",
      "sha256",
      "stored_path",
@@ -332,6 +360,10 @@
       "title": "Stored Name",
       "type": "string"
      },
+     "tagging_done": {
+      "title": "Tagging Done",
+      "type": "boolean"
+     },
      "tags": {
       "items": {
        "$ref": "#/components/schemas/TagRef"
@@ -373,7 +405,8 @@
      "size_bytes",
      "preview",
      "tags",
-     "text_status"
+     "text_status",
+     "tagging_done"
     ],
     "title": "DocumentSummary",
     "type": "object"
@@ -1080,6 +1113,20 @@
     "title": "TagUpdate",
     "type": "object"
    },
+   "TaggingState": {
+    "additionalProperties": false,
+    "properties": {
+     "done": {
+      "title": "Done",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "done"
+    ],
+    "title": "TaggingState",
+    "type": "object"
+   },
    "TextInfo": {
     "properties": {
      "chars": {
@@ -1283,11 +1330,11 @@
      },
      {
       "in": "query",
-      "name": "untagged",
+      "name": "inbox",
       "required": false,
       "schema": {
        "default": false,
-       "title": "Untagged",
+       "title": "Inbox",
        "type": "boolean"
       }
      },
@@ -1382,6 +1429,47 @@
      }
     },
     "summary": "List Documents",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/bulk-tagging": {
+   "post": {
+    "operationId": "bulk_tagging_state_api_v1_documents_bulk_tagging_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BulkTaggingState"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Bulk Tagging State",
     "tags": [
      "documents"
     ]
@@ -1904,6 +1992,60 @@
      }
     },
     "summary": "Reveal",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/tagging": {
+   "post": {
+    "description": "Finish the initial tagging (leaves \"To be tagged\") or send it back for revision.",
+    "operationId": "tagging_state_api_v1_documents__document_id__tagging_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TaggingState"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Tagging State",
     "tags": [
      "documents"
     ]

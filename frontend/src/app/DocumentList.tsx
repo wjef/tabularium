@@ -1,7 +1,7 @@
 import { Check, Download, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, ApiError, thumbnailUrl, type DocumentSummary } from "../api/client";
-import { useBulkTag } from "../api/mutations";
+import { useBulkTag, useBulkTaggingDone } from "../api/mutations";
 import { useDocuments, useEntities, useTags, type DocumentFilters } from "../api/hooks";
 import { TagChip } from "../components/TagChip";
 import { TagPicker } from "../components/TagPicker";
@@ -202,6 +202,7 @@ export function DocumentList() {
             words={words}
             selected={doc.id === selected}
             picked={pickedSet.has(doc.id)}
+            markToTag={section !== "inbox" && !doc.tagging_done}
             onClick={(event) => onCardClick(doc, event)}
           />
         ))}
@@ -218,10 +219,12 @@ interface CardProps {
   words: string[];
   selected: boolean;
   picked: boolean;
+  /** show that the document is still waiting in To be tagged */
+  markToTag: boolean;
   onClick: (event: MouseEvent) => void;
 }
 
-function DocumentCard({ doc, words, selected, picked, onClick }: CardProps) {
+function DocumentCard({ doc, words, selected, picked, markToTag, onClick }: CardProps) {
   const name = doc.title ?? shortName(doc.display_name);
   const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -242,6 +245,7 @@ function DocumentCard({ doc, words, selected, picked, onClick }: CardProps) {
         </span>
         <div className={styles.date}>
           {formatDate(doc.document_date) || `Imported ${formatDate(doc.ingested_at)}`}
+          {markToTag && <span className={styles.toTag}>To tag</span>}
         </div>
         {doc.snippet && <p className={styles.snippet}>{highlight(doc.snippet, words)}</p>}
         {doc.tags.length > 0 && (
@@ -266,6 +270,7 @@ function DocumentCard({ doc, words, selected, picked, onClick }: CardProps) {
 /** Bulk actions for the picked documents. */
 function SelectionBar({ ids, onClear }: { ids: string[]; onClear: () => void }) {
   const bulk = useBulkTag();
+  const done = useBulkTaggingDone();
   const [exporting, setExporting] = useState(false);
   const exportZip = async () => {
     setExporting(true);
@@ -291,6 +296,14 @@ function SelectionBar({ ids, onClear }: { ids: string[]; onClear: () => void }) 
         <strong>
           {ids.length} selected
         </strong>
+        <button
+          className={styles.barDone}
+          onClick={() => done.mutate({ ids, done: true }, { onSuccess: onClear })}
+          disabled={done.isPending}
+          title="Take the selected documents out of To be tagged"
+        >
+          <Check size={14} aria-hidden /> Done tagging
+        </button>
         <button className={styles.barButton} onClick={exportZip} disabled={exporting}>
           <Download size={14} aria-hidden /> Export
         </button>
@@ -303,7 +316,7 @@ function SelectionBar({ ids, onClear }: { ids: string[]; onClear: () => void }) 
         above
         placeholder={`Add a tag to all ${ids.length}…`}
         disabled={bulk.isPending}
-        onPick={(choice) => bulk.mutate({ ids, choice }, { onSuccess: onClear })}
+        onPick={(choice) => bulk.mutate({ ids, choice })} // selection stays: add more, then Done
       />
     </div>
   );
