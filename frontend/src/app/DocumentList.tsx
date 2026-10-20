@@ -10,6 +10,7 @@ import { fileBadge, formatDate, shortName } from "../lib/format";
 import { isTyping } from "../lib/keys";
 import { useTitle } from "../lib/useTitle";
 import styles from "./DocumentList.module.css";
+import { FilterBar } from "./FilterBar";
 import { useView } from "./useView";
 
 const SORTS: { value: NonNullable<DocumentFilters["sort"]>; label: string }[] = [
@@ -86,7 +87,18 @@ export function DocumentList() {
   const tag = filters.tag?.length === 1 ? tags.find((t) => t.id === filters.tag![0]) : undefined;
   const entities = useEntities().data;
   const entity = filters.entity?.length === 1 ? entities?.find((e) => e.id === filters.entity![0]) : undefined;
-  const title = section === "inbox" ? "To be tagged" : tag ? tag.name : entity ? entity.name : "All documents";
+  const filterCount = (filters.tag?.length ?? 0) + (filters.entity?.length ?? 0);
+  const single = filterCount === 1;
+  const title =
+    section === "inbox"
+      ? "To be tagged"
+      : filterCount > 1
+        ? "Filtered documents"
+        : tag
+          ? tag.name
+          : entity
+            ? entity.name
+            : "All documents";
   useTitle(selected ? null : filters.q ? `“${filters.q}”` : title);
   const words = (filters.q ?? "").toLowerCase().split(/\s+/).filter((w) => w.length > 1);
 
@@ -126,11 +138,12 @@ export function DocumentList() {
   return (
     <section className={styles.pane} aria-label="Documents">
       <header className={styles.header}>
-        {tag && tag.path !== tag.name && (
+        {single && tag && tag.path !== tag.name && (
           <div className={styles.crumb}>{tag.path.split(" / ").slice(0, -1).join(" / ")}</div>
         )}
         <h1 className={styles.title}>{title}</h1>
-        {entity && (
+        {section !== "inbox" && <FilterBar filters={filters} update={update} />}
+        {(filters.entity?.length ?? 0) > 0 && (
           <label className={styles.related}>
             <input
               type="checkbox"

@@ -34,7 +34,7 @@ export function Sidebar() {
   const tags = useTags().data ?? [];
   const [theme, setTheme] = useTheme();
   const inWorkspace = pathname === "/";
-  const activeTag = inWorkspace && filters.tag?.length === 1 ? filters.tag[0] : null;
+  const activeTags = useMemo(() => (inWorkspace ? (filters.tag ?? []) : []), [inWorkspace, filters.tag]);
   const browsingAll = inWorkspace && section === "all" && !filters.tag?.length && !filters.entity?.length;
   /** Open the workspace with these filters (a new view: no document open). */
   const browse = (params: Record<string, string> = {}) => navigate({ pathname: "/", search: new URLSearchParams(params).toString() });
@@ -76,8 +76,19 @@ export function Sidebar() {
       <div className={styles.tree}>
         <TagTree
           tags={tags}
-          activeId={activeTag}
-          onSelect={(id) => browse({ tag: id })}
+          activeIds={activeTags}
+          onSelect={(id, add) => {
+            // Ctrl+click adds the tag to the current filter (or takes it out again)
+            if (add && inWorkspace && section !== "inbox") {
+              const tags = activeTags.includes(id) ? activeTags.filter((t) => t !== id) : [...activeTags, id];
+              const params = new URLSearchParams();
+              tags.forEach((t) => params.append("tag", t));
+              filters.entity?.forEach((e) => params.append("entity", e));
+              navigate({ pathname: "/", search: params.toString() });
+            } else {
+              browse({ tag: id });
+            }
+          }}
         />
       </div>
 
@@ -135,12 +146,12 @@ function NavItem({ icon: Icon, label, count, highlight, active, onClick }: NavIt
 
 interface TreeProps {
   tags: TagNode[];
-  activeId: string | null;
-  onSelect: (id: string) => void;
+  activeIds: string[];
+  onSelect: (id: string, add: boolean) => void;
 }
 
 /** Nested tag list; branches open on click, the path to the selected tag stays open. */
-function TagTree({ tags, activeId, onSelect }: TreeProps) {
+function TagTree({ tags, activeIds, onSelect }: TreeProps) {
   const children = useMemo(() => {
     const map = new Map<string | null, TagNode[]>();
     for (const tag of tags) {
@@ -155,13 +166,15 @@ function TagTree({ tags, activeId, onSelect }: TreeProps) {
   const ancestors = useMemo(() => {
     const byId = new Map(tags.map((t) => [t.id, t]));
     const open = new Set<string>();
-    let current = activeId ? byId.get(activeId) : undefined;
-    while (current?.parent_id) {
-      open.add(current.parent_id);
-      current = byId.get(current.parent_id);
+    for (const id of activeIds) {
+      let current = byId.get(id);
+      while (current?.parent_id) {
+        open.add(current.parent_id);
+        current = byId.get(current.parent_id);
+      }
     }
     return open;
-  }, [tags, activeId]);
+  }, [tags, activeIds]);
 
   const [open, setOpen] = useState<Set<string>>(new Set());
   const toggle = (id: string) =>
@@ -179,7 +192,7 @@ function TagTree({ tags, activeId, onSelect }: TreeProps) {
       return (
         <li key={tag.id}>
           <div
-            className={tag.id === activeId ? `${styles.tag} ${styles.active}` : styles.tag}
+            className={activeIds.includes(tag.id) ? `${styles.tag} ${styles.active}` : styles.tag}
             style={{ paddingLeft: 8 + depth * 14 }}
           >
             {hasChildren ? (
@@ -194,7 +207,7 @@ function TagTree({ tags, activeId, onSelect }: TreeProps) {
             ) : (
               <span className={styles.twistySpace} />
             )}
-            <button className={styles.tagName} onClick={() => onSelect(tag.id)} title={tag.path}>
+            <button className={styles.tagName} onClick={(e) => onSelect(tag.id, e.ctrlKey || e.metaKey)} title={`${tag.path} (Ctrl+click: add to the filter)`}>
               {tag.entity_id ? <Building2 size={13} aria-hidden /> : <TagIcon size={13} aria-hidden />}
               <span className={styles.label}>{tag.name}</span>
               {tag.total > 0 && <span className={styles.count}>{tag.total}</span>}

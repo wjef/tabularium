@@ -219,6 +219,9 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 - Selecting a tag includes all its descendants. Ticking a tag *and* one below it narrows to
   the lower one (`sender` + `sender / Jan Kowalski` = sent by Jan).
 - **OR within a facet, AND across facets.**
+- Several tags are chosen as chips above the document list (**+ Filter**, or Ctrl+click a tag
+  in the sidebar); each chip can be removed on its own. Example: `FV` + `recipient / Jan
+  Kowalski` = invoices for Jan; `FV / correction` + `FV / pro forma` = either kind.
 - "Anything involving entity X" = documents with any tag pointing to X; several chosen
   entities form one more group (any of them). Optional per search: **include related
   entities** — also every group the chosen entities belong to and every member they have
@@ -226,7 +229,7 @@ Every change to tags, entities, document fields, outdating and restoring is writ
 - Additional filters: text in title, original file name and note (every word must match,
   case/diacritic-insensitive), document date range (documents without a date are then
   excluded). Results: newest document date first, undated last; first 500 shown.
-- Search is a GET form, so every search is a bookmarkable URL.
+- Every search and filter lives in the URL, so it can be bookmarked.
 - Known gap (ADR 0009): text search uses a SQLite function (`tnorm`) for case/diacritic
   folding; a PostgreSQL backend needs an equivalent (e.g. `unaccent` + `lower`).
 - "Open copy" refuses programs and scripts (`.exe`, `.bat`, `.ps1`, `.js`, `.lnk`, …):
