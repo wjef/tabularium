@@ -15,6 +15,7 @@ const tag = (id: string, path: string, parent: string | null, count = 1, entity:
 });
 
 const tags = [
+  tag("recipient", "recipient", null, 0), // holds no entities yet
   tag("home", "home", null, 0),
   tag("elec", "home / electricity", "home", 5),
   tag("inv", "invoice", null, 9),
@@ -57,5 +58,14 @@ describe("tag suggestions", () => {
     const [choice] = suggest("home / garden", tags, entities, new Set()).filter((c) => c.kind === "new");
     expect(choice).toMatchObject({ kind: "new", name: "garden", parent: { id: "home" } });
     expect(suggest("nowhere / garden", tags, entities, new Set()).some((c) => c.kind === "new")).toBe(false);
+  });
+
+  it("offers entities under a typed parent, even one without entities yet", () => {
+    const choices = suggest("recipient / kowal", tags, entities, new Set());
+    expect(choices[0]).toMatchObject({ kind: "entity", entity: { id: "e-jan" }, parent: { id: "recipient" } });
+    expect(choices.map(choiceLabel)).toContain("recipient / kowal"); // a plain tag stays possible, last
+    expect(choices.at(-1)).toMatchObject({ kind: "new" });
+    // an entity already filed there is offered as the existing tag, not again as new
+    expect(suggest("sender / anna", tags, entities, new Set()).map(choiceLabel)[0]).toBe("sender / Anna Nowak");
   });
 });

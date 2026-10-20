@@ -194,7 +194,9 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   title, tags, SHA-256; UTF-8 with BOM for Excel).
 - Tags are added by typing a full path (`sender / Jan Kowalski`, case/diacritic-insensitive)
   from a suggestion list, by picking *under which tag + which entity* (the entity tag is
-  reused or created), or by creating a new tag on the spot.
+  reused or created), or by creating a new tag on the spot. Typing `parent / part of a name`
+  (e.g. `sender / urzad`) first offers the matching entities under that tag, also when it
+  holds no entities yet.
 - Document details: title, note, document date, *keep until* (automatic or manual).
 - **Related documents** on the document page: links such as invoice ↔ payment, correction,
   signed version, attachment, replaces, related. Stored once (directed) and phrased from
