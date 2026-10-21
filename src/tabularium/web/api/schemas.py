@@ -104,6 +104,8 @@ class TextInfo(BaseModel):
 
 class DocumentDetail(DocumentSummary):
     note: str | None
+    sent_date: date | None
+    received_date: date | None
     sha256: str
     stored_path: str
     original_filename: str
@@ -149,6 +151,8 @@ class DocumentUpdate(BaseModel):
     note: str | None = None
     document_date: date | None = None
     clear_document_date: bool = False
+    sent_date: date | None = None  # sent as null: cleared
+    received_date: date | None = None
     retain_until: date | None = None
     retain_auto: bool | None = None
 

@@ -121,7 +121,7 @@ export function DocumentView() {
         <div className={styles.heading}>
           <DocumentTitle doc={doc} buttonRef={titleButton} />
           <div className={styles.sub}>
-            <DateField doc={doc} />
+            <DateField doc={doc} field="document_date" label="Date created" />
             <span aria-hidden>·</span>
             <span>
               {fileBadge(doc.stored_name)} · {formatSize(doc.size_bytes)}
@@ -235,29 +235,32 @@ function DocumentTitle({ doc, buttonRef }: { doc: DocumentDetail; buttonRef: Ref
   );
 }
 
-function DateField({ doc }: { doc: DocumentDetail }) {
+type DateKey = "document_date" | "sent_date" | "received_date";
+
+/** A date of the document, edited in place; × clears it. */
+function DateField({ doc, field, label }: { doc: DocumentDetail; field: DateKey; label: string }) {
   const save = useUpdateDocument(doc.id);
+  const value = doc[field];
+  const set = (next: string | null) =>
+    field === "document_date"
+      ? save.mutate(next ? { document_date: next } : { clear_document_date: true })
+      : save.mutate({ [field]: next });
   return (
     <span className={styles.dateField}>
       <input
-        key={doc.id}
+        key={`${doc.id}:${value}`}
         type="date"
-        defaultValue={doc.document_date ?? ""}
-        aria-label="Document date"
-        title="Document date"
-        className={doc.document_date ? undefined : styles.noDate}
+        defaultValue={value ?? ""}
+        aria-label={label}
+        title={label}
+        className={value ? undefined : styles.noDate}
         onBlur={(e) => {
-          const value = e.target.value;
-          if (value && value !== doc.document_date) save.mutate({ document_date: value });
+          if (e.target.value && e.target.value !== value) set(e.target.value);
         }}
         onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
       />
-      {doc.document_date && (
-        <button
-          onClick={() => save.mutate({ clear_document_date: true })}
-          aria-label="Remove document date"
-          title="Remove document date"
-        >
+      {value && (
+        <button onClick={() => set(null)} aria-label={`Remove ${label.toLowerCase()}`} title={`Remove ${label.toLowerCase()}`}>
           <X size={12} />
         </button>
       )}
@@ -372,6 +375,16 @@ function InfoPanel({ doc, onOpenDocument, tagInput }: InfoProps) {
 
       <Section title="Details">
         <dl className={styles.facts}>
+          <dt>Created</dt>
+          <dd>{formatDate(doc.document_date) || "—"}</dd>
+          <dt>Sent</dt>
+          <dd>
+            <DateField doc={doc} field="sent_date" label="Date sent" />
+          </dd>
+          <dt>Received</dt>
+          <dd>
+            <DateField doc={doc} field="received_date" label="Date received" />
+          </dd>
           <dt>Imported</dt>
           <dd>{formatDate(doc.ingested_at)}</dd>
           <dt>Keep until</dt>

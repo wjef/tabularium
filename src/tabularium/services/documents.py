@@ -69,6 +69,28 @@ def set_document_date(
     return document
 
 
+SUPPORTING_DATES = ("sent_date", "received_date")
+
+
+def set_supporting_date(
+    session: Session, document: Document, field: str, value: date | None
+) -> bool:
+    """Set (or clear, with ``None``) the date the document was sent or received.
+
+    These are reference dates only: the main date (``document_date``, date created) alone
+    drives sorting, date filters and retention. Returns False when nothing changed.
+    """
+    if field not in SUPPORTING_DATES:
+        raise ValueError(f"not a supporting date: {field}")
+    old = getattr(document, field)
+    if old == value:
+        return False
+    setattr(document, field, value)
+    record(session, Action.UPDATE, document, old={field: old}, new={field: value})
+    session.flush()
+    return True
+
+
 def set_retain_until(
     session: Session, document: Document, value: date | None, *, retention_years: int
 ) -> Document:

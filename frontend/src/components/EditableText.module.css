@@ -17,7 +17,7 @@
 .display {
   cursor: text;
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word; /* split a word only when it cannot fit on its own line */
 }
 
 .display:hover {

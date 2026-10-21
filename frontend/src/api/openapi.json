@@ -166,6 +166,18 @@
       "title": "Preview",
       "type": "string"
      },
+     "received_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Received Date"
+     },
      "retain_until": {
       "format": "date",
       "title": "Retain Until",
@@ -174,6 +186,18 @@
      "retain_until_manual": {
       "title": "Retain Until Manual",
       "type": "boolean"
+     },
+     "sent_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sent Date"
      },
      "sha256": {
       "title": "Sha256",
@@ -253,6 +277,8 @@
      "text_status",
      "tagging_done",
      "note",
+     "sent_date",
+     "received_date",
      "sha256",
      "stored_path",
      "original_filename",
@@ -443,6 +469,18 @@
       ],
       "title": "Note"
      },
+     "received_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Received Date"
+     },
      "retain_auto": {
       "anyOf": [
        {
@@ -465,6 +503,18 @@
        }
       ],
       "title": "Retain Until"
+     },
+     "sent_date": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sent Date"
      },
      "title": {
       "anyOf": [

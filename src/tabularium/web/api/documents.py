@@ -17,11 +17,13 @@ from tabularium.models import AuditLog, Document, DocumentTag, DocumentText, Ent
 from tabularium.retention import can_outdate
 from tabularium.services import DomainError
 from tabularium.services.documents import (
+    SUPPORTING_DATES,
     add_tag,
     bulk_add_tag,
     remove_tag,
     set_document_date,
     set_retain_until,
+    set_supporting_date,
     set_tagging_done,
     update_details,
 )
@@ -117,6 +119,8 @@ def detail(request: Request, session: Session, document: Document) -> s.Document
     return s.DocumentDetail(
         **base.model_dump(),
         note=document.note,
+        sent_date=document.sent_date,
+        received_date=document.received_date,
         sha256=document.sha256,
         stored_path=document.stored_path,
         original_filename=document.original_filename,
@@ -250,6 +254,9 @@ def update_document(
             None if body.clear_document_date else body.document_date,
             retention_years=years,
         )
+    for field in SUPPORTING_DATES:
+        if field in sent:
+            set_supporting_date(session, document, field, getattr(body, field))
     if body.retain_auto:
         set_retain_until(session, document, None, retention_years=years)
     elif body.retain_until is not None:

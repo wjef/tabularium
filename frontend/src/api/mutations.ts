@@ -8,6 +8,8 @@ export interface DocumentChanges {
   note?: string;
   document_date?: string;
   clear_document_date?: boolean;
+  sent_date?: string | null; // null clears
+  received_date?: string | null;
 }
 
 /** After a change: the document view shows the server's answer, lists and counts refresh. */
@@ -39,7 +41,13 @@ function offerUndo(client: QueryClient, message: string, undo: () => Promise<unk
   });
 }
 
-const FIELD_NAMES: Record<string, string> = { title: "Title", note: "Note", document_date: "Document date" };
+const FIELD_NAMES: Record<string, string> = {
+  title: "Title",
+  note: "Note",
+  document_date: "Date created",
+  sent_date: "Date sent",
+  received_date: "Date received",
+};
 
 export function useUpdateDocument(id: string) {
   const client = useQueryClient();
@@ -55,7 +63,9 @@ export function useUpdateDocument(id: string) {
           ? before.document_date
             ? { document_date: before.document_date }
             : { clear_document_date: true }
-          : { [field]: (before[field as "title" | "note"] as string | null) ?? "" };
+          : field === "sent_date" || field === "received_date"
+            ? { [field]: before[field] ?? null }
+            : { [field]: (before[field as "title" | "note"] as string | null) ?? "" };
       offerUndo(client, `${FIELD_NAMES[field] ?? "Document"} changed.`, () =>
         api.patch<DocumentDetail>(`/documents/${id}`, undo),
       );

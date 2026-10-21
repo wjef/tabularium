@@ -167,7 +167,9 @@ class Document(Base):
     size_bytes: Mapped[int] = mapped_column(BigInteger)
     title: Mapped[str | None] = mapped_column(String(500))
     note: Mapped[str | None] = mapped_column(Text)
-    document_date: Mapped[date | None] = mapped_column(index=True)
+    document_date: Mapped[date | None] = mapped_column(index=True)  # date created (the main date)
+    sent_date: Mapped[date | None]  # supporting dates, shown in the details
+    received_date: Mapped[date | None]
     retain_until: Mapped[date] = mapped_column(index=True)
     retain_until_manual: Mapped[bool] = mapped_column(default=False)
     ingested_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)

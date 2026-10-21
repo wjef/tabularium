@@ -199,7 +199,9 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   reused or created), or by creating a new tag on the spot. Typing `parent / part of a name`
   (e.g. `sender / urzad`) first offers the matching entities under that tag, also when it
   holds no entities yet.
-- Document details: title, note, document date, *keep until* (automatic or manual).
+- Document details: title, note, *keep until* (automatic or manual) and three dates: **date
+  created** (the main date: sorting, date filters and retention use it), **date sent** and
+  **date received** (supporting, for reference). Every change is in the document's history.
 - **Related documents** on the document page: links such as invoice ↔ payment, correction,
   signed version, attachment, replaces, related. Stored once (directed) and phrased from
   each document's side ("is the payment for" / "is paid by"). The other document is found

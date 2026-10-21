@@ -120,7 +120,9 @@ def build_snapshot(session: Session, document: Document) -> dict:
             .order_by(AuditLog.id)
         )
     ]
-    return {"tags": tags, "relations": relations, "history": history}
+    # supporting dates travel in the snapshot (the outdated store keeps its own fixed columns)
+    dates = {"sent_date": _json(document.sent_date), "received_date": _json(document.received_date)}
+    return {"tags": tags, "relations": relations, "history": history, "dates": dates}
 
 
 def _copy_between(source: Storage, target: Storage, key: str, sha256: str) -> None:
@@ -269,7 +271,10 @@ def restore_to_active(
     if document is None:
         if session.scalar(select(Document.id).where(Document.sha256 == fields["sha256"])):
             raise DomainError("The same file is already in the active archive (imported again).")
-        document = Document(**fields, tagging_done_at=utcnow())  # comes back fully tagged
+        dates = {
+            k: date.fromisoformat(v) for k, v in snapshot.get("dates", {}).items() if v is not None
+        }
+        document = Document(**fields, **dates, tagging_done_at=utcnow())  # comes back tagged
         session.add(document)
         session.flush()
         record(session, Action.RESTORE, document, new={"from": "outdated"})

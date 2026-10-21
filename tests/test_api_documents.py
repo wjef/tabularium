@@ -221,3 +221,23 @@ def test_tag_counts_include_sub_tags_once_and_only_finished_documents(client, da
     assert [i["id"] for i in todo["items"]] == [c]
     everything = client.get(f"{API}/documents", params={"tag": category}).json()
     assert everything["total"] == 3  # "any" (the default) is used to find documents to link
+
+
+def test_supporting_dates_are_set_cleared_and_audited(client, data):
+    doc = data["docs"]["a"]
+    client.patch(f"{API}/documents/{doc}", json={"document_date": "2025-03-01"})
+    before = client.get(f"{API}/documents/{doc}").json()
+    body = {"sent_date": "2025-03-03", "received_date": "2025-03-05"}
+    r = client.patch(f"{API}/documents/{doc}", json=body).json()
+    assert (r["document_date"], r["sent_date"], r["received_date"]) == (
+        "2025-03-01",
+        "2025-03-03",
+        "2025-03-05",
+    )
+    assert r["retain_until"] == before["retain_until"]  # only the main date drives retention
+
+    r = client.patch(f"{API}/documents/{doc}", json={"sent_date": None}).json()
+    assert (r["sent_date"], r["received_date"]) == (None, "2025-03-05")  # only what was sent
+    history = client.get(f"{API}/documents/{doc}/history").json()
+    changes = [h["new_value"] for h in history if h["new_value"] and "sent_date" in h["new_value"]]
+    assert changes == [{"sent_date": None}, {"sent_date": "2025-03-03"}]

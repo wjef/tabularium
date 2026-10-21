@@ -18,14 +18,15 @@
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap; /* buttons move under the title rather than squeezing it */
   align-items: center;
-  gap: 16px;
+  gap: 8px 16px;
   padding: 16px 20px 14px 28px;
   border-bottom: 1px solid var(--border);
 }
 
 .heading {
-  flex: 1;
+  flex: 1 1 260px;
   min-width: 0;
 }
 
