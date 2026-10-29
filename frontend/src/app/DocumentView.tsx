@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import {
   Archive,
+  ArchiveRestore,
   Check,
   Download,
   ExternalLink,
@@ -12,17 +13,19 @@ import {
   RefreshCw,
   RotateCcw,
   ScanText,
+  Trash2,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { api, fileUrl, type DocumentDetail, type DocumentPage } from "../api/client";
-import { useDocument } from "../api/hooks";
+import { useDocument, type DocumentFilters } from "../api/hooks";
 import {
   useAddTag,
   useExtractAgain,
   useOutdate,
   useRemoveTag,
   useTaggingDone,
+  useTrash,
   useUpdateDocument,
 } from "../api/mutations";
 import { EditableText } from "../components/EditableText";
@@ -46,9 +49,32 @@ const TEXT_STATUS: Record<DocumentDetail["text_status"], string> = {
 
 type Mode = "preview" | "text";
 
+/** The document after (or else before) this one in the list, to move on to when it leaves the list. */
+function nextInList(client: ReturnType<typeof useQueryClient>, filters: DocumentFilters, id: string) {
+  const pages = client.getQueryData<InfiniteData<DocumentPage>>(["documents", filters]);
+  const items = pages?.pages.flatMap((p) => p.items) ?? [];
+  const index = items.findIndex((d) => d.id === id);
+  return index >= 0 ? (items[index + 1] ?? items[index - 1])?.id : undefined;
+}
+
 export function DocumentView() {
-  const { selected, update } = useView();
+  const { selected, update, section, filters } = useView();
   const { data: doc, isPending, isError, error } = useDocument(selected);
+  const client = useQueryClient();
+  const trash = useTrash();
+  /** Trash or restore; when that takes the document out of the list, move on to the next one. */
+  const setTrashed = (d: DocumentDetail, trashed: boolean) => {
+    const next = nextInList(client, filters, d.id); // before the list refreshes without it
+    const leavesList = trashed ? section !== "trash" : section === "trash";
+    trash.mutate(
+      { id: d.id, trashed },
+      { onSuccess: () => leavesList && update({ doc: next ?? null }, { replace: true }) },
+    );
+  };
+  const trashKey = useRef(() => {});
+  useEffect(() => {
+    trashKey.current = () => doc && !doc.trashed && !trash.isPending && setTrashed(doc, true);
+  });
   const [infoOpen, setInfoOpen] = useInfoOpen();
   const [mode, setMode] = useState<Mode>("preview");
   useTitle(doc ? (doc.title ?? shortName(doc.display_name)) : null);
@@ -58,7 +84,7 @@ export function DocumentView() {
   const taggingButton = useRef<HTMLButtonElement>(null);
 
   // T: add a tag · E: edit the title · I: details on/off · O: open in the default app
-  // D: tagging done / revise tagging
+  // D: tagging done / revise tagging · Delete: move to Trash
   useEffect(() => {
     if (!selected) return;
     const onKey = (event: KeyboardEvent) => {
@@ -76,6 +102,9 @@ export function DocumentView() {
       } else if (event.key === "d") {
         event.preventDefault();
         taggingButton.current?.click();
+      } else if (event.key === "Delete") {
+        event.preventDefault();
+        trashKey.current();
       } else if (event.key === "o") {
         api.post(`/documents/${selected}/open`).catch((e: Error) => toast(e.message, "error"));
       }
@@ -126,16 +155,32 @@ export function DocumentView() {
             <span>
               {fileBadge(doc.stored_name)} · {formatSize(doc.size_bytes)}
             </span>
+            {doc.trashed && (
+              <span className={styles.inTrash}>
+                <Trash2 size={12} aria-hidden /> In Trash
+              </span>
+            )}
           </div>
         </div>
         <div className={styles.actions}>
-          <TaggingButton doc={doc} buttonRef={taggingButton} />
+          {doc.trashed ? (
+            <button
+              className={styles.reviseButton}
+              onClick={() => setTrashed(doc, false)}
+              disabled={trash.isPending}
+              title="Take it out of Trash, back to where it was"
+            >
+              <ArchiveRestore size={14} aria-hidden /> Restore
+            </button>
+          ) : (
+            <TaggingButton doc={doc} buttonRef={taggingButton} />
+          )}
           <OsAction id={doc.id} action="open" label="Open in default app" icon={<ExternalLink size={16} />} />
           <OsAction id={doc.id} action="reveal" label="Show in folder" icon={<FolderOpen size={16} />} />
           <a className={styles.iconButton} href={fileUrl(doc.id, true)} title="Download" aria-label="Download">
             <Download size={16} />
           </a>
-          <MoreMenu doc={doc} onOutdated={() => update({ doc: null })} />
+          <MoreMenu doc={doc} onOutdated={() => update({ doc: null })} onTrash={() => setTrashed(doc, true)} />
           <button
             className={styles.iconButton}
             onClick={() => setInfoOpen((v) => !v)}
@@ -175,14 +220,10 @@ function TaggingButton({ doc, buttonRef }: { doc: DocumentDetail; buttonRef: Ref
   const tagging = useTaggingDone(doc.id);
 
   const finish = () => {
-    // pick the next document before the list refreshes without this one
-    const pages = client.getQueryData<InfiniteData<DocumentPage>>(["documents", filters]);
-    const items = pages?.pages.flatMap((p) => p.items) ?? [];
-    const index = items.findIndex((d) => d.id === doc.id);
-    const next = index >= 0 ? (items[index + 1] ?? items[index - 1]) : undefined;
+    const next = nextInList(client, filters, doc.id); // before the list refreshes without it
     tagging.mutate(true, {
       onSuccess: () => {
-        if (section === "inbox") update({ doc: next?.id ?? null }, { replace: true });
+        if (section === "inbox") update({ doc: next ?? null }, { replace: true });
       },
     });
   };
@@ -463,7 +504,13 @@ function OsAction({ id, action, label, icon }: { id: string; action: "open" | "r
   );
 }
 
-function MoreMenu({ doc, onOutdated }: { doc: DocumentDetail; onOutdated: () => void }) {
+interface MoreMenuProps {
+  doc: DocumentDetail;
+  onOutdated: () => void;
+  onTrash: () => void;
+}
+
+function MoreMenu({ doc, onOutdated, onTrash }: MoreMenuProps) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const menu = useRef<HTMLDivElement>(null);
@@ -506,6 +553,21 @@ function MoreMenu({ doc, onOutdated }: { doc: DocumentDetail; onOutdated: () => 
           >
             <RefreshCw size={15} aria-hidden /> Read text again
           </button>
+          {!doc.trashed && (
+            <button
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onTrash();
+              }}
+            >
+              <Trash2 size={15} aria-hidden />
+              <span>
+                Move to Trash
+                <small className={styles.menuHint}>Hidden, not deleted · Delete key</small>
+              </span>
+            </button>
+          )}
           <button
             role="menuitem"
             disabled={!doc.can_outdate}

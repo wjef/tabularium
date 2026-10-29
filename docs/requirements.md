@@ -186,6 +186,23 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   check reports it as an orphan); when both documents of a relation are outdated one
   after the other, the second snapshot no longer contains the link.
 
+### 7.1 Trash (put aside, never deleted)
+- For documents added by mistake or not worth keeping in view. **Move to Trash** on the
+  document (More actions, or the Delete key) or for a selection; **Restore** brings it back.
+  Both are in its history, with Undo right after.
+- Trash only hides: the file stays in the archive, and tags, links, dates and the tagging
+  state stay as they were, so a restored document returns exactly where it was (To be
+  tagged or browsing). Nothing in Trash is ever deleted, and Trash has no "empty" action.
+- Retention does not apply: any document can go to Trash at any time.
+- A document in Trash is shown **only** in the **Trash** section: browsing, To be tagged,
+  search, linking related documents and tag counts leave it out. Opening it by a link (e.g.
+  from a related document or History) still works and shows it as *In Trash*.
+- Tags used only by documents in Trash still count as in use (they cannot be deleted).
+- Ingesting a file whose content is in Trash counts as a duplicate; the ingest log notes
+  "in Trash". The Evernote import treats it the same way.
+- A document in Trash can still be outdated; restored from Outdated it comes back out of
+  Trash.
+
 ## 8. User interface
 - Single-page app (React + TypeScript, ADR 0010) on a JSON API, served on `127.0.0.1` only,
   opened in the default browser. Light and dark themes follow Windows.
@@ -198,7 +215,9 @@ Every change to tags, entities, document fields, outdating and restoring is writ
   tags, entities, search and their counts leave it out (linking related documents can still
   find it). **Revise tagging** sends a document back. Both are in its history. Documents
   restored from Outdated come back as done.
+- **Trash** section (§7.1): documents put aside, with Restore for one or a selection.
 - Keyboard: Ctrl+K command palette, `/` search, J/K next/previous, T add tag, E edit title,
+  Delete move to Trash,
   `?` lists all shortcuts. Changes that remove or overwrite something offer **Undo**.
 - Preview inline for PDF, PNG/JPEG/GIF/WebP/BMP images and plain text. Every other type
   (including HTML, SVG, Office files) is only offered as a download, never rendered in the

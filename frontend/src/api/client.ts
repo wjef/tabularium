@@ -19,6 +19,7 @@ export interface AppInfo {
   language: string;
   inbox: number; // documents whose tagging is not done yet
   outdated: number;
+  trash?: number; // documents in Trash (absent until the server is restarted)
   restore_pending: boolean;
 }
 

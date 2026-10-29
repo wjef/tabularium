@@ -542,3 +542,14 @@
     background-position: -200% 0;
   }
 }
+
+.sub > .inTrash {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-weight: 500;
+}

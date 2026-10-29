@@ -48,6 +48,29 @@
     "title": "BulkTaggingState",
     "type": "object"
    },
+   "BulkTrashState": {
+    "additionalProperties": false,
+    "properties": {
+     "document_ids": {
+      "items": {
+       "format": "uuid",
+       "type": "string"
+      },
+      "title": "Document Ids",
+      "type": "array"
+     },
+     "trashed": {
+      "title": "Trashed",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "document_ids",
+     "trashed"
+    ],
+    "title": "BulkTrashState",
+    "type": "object"
+   },
    "DocRef": {
     "properties": {
      "display_name": {
@@ -261,6 +284,10 @@
        }
       ],
       "title": "Title"
+     },
+     "trashed": {
+      "title": "Trashed",
+      "type": "boolean"
      }
     },
     "required": [
@@ -276,6 +303,7 @@
      "tags",
      "text_status",
      "tagging_done",
+     "trashed",
      "note",
      "sent_date",
      "received_date",
@@ -418,6 +446,10 @@
        }
       ],
       "title": "Title"
+     },
+     "trashed": {
+      "title": "Trashed",
+      "type": "boolean"
      }
     },
     "required": [
@@ -432,7 +464,8 @@
      "preview",
      "tags",
      "text_status",
-     "tagging_done"
+     "tagging_done",
+     "trashed"
     ],
     "title": "DocumentSummary",
     "type": "object"
@@ -1406,6 +1439,20 @@
     "title": "TextInfo",
     "type": "object"
    },
+   "TrashState": {
+    "additionalProperties": false,
+    "properties": {
+     "trashed": {
+      "title": "Trashed",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "trashed"
+    ],
+    "title": "TrashState",
+    "type": "object"
+   },
    "TypeIn": {
     "additionalProperties": false,
     "properties": {
@@ -1545,6 +1592,16 @@
        ],
        "title": "Tagging",
        "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "trash",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Trash",
+       "type": "boolean"
       }
      },
      {
@@ -1720,6 +1777,47 @@
      }
     },
     "summary": "Bulk Tags",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/bulk-trash": {
+   "post": {
+    "operationId": "bulk_trash_state_api_v1_documents_bulk_trash_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BulkTrashState"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Bulk Trash State",
     "tags": [
      "documents"
     ]
@@ -2443,6 +2541,60 @@
      }
     },
     "summary": "Get Thumbnail",
+    "tags": [
+     "documents"
+    ]
+   }
+  },
+  "/api/v1/documents/{document_id}/trash": {
+   "post": {
+    "description": "Move the document to Trash, or bring it back.",
+    "operationId": "trash_state_api_v1_documents__document_id__trash_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "document_id",
+      "required": true,
+      "schema": {
+       "format": "uuid",
+       "title": "Document Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TrashState"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DocumentDetail"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Trash State",
     "tags": [
      "documents"
     ]

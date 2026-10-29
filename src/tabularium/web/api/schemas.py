@@ -77,6 +77,7 @@ class DocumentSummary(_Out):
     snippet: str | None = None
     text_status: TextState
     tagging_done: bool  # False: still in "To be tagged"
+    trashed: bool  # in Trash: hidden everywhere else, never deleted
 
 
 class DocumentPage(BaseModel):
@@ -180,6 +181,19 @@ class BulkTaggingState(BaseModel):
 
     document_ids: list[uuid.UUID]
     done: bool
+
+
+class TrashState(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    trashed: bool
+
+
+class BulkTrashState(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    document_ids: list[uuid.UUID]
+    trashed: bool
 
 
 class BulkTag(BaseModel):

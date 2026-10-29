@@ -308,8 +308,13 @@
 
 .selectionTop {
   display: flex;
+  flex-wrap: wrap; /* a narrow list puts the actions on a second row */
   align-items: center;
   gap: 4px;
+}
+
+.selectionTop button {
+  white-space: nowrap;
 }
 
 .selectionTop strong {
@@ -375,4 +380,10 @@
 
 .barDone:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+
+.sectionNote {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }

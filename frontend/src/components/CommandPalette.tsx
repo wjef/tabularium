@@ -12,6 +12,7 @@ import {
   Search,
   Sun,
   Tag as TagIcon,
+  Trash2,
   Wrench,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
@@ -75,6 +76,7 @@ function Palette({ onClose, onShowShortcuts }: { onClose: () => void; onShowShor
       { key: "p:all", group: "Go to", label: "All documents", icon: <FileText size={16} />, run: go("/") },
       { key: "p:inbox", group: "Go to", label: "To be tagged", icon: <Inbox size={16} />, run: go("/?section=inbox") },
       { key: "p:outdated", group: "Go to", label: "Outdated", icon: <Archive size={16} />, run: go("/outdated") },
+      { key: "p:trash", group: "Go to", label: "Trash", icon: <Trash2 size={16} />, run: go("/?section=trash") },
       { key: "p:tags", group: "Go to", label: "Manage tags", icon: <TagIcon size={16} />, run: go("/tags") },
       { key: "p:entities", group: "Go to", label: "Entities", icon: <Building2 size={16} />, run: go("/entities") },
       { key: "p:history", group: "Go to", label: "History", icon: <History size={16} />, run: go("/history") },

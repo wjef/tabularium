@@ -1,4 +1,4 @@
-"""Document operations: creation, dates, retention and tagging."""
+"""Document operations: creation, dates, retention, tagging and Trash."""
 
 import uuid
 from datetime import date, datetime
@@ -155,7 +155,7 @@ def inbox_documents() -> Select[tuple[Document]]:
     """
     return (
         select(Document)
-        .where(Document.tagging_done_at.is_(None))
+        .where(Document.tagging_done_at.is_(None), Document.trashed_at.is_(None))
         .order_by(Document.ingested_at, Document.id)
     )
 
@@ -168,6 +168,22 @@ def set_tagging_done(session: Session, document: Document, done: bool) -> bool:
     document.tagging_done_at = utcnow() if done else None
     old, new = ("to do", "done") if done else ("done", "to do")
     record(session, Action.UPDATE, document, old={"tagging": old}, new={"tagging": new})
+    session.flush()
+    return True
+
+
+def set_trashed(session: Session, document: Document, trashed: bool) -> bool:
+    """Move the document to Trash or bring it back. Returns False when nothing changed.
+
+    Trash only hides the document: file, tags, links and tagging state stay as they are, so
+    restoring brings it back exactly as it was. Retention does not apply (Trash is for
+    documents added by mistake or not worth keeping in view).
+    """
+    if (document.trashed_at is not None) == trashed:
+        return False
+    document.trashed_at = utcnow() if trashed else None
+    old, new = ("no", "yes") if trashed else ("yes", "no")
+    record(session, Action.UPDATE, document, old={"in trash": old}, new={"in trash": new})
     session.flush()
     return True
 

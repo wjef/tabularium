@@ -241,3 +241,27 @@ def test_supporting_dates_are_set_cleared_and_audited(client, data):
     history = client.get(f"{API}/documents/{doc}/history").json()
     changes = [h["new_value"] for h in history if h["new_value"] and "sent_date" in h["new_value"]]
     assert changes == [{"sent_date": None}, {"sent_date": "2025-03-03"}]
+
+
+def test_trash_and_restore(client, data):
+    a, b, c = (data["docs"][k] for k in "abc")
+    r = client.post(f"{API}/documents/{a}/trash", json={"trashed": True})
+    assert r.status_code == 200 and r.json()["trashed"] is True
+    n = client.post(f"{API}/documents/bulk-trash", json={"document_ids": [b, a], "trashed": True})
+    assert n.json()["message"] == "1"  # a was there already
+
+    info = client.get(f"{API}/info").json()
+    assert info["trash"] == 2 and info["inbox"] == 1
+    assert [i["id"] for i in client.get(f"{API}/documents").json()["items"]] == [c]
+    trash = client.get(f"{API}/documents", params={"trash": True}).json()
+    assert {i["id"] for i in trash["items"]} == {a, b} and all(i["trashed"] for i in trash["items"])
+    assert client.get(f"{API}/documents/{a}").status_code == 200  # still opens by its link
+
+    r = client.post(f"{API}/documents/{a}/trash", json={"trashed": False})
+    assert r.json()["trashed"] is False and r.json()["tagging_done"] is False
+    assert client.get(f"{API}/info").json()["trash"] == 1
+    history = client.get(f"{API}/documents/{a}/history").json()
+    assert [h["new_value"] for h in history if h["new_value"] and "in trash" in h["new_value"]] == [
+        {"in trash": "no"},
+        {"in trash": "yes"},
+    ]

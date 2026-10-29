@@ -17,6 +17,13 @@ metadata stored separately. Retention (default 5 years) must prevent premature o
 - `outdated.db` schema v1 is created with `create_all`; later changes need migrations.
 - Restore re-links to existing tags/entities where possible, recreates missing ones.
 
+## Addendum — Trash (2026-10-29)
+Documents added by mistake or not worth keeping in view go to **Trash**: a mark on the
+document (`trashed_at`) that hides it everywhere except the Trash section. The file and all
+metadata stay in place, retention does not apply, and Restore brings it back unchanged.
+Trash is not deletion and has no "empty" action, so this decision stands. Unlike outdating,
+nothing moves, so it needs no crash-safe sequence.
+
 ## Consequences
 - One codebase for both modes; mistakes are reversible.
 - Two databases must be kept consistent; operations follow a crash-safe order

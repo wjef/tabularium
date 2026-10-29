@@ -26,11 +26,15 @@ def info(request: Request, session: SessionDep) -> dict:
     """Small facts for the shell: version, counts for the sidebar, language."""
     state = request.app.state
     inbox = session.scalar(select(func.count()).select_from(inbox_documents().subquery()))
+    trash = session.scalar(
+        select(func.count()).select_from(Document).where(Document.trashed_at.is_not(None))
+    )
     return {
         "version": __version__,
         "language": state.config.ui.language,
         "inbox": inbox or 0,
         "outdated": state.outdated_store.count(),
+        "trash": trash or 0,
         "restore_pending": state.restore_pending(),
     }
 

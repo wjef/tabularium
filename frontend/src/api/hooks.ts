@@ -16,6 +16,8 @@ export interface DocumentFilters {
   related?: boolean;
   /** "done": finished documents (browsing) · "todo": To be tagged · "any": both */
   tagging?: "done" | "todo" | "any";
+  /** only the documents in Trash (otherwise they are left out) */
+  trash?: boolean;
   sort?: "date" | "imported" | "imported_asc" | "title";
 }
 

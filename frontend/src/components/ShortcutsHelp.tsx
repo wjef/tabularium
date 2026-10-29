@@ -32,6 +32,7 @@ const GROUPS: { title: string; keys: [string[], string][] }[] = [
       [["E"], "Edit the title"],
       [["I"], "Show or hide details"],
       [["O"], "Open in the default app"],
+      [["Delete"], "Move to Trash"],
     ],
   },
 ];

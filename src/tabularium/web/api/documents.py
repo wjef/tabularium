@@ -1,4 +1,4 @@
-"""Documents: list/search, detail, edits, tagging, links, text, history, desktop actions."""
+"""Documents: list/search, detail, edits, tagging, Trash, links, text, history, desktop actions."""
 
 import uuid
 from datetime import date
@@ -25,6 +25,7 @@ from tabularium.services.documents import (
     set_retain_until,
     set_supporting_date,
     set_tagging_done,
+    set_trashed,
     update_details,
 )
 from tabularium.services.outdating import outdate
@@ -94,6 +95,7 @@ def summaries(
                 snippet=snippet(text.content, words) if words and text and text.content else None,
                 text_status=(text.status if text else TextStatus.PENDING).value,
                 tagging_done=d.tagging_done_at is not None,
+                trashed=d.trashed_at is not None,
             )
         )
     return result
@@ -157,6 +159,7 @@ def list_documents(
     entity: Annotated[list[uuid.UUID] | None, Query()] = None,
     related: bool = False,
     tagging: Literal["done", "todo", "any"] = "any",
+    trash: bool = False,
     date_from: date | None = None,
     date_to: date | None = None,
     sort: str = "date",
@@ -173,6 +176,7 @@ def list_documents(
         date_to=date_to,
         include_related=related,
         tagging=tagging,
+        trash=trash,
         sort=sort,
     )
     documents, total = search(session, query, limit=limit, offset=offset)
@@ -310,6 +314,21 @@ def tagging_state(
 def bulk_tagging_state(session: SessionDep, body: s.BulkTaggingState):
     documents = session.scalars(select(Document).where(Document.id.in_(body.document_ids)))
     changed = sum(set_tagging_done(session, d, body.done) for d in documents)
+    session.commit()
+    return s.Message(message=str(changed))
+
+
+@router.post("/documents/{document_id}/trash", response_model=s.DocumentDetail)
+def trash_state(request: Request, session: SessionDep, document_id: uuid.UUID, body: s.TrashState):
+    """Move the document to Trash, or bring it back."""
+    set_trashed(session, _get(session, document_id), body.trashed)
+    return _changed(request, session, document_id)
+
+
+@router.post("/documents/bulk-trash", response_model=s.Message)
+def bulk_trash_state(session: SessionDep, body: s.BulkTrashState):
+    documents = session.scalars(select(Document).where(Document.id.in_(body.document_ids)))
+    changed = sum(set_trashed(session, d, body.trashed) for d in documents)
     session.commit()
     return s.Message(message=str(changed))
 

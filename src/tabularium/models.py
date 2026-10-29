@@ -175,6 +175,8 @@ class Document(Base):
     ingested_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
     # When the user finished the initial tagging; until then the document is "To be tagged".
     tagging_done_at: Mapped[datetime | None] = mapped_column(UTCDateTime, index=True)
+    # When the user moved it to Trash: hidden everywhere except the Trash section, never deleted.
+    trashed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, index=True)
 
     tag_links: Mapped[list["DocumentTag"]] = relationship(
         back_populates="document", cascade="all, delete-orphan", passive_deletes=True

@@ -1,7 +1,7 @@
-import { Check, Download, Search, X } from "lucide-react";
+import { ArchiveRestore, Check, Download, Search, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, ApiError, thumbnailUrl, type DocumentSummary } from "../api/client";
-import { useBulkTag, useBulkTaggingDone } from "../api/mutations";
+import { useBulkTag, useBulkTaggingDone, useBulkTrash } from "../api/mutations";
 import { useDocuments, useEntities, useTags, type DocumentFilters } from "../api/hooks";
 import { TagChip } from "../components/TagChip";
 import { TagPicker } from "../components/TagPicker";
@@ -11,7 +11,7 @@ import { isTyping } from "../lib/keys";
 import { useTitle } from "../lib/useTitle";
 import styles from "./DocumentList.module.css";
 import { FilterBar } from "./FilterBar";
-import { useView } from "./useView";
+import { useView, type Section } from "./useView";
 
 const SORTS: { value: NonNullable<DocumentFilters["sort"]>; label: string }[] = [
   { value: "date", label: "Document date" },
@@ -92,7 +92,9 @@ export function DocumentList() {
   const title =
     section === "inbox"
       ? "To be tagged"
-      : filterCount > 1
+      : section === "trash"
+        ? "Trash"
+        : filterCount > 1
         ? "Filtered documents"
         : tag
           ? tag.name
@@ -142,7 +144,10 @@ export function DocumentList() {
           <div className={styles.crumb}>{tag.path.split(" / ").slice(0, -1).join(" / ")}</div>
         )}
         <h1 className={styles.title}>{title}</h1>
-        {section !== "inbox" && <FilterBar filters={filters} update={update} />}
+        {section === "all" && <FilterBar filters={filters} update={update} />}
+        {section === "trash" && (
+          <p className={styles.sectionNote}>Documents put aside. Nothing here is deleted; restore them any time.</p>
+        )}
         {(filters.entity?.length ?? 0) > 0 && (
           <label className={styles.related}>
             <input
@@ -205,7 +210,9 @@ export function DocumentList() {
               ? "Nothing matches this search."
               : section === "inbox"
                 ? "Everything is tagged."
-                : "No documents here yet."}
+                : section === "trash"
+                  ? "Trash is empty."
+                  : "No documents here yet."}
           </p>
         )}
         {items.map((doc) => (
@@ -221,7 +228,7 @@ export function DocumentList() {
         <div ref={sentinel} />
         {isFetchingNextPage && <Skeleton count={2} />}
       </div>
-      {pickedIds.length > 0 && <SelectionBar ids={pickedIds} inbox={section === "inbox"} onClear={clearPicked} />}
+      {pickedIds.length > 0 && <SelectionBar ids={pickedIds} section={section} onClear={clearPicked} />}
     </section>
   );
 }
@@ -277,9 +284,11 @@ function DocumentCard({ doc, words, selected, picked, onClick }: CardProps) {
 }
 
 /** Bulk actions for the picked documents. */
-function SelectionBar({ ids, inbox, onClear }: { ids: string[]; inbox: boolean; onClear: () => void }) {
+function SelectionBar({ ids, section, onClear }: { ids: string[]; section: Section; onClear: () => void }) {
   const bulk = useBulkTag();
   const done = useBulkTaggingDone();
+  const trash = useBulkTrash();
+  const inTrash = section === "trash";
   const [exporting, setExporting] = useState(false);
   const exportZip = async () => {
     setExporting(true);
@@ -305,7 +314,7 @@ function SelectionBar({ ids, inbox, onClear }: { ids: string[]; inbox: boolean; 
         <strong>
           {ids.length} selected
         </strong>
-        {inbox && (
+        {section === "inbox" && (
           <button
             className={styles.barDone}
             onClick={() => done.mutate({ ids, done: true }, { onSuccess: onClear })}
@@ -315,6 +324,15 @@ function SelectionBar({ ids, inbox, onClear }: { ids: string[]; inbox: boolean; 
             <Check size={14} aria-hidden /> Done tagging
           </button>
         )}
+        <button
+          className={inTrash ? styles.barDone : styles.barButton}
+          onClick={() => trash.mutate({ ids, trashed: !inTrash }, { onSuccess: onClear })}
+          disabled={trash.isPending}
+          title={inTrash ? "Take the selected documents out of Trash" : "Put the selected documents aside (nothing is deleted)"}
+        >
+          {inTrash ? <ArchiveRestore size={14} aria-hidden /> : <Trash2 size={14} aria-hidden />}
+          {inTrash ? "Restore" : "Move to Trash"}
+        </button>
         <button className={styles.barButton} onClick={exportZip} disabled={exporting}>
           <Download size={14} aria-hidden /> Export
         </button>
@@ -322,13 +340,15 @@ function SelectionBar({ ids, inbox, onClear }: { ids: string[]; inbox: boolean; 
           <X size={14} aria-hidden /> Clear
         </button>
       </div>
-      <TagPicker
-        assigned={NO_IDS}
-        above
-        placeholder={`Add a tag to all ${ids.length}…`}
-        disabled={bulk.isPending}
-        onPick={(choice) => bulk.mutate({ ids, choice })} // selection stays: add more, then Done
-      />
+      {!inTrash && (
+        <TagPicker
+          assigned={NO_IDS}
+          above
+          placeholder={`Add a tag to all ${ids.length}…`}
+          disabled={bulk.isPending}
+          onPick={(choice) => bulk.mutate({ ids, choice })} // selection stays: add more, then Done
+        />
+      )}
     </div>
   );
 }

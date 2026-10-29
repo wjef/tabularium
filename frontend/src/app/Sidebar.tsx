@@ -10,6 +10,7 @@ import {
   Settings2,
   Sun,
   Tag as TagIcon,
+  Trash2,
   Wrench,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -65,6 +66,13 @@ export function Sidebar() {
           onClick={() => browse({ section: "inbox" })}
         />
         <NavItem icon={Archive} label="Outdated" count={info?.outdated} {...page("/outdated")} />
+        <NavItem
+          icon={Trash2}
+          label="Trash"
+          count={info?.trash}
+          active={inWorkspace && section === "trash"}
+          onClick={() => browse({ section: "trash" })}
+        />
       </div>
 
       <div className={styles.heading}>

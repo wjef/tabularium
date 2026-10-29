@@ -8,6 +8,7 @@
 - Text matches title, original file name, note, the hash (archive file name) and the
   document's extracted text (full-text index), ignoring case and diacritics.
 - The date range applies to the document date; documents without one are then excluded.
+- Documents in Trash are left out, unless the query asks for Trash (then only those).
 """
 
 import uuid
@@ -35,6 +36,7 @@ class SearchQuery:
     include_related: bool = False
     # "done": tagging finished (what browsing shows) · "todo": still "To be tagged" · "any"
     tagging: str = "any"
+    trash: bool = False  # True: only the documents in Trash
     sort: str = "date"  # date | imported | title
 
     @property
@@ -46,6 +48,7 @@ class SearchQuery:
             or self.date_from
             or self.date_to
             or self.tagging != "any"
+            or self.trash
         )
 
 
@@ -114,6 +117,10 @@ def build_query(session: Session, query: SearchQuery) -> Select[tuple[Document]]
         stmt = stmt.where(Document.tagging_done_at.is_(None))
     elif query.tagging == "done":
         stmt = stmt.where(Document.tagging_done_at.is_not(None))
+    if query.trash:
+        stmt = stmt.where(Document.trashed_at.is_not(None))
+    else:
+        stmt = stmt.where(Document.trashed_at.is_(None))
     return stmt.order_by(*SORTS.get(query.sort, SORTS["date"]))
 
 

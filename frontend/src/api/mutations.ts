@@ -235,6 +235,37 @@ export function useTaggingDone(id: string) {
   });
 }
 
+/** Move a document to Trash or restore it (Trash only hides it). */
+export function useTrash() {
+  const client = useQueryClient();
+  const post = (id: string, trashed: boolean) => api.post<DocumentDetail>(`/documents/${id}/trash`, { trashed });
+  return useMutation({
+    mutationFn: ({ id, trashed }: { id: string; trashed: boolean }) => post(id, trashed),
+    onSuccess: (detail, { id, trashed }) => {
+      refreshAfter(client, detail, true); // tag counts leave out documents in Trash
+      offerUndo(client, trashed ? "Moved to Trash." : "Restored from Trash.", () => post(id, !trashed));
+    },
+    onError: showError,
+  });
+}
+
+export function useBulkTrash() {
+  const client = useQueryClient();
+  const post = (ids: string[], trashed: boolean) =>
+    api.post<{ message: string }>("/documents/bulk-trash", { document_ids: ids, trashed });
+  return useMutation({
+    mutationFn: ({ ids, trashed }: { ids: string[]; trashed: boolean }) => post(ids, trashed),
+    onSuccess: (result, { ids, trashed }) => {
+      refreshAfter(client, undefined, true);
+      ids.forEach((id) => void client.invalidateQueries({ queryKey: ["document", id] }));
+      const n = Number(result.message);
+      const what = `${n} ${n === 1 ? "document" : "documents"}`;
+      offerUndo(client, trashed ? `${what} moved to Trash.` : `${what} restored from Trash.`, () => post(ids, !trashed));
+    },
+    onError: showError,
+  });
+}
+
 export function useBulkTaggingDone() {
   const client = useQueryClient();
   return useMutation({

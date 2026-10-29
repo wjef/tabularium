@@ -138,7 +138,8 @@ def subtree_document_counts(session: Session, *, done_only: bool = False) -> dic
     """Number of distinct documents tagged with each tag or any tag below it.
 
     A document tagged both ``FV`` and ``FV / KOREKTA`` counts once for ``FV``. With
-    ``done_only`` documents still "To be tagged" are left out (browsing does not show them).
+    ``done_only`` documents still "To be tagged" or in Trash are left out (browsing does not
+    show them).
     Tags without documents are absent.
     """
     parents = {
@@ -147,7 +148,7 @@ def subtree_document_counts(session: Session, *, done_only: bool = False) -> dic
     rows = select(DocumentTag.document_id, DocumentTag.tag_id)
     if done_only:
         rows = rows.join(Document, Document.id == DocumentTag.document_id).where(
-            Document.tagging_done_at.is_not(None)
+            Document.tagging_done_at.is_not(None), Document.trashed_at.is_(None)
         )
     documents: dict[uuid.UUID, set[uuid.UUID]] = {}
     for document_id, tag_id in session.execute(rows):

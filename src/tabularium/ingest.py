@@ -194,7 +194,8 @@ class Ingestor:
             if self.known(staged.sha256):
                 self.storage.discard(staged)
                 self.move_original(c, DUPLICATES)
-                self._log(report, c, IngestResult.DUPLICATE, staged.sha256, None)
+                note = "in Trash" if self.in_trash(staged.sha256) else None
+                self._log(report, c, IngestResult.DUPLICATE, staged.sha256, note)
                 report.duplicates.append(rel)
                 return
 
@@ -225,6 +226,14 @@ class Ingestor:
             if session.scalar(select(Document.id).where(Document.sha256 == sha256)) is not None:
                 return True
         return self.is_outdated is not None and bool(self.is_outdated(sha256))
+
+    def in_trash(self, sha256: str) -> bool:
+        """Is this content archived as a document that is in Trash (so it is not seen)?"""
+        with self.session_factory() as session:
+            query = select(Document.id).where(
+                Document.sha256 == sha256, Document.trashed_at.is_not(None)
+            )
+            return session.scalar(query) is not None
 
     def _record(self, c: Candidate, sha256: str, size: int, key: str, run_id: uuid.UUID) -> None:
         name = c.relpath.name
