@@ -16,8 +16,11 @@ export function TagChip({ tag, full = false, onRemove }: Props) {
   return (
     <span className={styles.chip} title={tag.path}>
       <Icon size={11} strokeWidth={2.2} aria-hidden />
-      {full && parts.length > 1 && <span className={styles.parent}>{parts.slice(0, -1).join(" / ")} /</span>}
-      <span>{tag.name}</span>
+      {/* a long name is cut short ("…"), so the remove button always stays visible */}
+      <span className={styles.label}>
+        {full && parts.length > 1 && <span className={styles.parent}>{parts.slice(0, -1).join(" / ")} / </span>}
+        {tag.name}
+      </span>
       {onRemove && (
         <button className={styles.remove} onClick={onRemove} aria-label={`Remove tag ${tag.path}`}>
           <X size={12} />
