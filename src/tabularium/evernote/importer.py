@@ -121,8 +121,8 @@ def plan_note(note: Note, body: Body) -> list[_Part]:
     return parts
 
 
-def _note_text(notebook: str, note: Note, body: Body, *, with_text: bool) -> str:
-    header = f"From Evernote. Notebook: {notebook}."
+def _note_text(notebook: str | None, note: Note, body: Body, *, with_text: bool) -> str:
+    header = "From Evernote." + (f" Notebook: {notebook}." if notebook else "")
     if note.tags:
         header += f" Tags: {', '.join(note.tags)}."
     return f"{header}\n\n{body.text}" if with_text and body.text else header
@@ -136,11 +136,14 @@ def _with_count(notes: Iterator[Note]) -> tuple[bool, Iterator[Note]]:
     return second is not None, chain(ahead, notes)
 
 
-def notebook_of(relpath: PurePosixPath, whole_notebook: bool) -> str:
+def notebook_of(relpath: PurePosixPath, whole_notebook: bool) -> str | None:
     """A notebook exported as a whole is named after it; single notes (evernote-backup
-    ``--single-notes``) sit in a folder named after their notebook."""
-    if whole_notebook or relpath.parent == PurePosixPath("."):
+    ``--single-notes``) sit in a folder named after their notebook. A single note directly
+    in the ingest folder has no notebook to tell (its file name is the note's title)."""
+    if whole_notebook:
         return relpath.stem
+    if relpath.parent == PurePosixPath("."):
+        return None
     return relpath.parent.name
 
 
@@ -208,7 +211,12 @@ class EvernoteImporter:
             return {m.removeprefix(FINGERPRINT) for m in messages}
 
     def _note(
-        self, c: Candidate, notebook: str, note: Note, report: EvernoteReport, run_id: uuid.UUID
+        self,
+        c: Candidate,
+        notebook: str | None,
+        note: Note,
+        report: EvernoteReport,
+        run_id: uuid.UUID,
     ) -> None:
         fingerprint = note.fingerprint
         if fingerprint in self._seen:
@@ -257,7 +265,7 @@ class EvernoteImporter:
     def _import(
         self,
         c: Candidate,
-        notebook: str,
+        notebook: str | None,
         note: Note,
         body: Body,
         parts: list[_Part],
@@ -311,7 +319,7 @@ class EvernoteImporter:
     def _record(
         self,
         c: Candidate,
-        notebook: str,
+        notebook: str | None,
         note: Note,
         body: Body,
         staged: list[tuple[_Part, StagedFile]],

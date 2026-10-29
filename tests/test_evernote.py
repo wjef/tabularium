@@ -236,7 +236,7 @@ def test_notebook_name():
     assert notebook_of(P("Faktury.enex"), whole_notebook=True) == "Faktury"
     assert notebook_of(P("Evernote/Faktury.enex"), whole_notebook=True) == "Faktury"
     assert notebook_of(P("Faktury/Rachunek za prąd.enex"), whole_notebook=False) == "Faktury"
-    assert notebook_of(P("Rachunek.enex"), whole_notebook=False) == "Rachunek"
+    assert notebook_of(P("Rachunek.enex"), whole_notebook=False) is None  # a loose single note
 
 
 # --- importing -------------------------------------------------------------------------
@@ -276,6 +276,17 @@ def test_dry_run_counts_without_changing_anything(importer, folders, session_fac
     assert report.failed == [] and printer.pages == []
     assert documents(session_factory) == []
     assert (folders["ingest"] / "Dom.enex").exists()
+
+
+def test_loose_single_notes_have_no_notebook(importer, folders, session_factory):
+    put(folders["ingest"], "Kody do bramy.enex", enex(note_xml("Kody do bramy", "<div>1234</div>")))
+    put(folders["ingest"], "Faktury/Prąd.enex", enex(note_xml("Prąd", "<div>x</div>", tags=["FV"])))
+    importer.run(dry_run=False)
+    notes = {d.title: d.note for d in documents(session_factory)}
+    assert notes == {
+        "Kody do bramy": "From Evernote.",
+        "Prąd": "From Evernote. Notebook: Faktury. Tags: FV.",
+    }
 
 
 def test_import_creates_documents_to_be_tagged(importer, folders, session_factory, printer):

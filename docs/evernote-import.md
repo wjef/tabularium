@@ -92,7 +92,7 @@ the same files).
 | No attachments, only text | The note printed to an A4 PDF by Microsoft Edge. |
 | Several documents from one note | Linked to each other as *related*. |
 | Title | The document title. Several documents from one note get the attachment's name added. |
-| Notebook, Evernote tags, text | Written into the document's note, e.g. `From Evernote. Notebook: Invoices. Tags: FV, 2021.`, followed by the note's text. |
+| Notebook, Evernote tags, text | Written into the document's note, e.g. `From Evernote. Notebook: Invoices. Tags: FV, 2021.`, followed by the note's text. The notebook is taken from the folder of a single-note file, or from the file name of a whole-notebook file; a single-note file put straight into the ingest folder has none. |
 | Created/updated dates | Not used. Set the dates while tagging. |
 | Empty notes | Skipped. |
 
