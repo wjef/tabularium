@@ -10,7 +10,7 @@ Status: agreed specification, v1 scope. Decisions and their reasoning are in [`d
 ## 1. Principles
 
 1. **Originals are never modified.** File bytes stored in the archive are identical to the
-   ingested file. Only the file *name* changes (see §3.3).
+   ingested file. Only the file *name* changes (see §3.4).
 2. **Documents are never deleted.** They can be *outdated* (moved aside), never destroyed.
 3. **Metadata lives outside the files** in a database, plus a human-readable JSON export
    stored next to the archive so the archive survives without the app.
@@ -67,7 +67,22 @@ The order (copy → verify → record → move original) guarantees a crash at a
 Subfolders of the ingest folder are scanned (`include_subfolders`); the subfolder path is stored
 as `original_relpath` but has no other meaning. Only one scan runs at a time.
 
-### 3.3 Archive naming
+### 3.3 Import from Evernote
+- Evernote exports (`.enex`) in the ingest folder are not ingested as files: the scan reports
+  them and leaves them for **Maintenance → Import from Evernote** (Preview, then Import; runs in
+  the background, one at a time with scans). User guide: `docs/evernote-import.md`.
+- Per note: its photos become one PDF (a page per photo, JPEG embedded unchanged, EXIF
+  orientation applied by page rotation); every other attachment becomes its own document,
+  unchanged; a note without attachments is printed to an A4 PDF by Microsoft Edge (headless,
+  sanitized markup, nothing loaded from outside); empty notes are skipped.
+- Documents from one note are linked `RELATED` to the first. Title from the note; notebook,
+  Evernote tags and (for notes with attachments) the text go into the document note. Evernote
+  dates are not used. Documents arrive in *To be tagged*.
+- Every part is logged in the ingest log with the note's fingerprint (title, created, content,
+  attachment hashes), so a note is imported once; content already archived or outdated is
+  not stored again. The `.enex` moves to `_processed`, or `_failed` if any note failed.
+
+### 3.4 Archive naming
 - `<archive>\<first 2 hex chars>\<full sha256>.<original extension, lowercase>`
   e.g. `3f\3fa9c1…e81b.pdf`.
 - The original filename and relative ingest path are stored in the database.

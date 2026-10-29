@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from tabularium import __version__, db
 from tabularium.config import Config
+from tabularium.evernote.convert import EdgePrinter
+from tabularium.evernote.importer import EvernoteImporter, ImportJob
 from tabularium.ingest import IngestBusyError, Ingestor
 from tabularium.metadata import MetadataExporter, restore_pending
 from tabularium.outdated import OutdatedStore
@@ -77,6 +79,9 @@ def create_app(
     app.state.csrf_token = csrf_token
     app.state.session_factory = session_factory
     app.state.ingestor = ingestor
+    app.state.evernote = ImportJob(
+        EvernoteImporter(ingestor, EdgePrinter()), on_done=text_indexer.wake
+    )
     app.state.storage = storage
     app.state.metadata_exporter = exporter
     app.state.outdated_store = outdated_store

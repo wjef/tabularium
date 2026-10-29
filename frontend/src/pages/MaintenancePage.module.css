@@ -133,3 +133,22 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+.progress {
+  margin-top: 4px;
+}
+
+.bar {
+  height: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--chip-bg);
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}

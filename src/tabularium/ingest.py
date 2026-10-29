@@ -14,6 +14,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
@@ -40,10 +41,11 @@ PROCESSED, DUPLICATES, FAILED = "_processed", "_duplicates", "_failed"
 RESERVED_FOLDERS = frozenset({PROCESSED, DUPLICATES, FAILED})
 STALE_STAGING_SECONDS = 24 * 3600
 BUILTIN_IGNORE = ("~$*", ".~*", "*.tmp", "*.partial", "*.crdownload", "desktop.ini", "thumbs.db")
+EVERNOTE_SUFFIX = ".enex"  # Evernote exports wait for "Import from Evernote" (tabularium.evernote)
 
 
 class IngestBusyError(Exception):
-    """A scan is already running."""
+    """A scan or an Evernote import is already running."""
 
 
 @dataclass
@@ -54,6 +56,7 @@ class IngestReport:
     failed: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)  # e.g. cloud-only placeholders
     waiting: list[str] = field(default_factory=list)  # still being written / locked
+    evernote: list[str] = field(default_factory=list)  # .enex files, left for the Evernote import
 
     @property
     def total(self) -> int:
@@ -61,7 +64,7 @@ class IngestReport:
 
 
 @dataclass(frozen=True)
-class _Candidate:
+class Candidate:
     path: Path  # long-path form on Windows
     relpath: PurePosixPath  # relative to the ingest root, for logs and the database
     stat: os.stat_result
@@ -92,15 +95,26 @@ class Ingestor:
     def root(self) -> Path:
         return self.config.paths.ingest
 
+    @contextmanager
+    def exclusive(self) -> Iterator[None]:
+        """Run alone: one scan or Evernote import at a time. Raises IngestBusyError."""
+        if not self._lock.acquire(blocking=False):
+            raise IngestBusyError("An ingest scan or Evernote import is already running.")
+        try:
+            yield
+        finally:
+            self._lock.release()
+
     def scan(self) -> IngestReport:
         """Process every ready file in the ingest folder. Raises IngestBusyError if running."""
-        if not self._lock.acquire(blocking=False):
-            raise IngestBusyError("An ingest scan is already running.")
-        try:
+        with self.exclusive():
             report = IngestReport(run_id=uuid.uuid4())
             # Copies staged by a run that was interrupted (app closed mid-copy).
             self.storage.cleanup_staging(older_than=STALE_STAGING_SECONDS, now=self.clock())
-            for candidate in self._candidates():
+            for candidate in self.candidates():
+                if candidate.path.suffix.lower() == EVERNOTE_SUFFIX:
+                    report.evernote.append(str(candidate.relpath))
+                    continue
                 self._process(candidate, report)
             if report.total or report.waiting:
                 log.info(
@@ -113,8 +127,6 @@ class Ingestor:
                     len(report.waiting),
                 )
             return report
-        finally:
-            self._lock.release()
 
     # --- discovery -------------------------------------------------------------------
 
@@ -123,7 +135,7 @@ class Ingestor:
         patterns = (*BUILTIN_IGNORE, *self.config.ingest.ignore)
         return lowered.startswith(".") or any(fnmatch.fnmatch(lowered, p.lower()) for p in patterns)
 
-    def _candidates(self) -> Iterator[_Candidate]:
+    def candidates(self) -> Iterator[Candidate]:
         root = lp(self.root)
         for dirpath, dirnames, filenames in os.walk(root):
             rel_dir = PurePosixPath(*Path(os.path.relpath(dirpath, root)).parts)
@@ -143,9 +155,9 @@ class Ingestor:
                 if is_hidden_or_system(st):
                     continue
                 relpath = rel_dir / name if rel_dir != PurePosixPath(".") else PurePosixPath(name)
-                yield _Candidate(path, relpath, st)
+                yield Candidate(path, relpath, st)
 
-    def _is_stable(self, candidate: _Candidate) -> bool:
+    def is_stable(self, candidate: Candidate) -> bool:
         st, now = candidate.stat, self.clock()
         # Birth time matters: sync clients and copies may preserve an old modification time.
         # Timestamps in the future (preserved from elsewhere, clock rounding) are ignored,
@@ -158,13 +170,13 @@ class Ingestor:
 
     # --- processing ------------------------------------------------------------------
 
-    def _process(self, c: _Candidate, report: IngestReport) -> None:
+    def _process(self, c: Candidate, report: IngestReport) -> None:
         rel = str(c.relpath)
         if is_placeholder(c.stat):
             self._log(report, c, IngestResult.SKIPPED, None, "cloud-only placeholder")
             report.skipped.append(rel)
             return
-        if not self._is_stable(c):
+        if not self.is_stable(c):
             report.waiting.append(rel)
             return
 
@@ -179,13 +191,9 @@ class Ingestor:
                 report.waiting.append(rel)  # changed while copying: try again next scan
                 return
 
-            with self.session_factory() as session:
-                exists = session.scalar(select(Document.id).where(Document.sha256 == staged.sha256))
-            if exists is None and self.is_outdated is not None:
-                exists = self.is_outdated(staged.sha256) or None
-            if exists is not None:
+            if self.known(staged.sha256):
                 self.storage.discard(staged)
-                self._move_original(c, DUPLICATES)
+                self.move_original(c, DUPLICATES)
                 self._log(report, c, IngestResult.DUPLICATE, staged.sha256, None)
                 report.duplicates.append(rel)
                 return
@@ -206,12 +214,19 @@ class Ingestor:
             return
 
         try:
-            self._move_original(c, PROCESSED)
+            self.move_original(c, PROCESSED)
         except OSError:
             # Archived and recorded; the original stays and will be seen as a duplicate later.
             log.warning("Imported %s but could not move the original to %s", rel, PROCESSED)
 
-    def _record(self, c: _Candidate, sha256: str, size: int, key: str, run_id: uuid.UUID) -> None:
+    def known(self, sha256: str) -> bool:
+        """Is this content already archived, or outdated (which must not bring it back)?"""
+        with self.session_factory() as session:
+            if session.scalar(select(Document.id).where(Document.sha256 == sha256)) is not None:
+                return True
+        return self.is_outdated is not None and bool(self.is_outdated(sha256))
+
+    def _record(self, c: Candidate, sha256: str, size: int, key: str, run_id: uuid.UUID) -> None:
         name = c.relpath.name
         parent = str(c.relpath.parent)
         with self.session_factory() as session, session.begin():
@@ -235,14 +250,14 @@ class Ingestor:
                 )
             )
 
-    def _move_original(self, c: _Candidate, reserved: str) -> Path:
+    def move_original(self, c: Candidate, reserved: str) -> Path:
         target_dir = self.root / reserved / Path(*c.relpath.parent.parts)
         return Path(strip_lp(str(move_file(c.path, target_dir))))
 
-    def _fail(self, c: _Candidate, report: IngestReport, exc: Exception) -> None:
+    def _fail(self, c: Candidate, report: IngestReport, exc: Exception) -> None:
         message = f"{type(exc).__name__}: {exc}"
         try:
-            self._move_original(c, FAILED)
+            self.move_original(c, FAILED)
         except OSError as move_exc:
             message += f" (original left in place: {move_exc})"
         self._log(report, c, IngestResult.FAILED, None, message)
@@ -251,7 +266,17 @@ class Ingestor:
     def _log(
         self,
         report: IngestReport,
-        c: _Candidate,
+        c: Candidate,
+        result: IngestResult,
+        sha256: str | None,
+        message: str | None,
+    ) -> None:
+        self.log_result(report.run_id, str(c.relpath), result, sha256, message)
+
+    def log_result(
+        self,
+        run_id: uuid.UUID,
+        source_path: str,
         result: IngestResult,
         sha256: str | None,
         message: str | None,
@@ -260,12 +285,12 @@ class Ingestor:
             with self.session_factory() as session, session.begin():
                 session.add(
                     IngestLog(
-                        run_id=report.run_id,
-                        source_path=str(c.relpath),
+                        run_id=run_id,
+                        source_path=source_path,
                         sha256=sha256,
                         result=result,
                         message=message,
                     )
                 )
         except Exception:  # noqa: BLE001 — logging must not break the scan
-            log.exception("Could not write ingest log for %s", c.relpath)
+            log.exception("Could not write ingest log for %s", source_path)

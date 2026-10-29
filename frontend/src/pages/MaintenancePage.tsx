@@ -1,8 +1,25 @@
-import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, CircleAlert, DatabaseBackup, FileJson, FolderSync, ScanText, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  CheckCircle2,
+  CircleAlert,
+  DatabaseBackup,
+  FileJson,
+  FolderSync,
+  NotebookText,
+  ScanText,
+  ShieldCheck,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { api, type CheckProblem, type CheckReport, type IngestReport, type MaintenanceStatus } from "../api/client";
+import {
+  api,
+  type CheckProblem,
+  type CheckReport,
+  type EvernoteReport,
+  type EvernoteStatus,
+  type IngestReport,
+  type MaintenanceStatus,
+} from "../api/client";
 import { useAction } from "../api/mutations";
 import { Dialog } from "../components/Dialog";
 import { Card, Empty, Page } from "../components/Page";
@@ -47,6 +64,7 @@ export function MaintenancePage() {
         <>
           {(status.can_restore || status.outdated_restore_pending) && <RestoreCard status={status} />}
           <IngestCard />
+          <EvernoteCard />
           <TextCard status={status} />
           <IntegrityCard />
           <BackupCard status={status} />
@@ -78,12 +96,153 @@ function IngestCard() {
             {report.failed.length} failed · {report.skipped.length} skipped
             {report.waiting.length ? ` · ${report.waiting.length} still being written` : ""}
           </p>
+          {report.evernote.length > 0 && (
+            <p className={ui.muted}>
+              {report.evernote.length} Evernote {report.evernote.length === 1 ? "file waits" : "files wait"} for Import
+              from Evernote below.
+            </p>
+          )}
           {report.failed.length > 0 && (
             <p className={styles.error}>Could not import: {report.failed.join(", ")}</p>
           )}
         </>
       )}
     </Card>
+  );
+}
+
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+function EvernoteCard() {
+  const client = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+  const { data: status } = useQuery({
+    queryKey: ["evernote"],
+    queryFn: () => api.get<EvernoteStatus>("/ingest/evernote"),
+    refetchInterval: (query) => (query.state.data?.running ? 1000 : false),
+  });
+  const start = useAction((dryRun: boolean) => api.post<EvernoteStatus>("/ingest/evernote", { dry_run: dryRun }));
+
+  // When an import finishes, the new documents show up everywhere.
+  const wasRunning = useRef(false);
+  useEffect(() => {
+    if (wasRunning.current && status && !status.running && !status.dry_run) {
+      for (const key of [["documents"], ["info"], ["tags"], ["maintenance"]]) void client.invalidateQueries({ queryKey: key });
+    }
+    wasRunning.current = !!status?.running;
+  }, [status, client]);
+
+  if (!status) return null;
+  const busy = status.running || start.isPending;
+  const run = (dryRun: boolean) =>
+    start.mutate(dryRun, {
+      onSuccess: (s) => {
+        setConfirming(false);
+        client.setQueryData(["evernote"], s);
+      },
+    });
+  return (
+    <Card
+      title={<Title icon={<NotebookText size={18} />} text="Import from Evernote" />}
+      actions={
+        <div className={ui.row}>
+          <button className={ui.secondary} disabled={busy || !status.files_waiting} onClick={() => run(true)}>
+            Preview
+          </button>
+          <button className={ui.button} disabled={busy || !status.files_waiting} onClick={() => setConfirming(true)}>
+            Import
+          </button>
+        </div>
+      }
+    >
+      <p className={ui.muted}>
+        Put Evernote exports (.enex files) in the ingest folder. The photos of a note become one PDF, a note without
+        attachments is printed to PDF, and other attachments are kept as they are. Everything arrives in To be tagged,
+        with the notebook, Evernote tags and the note's text in the document's note.
+      </p>
+      {!status.running && (
+        <p className={styles.result}>
+          {status.files_waiting
+            ? `${plural(status.files_waiting, "Evernote file")} in the ingest folder.`
+            : "No Evernote files in the ingest folder."}
+        </p>
+      )}
+      {!status.printer_found && (
+        <p className={styles.status}>
+          <span className={`${ui.pill} ${ui.warn}`}>
+            <CircleAlert size={12} /> Microsoft Edge not found
+          </span>{" "}
+          <span className={ui.muted}>Notes without attachments cannot be printed to PDF; they will be reported as failed.</span>
+        </p>
+      )}
+      {status.running && (
+        <div className={styles.progress}>
+          <p className={styles.result}>
+            {status.dry_run ? "Previewing" : "Importing"}… file {Math.min(status.files_done + 1, status.files_total)} of{" "}
+            {status.files_total} · {plural(status.notes_done, "note")} so far
+          </p>
+          <div className={styles.bar}>
+            <span style={{ width: `${status.files_total ? (100 * status.files_done) / status.files_total : 0}%` }} />
+          </div>
+        </div>
+      )}
+      {status.error && <p className={styles.error}>{status.error}</p>}
+      {!status.running && status.report && <EvernoteResult report={status.report} />}
+      {confirming && (
+        <Dialog
+          title="Import from Evernote?"
+          confirmLabel="Import"
+          busy={start.isPending}
+          onClose={() => setConfirming(false)}
+          onConfirm={() => run(false)}
+        >
+          <p>
+            {plural(status.files_waiting, "Evernote file")} will be imported into To be tagged. The .enex files move to
+            _processed afterwards; importing the same notes again later adds nothing twice.
+          </p>
+        </Dialog>
+      )}
+    </Card>
+  );
+}
+
+function EvernoteResult({ report: r }: { report: EvernoteReport }) {
+  const kinds = [
+    r.photo_pdfs && plural(r.photo_pdfs, "photo PDF"),
+    r.printed && plural(r.printed, "printed note"),
+    r.attachments && plural(r.attachments, "attachment"),
+  ].filter(Boolean);
+  const other = [
+    r.already_imported && `${plural(r.already_imported, "note")} imported before`,
+    r.duplicates && `${plural(r.duplicates, "file")} already in the archive`,
+    r.empty && `${plural(r.empty, "empty note")} skipped`,
+    r.waiting.length && `${plural(r.waiting.length, "file")} still being written`,
+  ].filter(Boolean);
+  return (
+    <>
+      <p className={styles.result}>
+        <strong>
+          {r.dry_run ? "Preview: " : "Done: "}
+          {plural(r.documents, "document")} {r.dry_run ? "would be created" : "created"}
+        </strong>{" "}
+        from {plural(r.notes, "note")} in {plural(r.files, "file")}
+        {kinds.length ? ` (${kinds.join(", ")})` : ""}.
+      </p>
+      {other.length > 0 && <p className={ui.muted}>{other.join(" · ")}.</p>}
+      {r.failed.length > 0 && (
+        <div className={styles.problems}>
+          <h3>Could not import ({r.failed.length})</h3>
+          <ul>
+            {r.failed.slice(0, 50).map((f, i) => (
+              <li key={i} className={styles.error}>
+                {f}
+              </li>
+            ))}
+          </ul>
+          {r.failed.length > 50 && <p className={ui.muted}>…and {r.failed.length - 50} more (see the log).</p>}
+        </div>
+      )}
+    </>
   );
 }
 

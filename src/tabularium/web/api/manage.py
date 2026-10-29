@@ -342,7 +342,47 @@ async def ingest_scan(request: Request) -> dict:
         "failed": report.failed,
         "skipped": report.skipped,
         "waiting": report.waiting,
+        "evernote": report.evernote,
     }
+
+
+class EvernoteStart(_In):
+    dry_run: bool
+
+
+def _evernote_status(state) -> s.EvernoteStatus:
+    job = state.evernote
+    report = job.report
+    return s.EvernoteStatus(
+        running=job.running,
+        dry_run=job.dry_run,
+        files_done=job.files_done,
+        files_total=job.files_total,
+        notes_done=job.notes_done,
+        report=s.EvernoteReport.model_validate(report) if report else None,
+        error=job.error,
+        files_waiting=0 if job.running else len(job.importer.files()),
+        printer_found=job.importer.printer.available,
+    )
+
+
+@router.get("/ingest/evernote", response_model=s.EvernoteStatus)
+def evernote_status(request: Request):
+    return _evernote_status(request.app.state)
+
+
+@router.post("/ingest/evernote", response_model=s.EvernoteStatus)
+def evernote_start(request: Request, body: EvernoteStart):
+    """Start importing (or, with ``dry_run``, previewing) the ``.enex`` files in the ingest
+    folder; poll GET for progress."""
+    state = request.app.state
+    if state.restore_pending():
+        raise DomainError("Restore the database first (Maintenance); importing now would block it.")
+    try:
+        state.evernote.start(dry_run=body.dry_run)
+    except IngestBusyError as exc:
+        raise DomainError(str(exc)) from exc
+    return _evernote_status(state)
 
 
 @router.post("/export")

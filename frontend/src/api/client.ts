@@ -11,6 +11,8 @@ export type TagRef = Schemas["TagRef"];
 export type EntityOut = Schemas["EntityOut"];
 export type LinkOut = Schemas["LinkOut"];
 export type HistoryEntry = Schemas["HistoryEntry"];
+export type EvernoteStatus = Schemas["EvernoteStatus"];
+export type EvernoteReport = Schemas["EvernoteReport"];
 
 export interface AppInfo {
   version: string;
@@ -165,6 +167,7 @@ export interface IngestReport {
   failed: string[];
   skipped: string[];
   waiting: string[];
+  evernote: string[]; // .enex files, left for Import from Evernote
 }
 
 export interface CheckProblem {

@@ -28,6 +28,11 @@ Then:
 2. Edit that file: set your `ingest`, `archive` and `outdated` folders (they must exist).
 3. Run `Tabularium.bat` again — the app opens in your browser.
 
+## Moving from Evernote
+
+Export your notebooks to `.enex` files, put them in the ingest folder and use
+**Maintenance → Import from Evernote**. See [docs/evernote-import.md](docs/evernote-import.md).
+
 ## OCR for scans and photos (optional)
 
 Text PDFs are searchable right away. To also search scans and photos, install Tesseract

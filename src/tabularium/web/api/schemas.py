@@ -200,3 +200,33 @@ class OutdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     reason: str | None = None
+
+
+# --- Evernote import ---------------------------------------------------------------------
+
+
+class EvernoteReport(_Out):
+    dry_run: bool
+    files: int
+    notes: int
+    documents: int  # new documents (with dry_run: that would be created)
+    photo_pdfs: int
+    printed: int
+    attachments: int
+    already_imported: int
+    duplicates: int
+    empty: int
+    failed: list[str]
+    waiting: list[str]
+
+
+class EvernoteStatus(BaseModel):
+    running: bool
+    dry_run: bool
+    files_done: int
+    files_total: int
+    notes_done: int
+    report: EvernoteReport | None
+    error: str | None
+    files_waiting: int  # .enex files in the ingest folder (when not running)
+    printer_found: bool  # Microsoft Edge, needed for notes without attachments

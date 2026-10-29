@@ -685,6 +685,160 @@
     "title": "EntityUpdate",
     "type": "object"
    },
+   "EvernoteReport": {
+    "properties": {
+     "already_imported": {
+      "title": "Already Imported",
+      "type": "integer"
+     },
+     "attachments": {
+      "title": "Attachments",
+      "type": "integer"
+     },
+     "documents": {
+      "title": "Documents",
+      "type": "integer"
+     },
+     "dry_run": {
+      "title": "Dry Run",
+      "type": "boolean"
+     },
+     "duplicates": {
+      "title": "Duplicates",
+      "type": "integer"
+     },
+     "empty": {
+      "title": "Empty",
+      "type": "integer"
+     },
+     "failed": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Failed",
+      "type": "array"
+     },
+     "files": {
+      "title": "Files",
+      "type": "integer"
+     },
+     "notes": {
+      "title": "Notes",
+      "type": "integer"
+     },
+     "photo_pdfs": {
+      "title": "Photo Pdfs",
+      "type": "integer"
+     },
+     "printed": {
+      "title": "Printed",
+      "type": "integer"
+     },
+     "waiting": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Waiting",
+      "type": "array"
+     }
+    },
+    "required": [
+     "dry_run",
+     "files",
+     "notes",
+     "documents",
+     "photo_pdfs",
+     "printed",
+     "attachments",
+     "already_imported",
+     "duplicates",
+     "empty",
+     "failed",
+     "waiting"
+    ],
+    "title": "EvernoteReport",
+    "type": "object"
+   },
+   "EvernoteStart": {
+    "additionalProperties": false,
+    "properties": {
+     "dry_run": {
+      "title": "Dry Run",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "dry_run"
+    ],
+    "title": "EvernoteStart",
+    "type": "object"
+   },
+   "EvernoteStatus": {
+    "properties": {
+     "dry_run": {
+      "title": "Dry Run",
+      "type": "boolean"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     },
+     "files_done": {
+      "title": "Files Done",
+      "type": "integer"
+     },
+     "files_total": {
+      "title": "Files Total",
+      "type": "integer"
+     },
+     "files_waiting": {
+      "title": "Files Waiting",
+      "type": "integer"
+     },
+     "notes_done": {
+      "title": "Notes Done",
+      "type": "integer"
+     },
+     "printer_found": {
+      "title": "Printer Found",
+      "type": "boolean"
+     },
+     "report": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/EvernoteReport"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "running": {
+      "title": "Running",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "running",
+     "dry_run",
+     "files_done",
+     "files_total",
+     "notes_done",
+     "report",
+     "error",
+     "files_waiting",
+     "printer_found"
+    ],
+    "title": "EvernoteStatus",
+    "type": "object"
+   },
    "ExportRequest": {
     "additionalProperties": false,
     "properties": {
@@ -2864,6 +3018,67 @@
     "summary": "Info",
     "tags": [
      "catalog"
+    ]
+   }
+  },
+  "/api/v1/ingest/evernote": {
+   "get": {
+    "operationId": "evernote_status_api_v1_ingest_evernote_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EvernoteStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Evernote Status",
+    "tags": [
+     "manage"
+    ]
+   },
+   "post": {
+    "description": "Start importing (or, with ``dry_run``, previewing) the ``.enex`` files in the ingest\nfolder; poll GET for progress.",
+    "operationId": "evernote_start_api_v1_ingest_evernote_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EvernoteStart"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EvernoteStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Evernote Start",
+    "tags": [
+     "manage"
     ]
    }
   },
