@@ -167,7 +167,7 @@ export interface IngestReport {
   failed: string[];
   skipped: string[];
   waiting: string[];
-  evernote: string[]; // .enex files, left for Import from Evernote
+  evernote?: string[]; // .enex files, left for Import from Evernote (absent before a restart)
 }
 
 export interface CheckProblem {

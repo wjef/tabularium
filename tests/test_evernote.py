@@ -359,6 +359,46 @@ def test_failed_note_does_not_stop_the_others(ingestor, folders, session_factory
     assert (report.already_imported, report.documents) == (1, 1)
 
 
+def test_a_note_that_cannot_be_read_does_not_block_the_rest_of_its_file(
+    importer, folders, session_factory, monkeypatch
+):
+    from tabularium.evernote import importer as module
+
+    put(
+        folders["ingest"],
+        "Notatnik.enex",
+        enex(
+            note_xml("Pierwsza", "<div>a</div>"),
+            note_xml("Zepsuta", "", [(b"broken", "image/jpeg", "x.jpg")]),
+            note_xml("Trzecia", "<div>c</div>"),
+        ),
+    )
+    real = module.is_photo
+
+    def is_photo(data, mime):
+        if data == b"broken":
+            raise RuntimeError("image library crashed")
+        return real(data, mime)
+
+    monkeypatch.setattr(module, "is_photo", is_photo)
+    preview = importer.run(dry_run=True)
+    assert preview.documents == 2 and len(preview.failed) == 1
+    report = importer.run(dry_run=False)
+    assert report.documents == 2 and "Zepsuta" in report.failed[0]
+    assert sorted(d.title for d in documents(session_factory)) == ["Pierwsza", "Trzecia"]
+
+
+def test_damaged_attachment_fails_only_its_note(importer, folders, session_factory):
+    good = note_xml("Dobra", "<div>b</div>")
+    bad = note_xml("Zła", "", [(b"x", "application/pdf", "a.pdf")]).replace(
+        base64.b64encode(b"x").decode(), "@@@="
+    )
+    put(folders["ingest"], "N.enex", enex(bad, good))
+    report = importer.run(dry_run=False)
+    assert report.documents == 1 and "damaged" in report.failed[0]
+    assert [d.title for d in documents(session_factory)] == ["Dobra"]
+
+
 def test_unreadable_file_is_reported(importer, folders):
     put(folders["ingest"], "broken.enex", b"<en-export><note><title>x</title>")
     report = importer.run(dry_run=False)

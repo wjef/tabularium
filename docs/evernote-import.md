@@ -69,6 +69,10 @@ notebook name in Tabularium. Repeat this for each notebook.
 Exporting a whole notebook has no size limit. Exporting a selection of notes is limited to
 100 notes at a time.
 
+Use one route for the whole move. The two routes may write the same note slightly
+differently, and Tabularium would then import it twice (attachments are still recognised as
+the same files).
+
 ## 2. Import in Tabularium
 
 1. Copy the exported files into the ingest folder. Folders are fine, for example the whole

@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Protocol
 
 import pypdfium2 as pdfium
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageOps
 
 from tabularium.textextract import PDFIUM_LOCK
 
@@ -44,7 +44,7 @@ def is_photo(data: bytes, mime: str) -> bool:
     try:
         with Image.open(io.BytesIO(data)) as image:
             image.verify()
-    except (UnidentifiedImageError, OSError, SyntaxError, ValueError):
+    except Exception:  # noqa: BLE001 — anything unreadable is kept as an attachment
         return False
     return True
 

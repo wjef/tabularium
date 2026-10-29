@@ -6,6 +6,7 @@ The body refers to an attachment by the MD5 of its bytes (``<en-media hash="…"
 """
 
 import base64
+import binascii
 import hashlib
 import html
 import re
@@ -36,6 +37,7 @@ class Note:
     tags: tuple[str, ...]
     content: str  # ENML
     resources: tuple[Resource, ...]
+    problems: tuple[str, ...] = ()  # e.g. an attachment that could not be read
 
     @property
     def fingerprint(self) -> str:
@@ -54,7 +56,8 @@ def _text(element: ET.Element, tag: str) -> str | None:
     return child.text if child is not None and child.text is not None else None
 
 
-def _resource(element: ET.Element) -> Resource | None:
+def _resource(element: ET.Element) -> Resource | str | None:
+    """The attachment, or what is wrong with it."""
     data = _text(element, "data")
     if not data:
         return None
@@ -63,7 +66,10 @@ def _resource(element: ET.Element) -> Resource | None:
     if attributes is not None:
         file_name = (_text(attributes, "file-name") or "").strip() or None
     mime = (_text(element, "mime") or "application/octet-stream").strip().lower()
-    return Resource(base64.b64decode(data), mime, file_name)
+    try:
+        return Resource(base64.b64decode("".join(data.split()), validate=True), mime, file_name)
+    except (binascii.Error, ValueError):
+        return f"attachment {file_name or mime} is damaged in the export"
 
 
 def read_notes(path: Path) -> Iterator[Note]:
@@ -74,9 +80,9 @@ def read_notes(path: Path) -> Iterator[Note]:
         for _event, element in ET.iterparse(stream, events=("end",)):  # noqa: S314
             if element.tag != "note":
                 continue
-            resources = tuple(
-                r for r in (_resource(e) for e in element.iterfind("resource")) if r is not None
-            )
+            read = [_resource(e) for e in element.iterfind("resource")]
+            resources = tuple(r for r in read if isinstance(r, Resource))
+            problems = tuple(r for r in read if isinstance(r, str))
             yield Note(
                 title=(_text(element, "title") or "").strip(),
                 created=_text(element, "created"),
@@ -85,6 +91,7 @@ def read_notes(path: Path) -> Iterator[Note]:
                 ),
                 content=_text(element, "content") or "",
                 resources=resources,
+                problems=problems,
             )
             element.clear()
 

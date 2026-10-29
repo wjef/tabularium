@@ -96,7 +96,7 @@ function IngestCard() {
             {report.failed.length} failed · {report.skipped.length} skipped
             {report.waiting.length ? ` · ${report.waiting.length} still being written` : ""}
           </p>
-          {report.evernote.length > 0 && (
+          {!!report.evernote?.length && (
             <p className={ui.muted}>
               {report.evernote.length} Evernote {report.evernote.length === 1 ? "file waits" : "files wait"} for Import
               from Evernote below.

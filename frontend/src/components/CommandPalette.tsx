@@ -92,7 +92,7 @@ function Palette({ onClose, onShowShortcuts }: { onClose: () => void; onShowShor
               void client.invalidateQueries({ queryKey: ["info"] });
               toast(
                 `${r.imported.length} ${r.imported.length === 1 ? "document" : "documents"} imported.` +
-                  (r.evernote.length ? ` ${r.evernote.length} Evernote files wait for Import from Evernote (Maintenance).` : ""),
+                  (r.evernote?.length ? ` ${r.evernote.length} Evernote files wait for Import from Evernote (Maintenance).` : ""),
               );
             })
             .catch((e: Error) => toast(e.message, "error")),

@@ -148,6 +148,7 @@ class EvernoteImporter:
     def __init__(self, ingestor: Ingestor, printer: Printer) -> None:
         self.ingestor = ingestor
         self.printer = printer
+        self._seen: set[str] = set()  # fingerprints of imported notes, loaded per run
 
     def files(self) -> list[Candidate]:
         return [c for c in self.ingestor.candidates() if c.path.suffix.lower() == EVERNOTE_SUFFIX]
@@ -157,6 +158,7 @@ class EvernoteImporter:
         Raises IngestBusyError while a scan or another import runs."""
         with self.ingestor.exclusive():
             report = EvernoteReport(dry_run=dry_run)
+            self._seen = self._imported_before()
             files = self.files()
             for done, candidate in enumerate(files):
                 if progress:
@@ -197,38 +199,41 @@ class EvernoteImporter:
 
     # --- one note --------------------------------------------------------------------------
 
-    def _seen(self, fingerprint: str) -> bool:
+    def _imported_before(self) -> set[str]:
+        """Fingerprints of the notes imported by earlier runs."""
         with self.ingestor.session_factory() as session:
-            return (
-                session.scalar(
-                    select(IngestLog.id)
-                    .where(IngestLog.message == FINGERPRINT + fingerprint)
-                    .limit(1)
-                )
-                is not None
+            messages = session.scalars(
+                select(IngestLog.message).where(IngestLog.message.startswith(FINGERPRINT))
             )
+            return {m.removeprefix(FINGERPRINT) for m in messages}
 
     def _note(
         self, c: Candidate, notebook: str, note: Note, report: EvernoteReport, run_id: uuid.UUID
     ) -> None:
         fingerprint = note.fingerprint
-        if self._seen(fingerprint):
+        if fingerprint in self._seen:
             report.already_imported += 1
             return
-        body = parse_body(note.content)
-        parts = plan_note(note, body)
-        if not parts:
-            report.empty += 1
-            return
-        if report.dry_run:
-            self._count(parts, report)
-            return
         try:
+            if note.problems:
+                raise ConversionError("; ".join(note.problems))
+            body = parse_body(note.content)
+            parts = plan_note(note, body)
+            if not parts:
+                report.empty += 1
+                return
+            if report.dry_run:
+                self._count(parts, report)
+                return
             self._import(c, notebook, note, body, parts, fingerprint, report, run_id)
+            self._seen.add(fingerprint)  # the same note in another file of this run
         except Exception as exc:  # noqa: BLE001 — reported per note; the others go on
             log.exception("Evernote import failed for a note in %s", c.relpath)
             report.failed.append(f"{c.relpath}: {note.title or 'untitled note'}: {exc}")
-            self.ingestor.log_result(run_id, str(c.relpath), IngestResult.FAILED, None, str(exc))
+            if not report.dry_run:
+                self.ingestor.log_result(
+                    run_id, str(c.relpath), IngestResult.FAILED, None, str(exc)
+                )
 
     def _count(self, parts: list[_Part], report: EvernoteReport) -> None:
         for part in parts:
